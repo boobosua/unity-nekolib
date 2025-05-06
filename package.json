@@ -1,1 +1,12 @@
-ECHO is on.
+{
+  "name": "com.nekoindie.nekolib",
+  "version": "1.0.0",
+  "displayName": "NekoLib",
+  "description": "This is a package containing useful tools for game development using the Unity engine.",
+  "unity": "2020.3",
+  "dependencies": {},
+  "author": {
+    "name": "Nguyen Thanh Trung",
+    "url": "https://nekoindie.itch.io/"
+  }
+}
