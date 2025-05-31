@@ -14,8 +14,6 @@ namespace NekoLib.Singleton
         private static readonly object _lock = new();
         private static bool s_applicationIsQuitting = false;
 
-        public static bool HasInstance => s_instance != null;
-
         public static T Instance
         {
             get
@@ -77,6 +75,7 @@ namespace NekoLib.Singleton
         protected virtual void OnApplicationQuit()
         {
             s_applicationIsQuitting = true;
+            s_instance = null;
         }
     }
 }

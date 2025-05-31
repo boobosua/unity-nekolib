@@ -15,8 +15,6 @@ namespace NekoLib.Singleton
         private static readonly object _lock = new();
         private static bool s_queueForDestroy = false;
 
-        public static bool HasInstance => s_instance != null;
-
         public static T Instance
         {
             get
@@ -78,6 +76,7 @@ namespace NekoLib.Singleton
         protected virtual void OnDestroy()
         {
             s_queueForDestroy = true;
+            s_instance = null;
             // Debug.Log($"Destroy {typeof(T).Name.Colorize(Color.magenta)} ({GetInstanceID()}).");
         }
     }

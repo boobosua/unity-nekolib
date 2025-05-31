@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace NekoLib.Extensions
 {
@@ -61,6 +62,34 @@ namespace NekoLib.Extensions
         public static float AtMost(this float num, float max)
         {
             return Mathf.Min(num, max);
+        }
+
+        /// <summary>
+        /// Returns 'true' if the random roll between min and max is less than or equal to the target roll.
+        /// </summary>
+        public static bool HasChance(this float rate, float min = 0f, float max = 1f)
+        {
+            if (rate < min || rate > max)
+            {
+                throw new ArgumentException($"rate '{rate}' is not in range of min '{min}' and max '{max}'");
+            }
+
+            var randomRoll = Random.Range(min, max);
+            return randomRoll <= rate;
+        }
+
+        /// <summary>
+        /// Returns 'true' if the random roll between min and max is less than or equal to the target roll.
+        /// </summary>
+        public static bool HasChance(int rate, int min = 0, int max = 100)
+        {
+            if (rate < min || rate > max)
+            {
+                throw new ArgumentException($"rate '{rate}' is not in range of min '{min}' and max '{max}'");
+            }
+
+            var randomRoll = Random.Range(min, max);
+            return randomRoll <= rate;
         }
     }
 }

@@ -24,5 +24,13 @@ namespace NekoLib.Singleton
 
             return instance;
         }
+
+#if UNITY_EDITOR
+        protected virtual void Reset()
+        { //Optional function that prevents manual instantiation.
+            UnityEditor.EditorUtility.DisplayDialog("LazySingletons should not be manually instantiated", "Lazyloaded Singletons will load when first accessed. Instances that are part of scenes or prefabs do nothing.", "Ok");
+            DestroyImmediate(this);
+        }
+#endif
     }
 }
