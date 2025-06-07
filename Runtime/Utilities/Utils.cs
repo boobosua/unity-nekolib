@@ -58,6 +58,118 @@ namespace NekoLib.Utilities
             return s_waitForSecondsRealtimeDictionary[waitSeconds];
         }
 
+        public static bool IsPointerOverAny3DObject(Camera camera = null, float maxDistance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers)
+        {
+            var cam = camera;
+            if (cam == null)
+                cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogError("There is no camera in the scene.");
+                return false;
+            }
+
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            return Physics.Raycast(ray, maxDistance, layerMask);
+        }
+
+        public static bool IsPointerOverAny3DObject(out RaycastHit hit, Camera camera = null, float maxDistance = Mathf.Infinity, int layerMask = Physics.DefaultRaycastLayers)
+        {
+            var cam = camera;
+            if (cam == null)
+                cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogError("There is no camera in the scene.");
+                hit = default;
+                return false;
+            }
+
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            return Physics.Raycast(ray, out hit, maxDistance, layerMask);
+        }
+
+        public static bool IsPointerOver3DObject(GameObject objectToCheck, Camera camera = null, float maxDistance = Mathf.Infinity)
+        {
+            if (objectToCheck == null)
+            {
+                Debug.LogWarning("Object to check is null.");
+                return false;
+            }
+
+            var cam = camera;
+            if (cam == null)
+                cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogError("There is no camera in the scene.");
+                return false;
+            }
+
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out var hit, maxDistance))
+            {
+                return hit.transform == objectToCheck.transform;
+            }
+
+            return false;
+        }
+
+        public static bool IsPointerOverAny2DObject(Camera camera = null, int layerMask = Physics2D.DefaultRaycastLayers)
+        {
+            var cam = camera;
+            if (cam == null)
+                cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogError("There is no camera in the scene.");
+                return false;
+            }
+
+            if (!cam.orthographic)
+            {
+                Debug.LogWarning("Camera is not in orthographic mode.");
+                return false;
+            }
+
+            Vector2 position = Input.mousePosition.ScreenToWorld();
+            var detectCollider = Physics2D.OverlapPoint(position, layerMask);
+            return detectCollider != null;
+        }
+
+        public static bool IsPointerOver2DObject(GameObject objectToCheck, Camera camera = null)
+        {
+            if (objectToCheck == null)
+            {
+                Debug.LogWarning("Object to check is null.");
+                return false;
+            }
+
+            var cam = camera;
+            if (cam == null)
+                cam = Camera.main;
+
+            if (cam == null)
+            {
+                Debug.LogError("There is no camera in the scene.");
+                return false;
+            }
+
+            if (!cam.orthographic)
+            {
+                Debug.LogWarning("Camera is not in orthographic mode.");
+                return false;
+            }
+
+            Vector2 position = Input.mousePosition.ScreenToWorld();
+            var detectCollider = Physics2D.OverlapPoint(position);
+            return detectCollider != null && detectCollider.gameObject == objectToCheck;
+        }
+
         /// <summary>
         /// Returns 'true' if we touched or hovering on Unity UI element.
         /// </summary>
@@ -97,15 +209,17 @@ namespace NekoLib.Utilities
         }
 
         /// <summary>
-        /// Returns the world position of the mouse cursor.
+        /// Returns the world position of the mouse cursor in 2D.
         /// </summary>
-        public static Vector3 MouseWorldPosition
+        public static Vector2 MouseWorldPosition
         {
             get
             {
-                var mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                mouseWorldPos.z = 0f;
-                return mouseWorldPos;
+                if (Camera.main.orthographic)
+                    return Input.mousePosition.ToVector2().ScreenToWorld();
+
+                Debug.LogWarning("Camera is not orthographic, mouse position will be returned as Vector2.zero.");
+                return Vector2.zero;
             }
         }
 

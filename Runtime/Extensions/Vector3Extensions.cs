@@ -4,6 +4,11 @@ namespace NekoLib.Extensions
 {
     public static class Vector3Extensions
     {
+        public static Vector2 ToVector2(this Vector3 vector)
+        {
+            return (Vector2)vector;
+        }
+
         public static Vector3 With(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(x ?? vector.x, y ?? vector.y, z ?? vector.z);
@@ -31,6 +36,64 @@ namespace NekoLib.Extensions
                 y.HasValue && y.Value != 0 ? vector.y / y.Value : vector.y,
                 z.HasValue && z.Value != 0 ? vector.z / z.Value : vector.z
             );
+        }
+
+        /// <summary>
+        /// Converts a world position to a screen position.
+        /// </summary>
+        public static Vector3 WorldToScreen(this Vector3 vector, bool useCameraDistance = false)
+        {
+            var pos = Camera.main.WorldToScreenPoint(vector);
+            pos.z = useCameraDistance ? pos.z : 0f;
+            return pos;
+        }
+
+        /// <summary>
+        /// Converts a viewport position to a screen position.
+        /// </summary>
+        public static Vector3 ViewportToScreen(this Vector3 vector)
+        {
+            var pos = Camera.main.ViewportToScreenPoint(vector);
+            pos.z = 0f;
+            return pos;
+        }
+
+        /// <summary>
+        /// Converts a screen position to a world position.
+        /// </summary>
+        public static Vector3 ScreenToWorld(this Vector3 vector, bool useCameraDistance = false)
+        {
+            var nearClipPlanePos = vector.With(z: Camera.main.nearClipPlane + 1);
+            var worldPos = Camera.main.ScreenToWorldPoint(nearClipPlanePos);
+            worldPos.z = useCameraDistance ? worldPos.z : 0f;
+            return worldPos;
+        }
+
+        /// <summary>
+        /// Converts a viewport position to a world position.
+        /// </summary>
+        public static Vector3 ViewportToWorld(this Vector3 vector, bool useCameraDistance = false)
+        {
+            var nearClipPlanePos = vector.With(z: Camera.main.nearClipPlane + 1);
+            var worldPos = Camera.main.ViewportToWorldPoint(nearClipPlanePos);
+            worldPos.z = useCameraDistance ? worldPos.z : 0f;
+            return worldPos;
+        }
+
+        /// <summary>
+        /// Converts a screen position to a viewport position.
+        /// </summary>
+        public static Vector3 ScreenToViewport(this Vector3 vector)
+        {
+            return Camera.main.ScreenToViewportPoint(vector.With(z: 0f));
+        }
+
+        /// <summary>
+        /// Converts a world position to a viewport position.
+        /// </summary>
+        public static Vector3 WorldToViewport(this Vector3 vector)
+        {
+            return Camera.main.WorldToViewportPoint(vector.With(z: 0f));
         }
 
         /// <summary>

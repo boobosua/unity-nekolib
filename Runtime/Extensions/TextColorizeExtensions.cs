@@ -58,9 +58,9 @@ namespace NekoLib.Extensions
             return text;
         }
 
-        public static string Colorize(this string text, Color color, Func<char, bool> predicate)
+        public static string Colorize(this string text, Color color, Func<bool> predicate)
         {
-            return s_charRegex.Replace(text, match => predicate(match.Value[0]) ? $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{match.Value}</color>" : match.Value);
+            return predicate() ? $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{text}</color>" : text;
         }
 
         public static string Colorize(this string text, Color color, Func<string, bool> predicate)
@@ -69,4 +69,3 @@ namespace NekoLib.Extensions
         }
     }
 }
-
