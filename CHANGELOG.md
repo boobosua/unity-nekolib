@@ -1,3 +1,10 @@
+## [1.1.0] - 2025-06-20
+
+### World API Request
+
+- Request world time from WorldAPI
+- Rework NetworkManager
+
 ## [1.0.2] - 2025-06-07
 
 ### Text Formatter

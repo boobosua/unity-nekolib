@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using NekoLib.Singleton;
 using NekoLib.Utilities;
 using NekoLib.Extensions;
+using NekoLib.ColorPalette;
 
 namespace NekoLib.Networking
 {
@@ -13,51 +14,51 @@ namespace NekoLib.Networking
         private const float CheckInterval = 2f;
         private const string URL = "https://google.com";
 
-        /// <summary>
-        /// Called when the internet connection status changes.
-        /// </summary>
         public event Action<bool> OnConnectionRefresh;
 
-        private bool _hasInternet = false;
-        public bool HasInternet
-        {
-            get
-            {
-                // if (!IsDiagnosticRunning)
-                // {
-                //     RunConnectionDiagnostic();
-                //     return Application.internetReachability != NetworkReachability.NotReachable;
-                // }
+        public bool HasInternet => Application.internetReachability != NetworkReachability.NotReachable;
 
-                return _hasInternet;
+        private Coroutine _connectionDiagnosticRoutine = null;
+
+        private bool IsDiagnosticRunning => _connectionDiagnosticRoutine != null;
+
+        public void InitConnectionDiagnostic(Action<bool> onComplete)
+        {
+            StartCoroutine(ConnectionDiagnosticRoutine(onComplete));
+        }
+
+        private IEnumerator ConnectionDiagnosticRoutine(Action<bool> onComplete)
+        {
+            using var request = UnityWebRequest.Get(URL);
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                onComplete?.Invoke(false);
+                Debug.LogWarning($"Failed to connect to {URL.Italic()} via internet.".Colorize(Palette.VibrantRed));
+            }
+            else
+            {
+                onComplete?.Invoke(true);
+                Debug.Log($"Internet connection successfully established.".Colorize(Palette.PumpkinOrange));
             }
         }
 
-        public bool IsNetworkReachable => Application.internetReachability != NetworkReachability.NotReachable;
-
-        private Coroutine _connectionDiagnosticRoutine = null;
-        private bool IsDiagnosticRunning => _connectionDiagnosticRoutine != null;
-
-        /// <summary>
-        /// Run an internet connection diagnostic.
-        /// </summary>
-        /// <param name="interval"> Time delay between each diagnostic. </param>
-        /// <param name="url"> URL of a website to ping. </param>
-        public void RunConnectionDiagnostic(float interval = CheckInterval, string url = URL)
+        public void RunConnectionDiagnosticLoop(float interval = CheckInterval, string url = URL)
         {
-            _connectionDiagnosticRoutine = StartCoroutine(ConnectionDiagnosticRoutine(interval, url));
+            _connectionDiagnosticRoutine = StartCoroutine(ConnectionDiagnosticLoopRoutine(interval, url));
         }
 
-        public void StopConnectionDiagnostic()
+        public void StopConnectionDiagnosticLoop()
         {
-            if (_connectionDiagnosticRoutine != null)
+            if (IsDiagnosticRunning)
             {
                 StopCoroutine(_connectionDiagnosticRoutine);
                 _connectionDiagnosticRoutine = null;
             }
         }
 
-        private IEnumerator ConnectionDiagnosticRoutine(float interval, string url)
+        private IEnumerator ConnectionDiagnosticLoopRoutine(float interval, string url)
         {
             while (true)
             {
@@ -66,23 +67,13 @@ namespace NekoLib.Networking
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    if (_hasInternet)
-                    {
-                        _hasInternet = false;
-
-                        OnConnectionRefresh?.Invoke(_hasInternet);
-                        Debug.LogWarning($"Internet connection lost.".Colorize(Color.red));
-                    }
+                    OnConnectionRefresh?.Invoke(false);
+                    Debug.LogWarning($"Internet connection lost.".Colorize(Palette.VibrantRed));
                 }
                 else
                 {
-                    if (!_hasInternet)
-                    {
-                        _hasInternet = true;
-
-                        OnConnectionRefresh?.Invoke(_hasInternet);
-                        Debug.Log($"Internet connection restored.".Colorize(Color.green));
-                    }
+                    OnConnectionRefresh?.Invoke(true);
+                    Debug.Log($"Internet connection restored.".Colorize(Palette.MintEmerald));
                 }
 
                 yield return Utils.GetWaitForSecondsRealtime(interval);

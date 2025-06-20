@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.ColorPalette;
 
 namespace NekoLib.Singleton
 {
@@ -20,15 +21,16 @@ namespace NekoLib.Singleton
             var instance = ownerObject.AddComponent<T>();
             DontDestroyOnLoad(ownerObject);
 
-            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Color.magenta)}.");
+            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Palette.Lavender)}.");
 
             return instance;
         }
 
 #if UNITY_EDITOR
         protected virtual void Reset()
-        { //Optional function that prevents manual instantiation.
-            UnityEditor.EditorUtility.DisplayDialog("LazySingletons should not be manually instantiated", "Lazyloaded Singletons will load when first accessed. Instances that are part of scenes or prefabs do nothing.", "Ok");
+        {
+            //Optional function that prevents manual instantiation.
+            UnityEditor.EditorUtility.DisplayDialog("LazySingletons should not be manually instantiated", "Lazy loaded Singletons will load when first accessed. Instances that are part of scenes or prefabs do nothing.", "Ok");
             DestroyImmediate(this);
         }
 #endif

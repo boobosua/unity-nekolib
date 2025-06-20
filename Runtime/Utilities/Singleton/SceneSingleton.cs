@@ -1,5 +1,6 @@
 using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.ColorPalette;
 
 namespace NekoLib.Singleton
 {
@@ -12,18 +13,18 @@ namespace NekoLib.Singleton
     public abstract class SceneSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T s_instance;
-        private static readonly object _lock = new();
+        private static readonly object s_lock = new();
         private static bool s_queueForDestroy = false;
 
         public static T Instance
         {
             get
             {
-                lock (_lock)
+                lock (s_lock)
                 {
                     if (s_queueForDestroy)
                     {
-                        Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Color.magenta)} already queued for destroy. Won't create again - returning null.");
+                        Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Palette.GoldenAmber)} already queued for destroy. Won't create again - returning null.");
                         return null;
                     }
 
@@ -39,7 +40,7 @@ namespace NekoLib.Singleton
                             };
 
                             s_instance = obj.AddComponent<T>();
-                            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Color.magenta)}.");
+                            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Palette.Lavender)}.");
                         }
                     }
                 }
@@ -58,7 +59,7 @@ namespace NekoLib.Singleton
             {
                 if (s_instance != this)
                 {
-                    Debug.LogWarning($"Destroyed a duplicate {gameObject.name.Colorize(Color.magenta)} ({gameObject.GetInstanceID()}).");
+                    Debug.LogWarning($"Destroyed a duplicate {gameObject.name.Colorize(Palette.GoldenAmber)} ({gameObject.GetInstanceID()}).");
                     Destroy(gameObject);
                     return;
                 }
@@ -77,7 +78,6 @@ namespace NekoLib.Singleton
         {
             s_queueForDestroy = true;
             s_instance = null;
-            // Debug.Log($"Destroy {typeof(T).Name.Colorize(Color.magenta)} ({GetInstanceID()}).");
         }
     }
 }
