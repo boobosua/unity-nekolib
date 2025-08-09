@@ -1,83 +1,113 @@
 using System;
-using System.Collections;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Cysharp.Threading.Tasks;
 using NekoLib.Singleton;
-using NekoLib.Utilities;
 using NekoLib.Extensions;
 using NekoLib.ColorPalette;
 
 namespace NekoLib.Networking
 {
-    public class NetworkManager : LazySingleton<NetworkManager>
+    public sealed class NetworkManager : LazySingleton<NetworkManager>
     {
-        private const float CheckInterval = 2f;
-        private const string URL = "https://google.com";
+        private const float CheckIntervalSeconds = 5f;
+        private const string PingUrl = "https://google.com";
+        private const int TimeoutSeconds = 10;
 
-        public event Action<bool> OnConnectionRefresh;
+        public event Action<bool> OnInternetRefresh;
 
-        public bool HasInternet => Application.internetReachability != NetworkReachability.NotReachable;
+        public bool HasInternet { get; private set; } = false;
 
-        private Coroutine _connectionDiagnosticRoutine = null;
+        private CancellationTokenSource _monitoringCts;
 
-        private bool IsDiagnosticRunning => _connectionDiagnosticRoutine != null;
-
-        public void InitConnectionDiagnostic(Action<bool> onComplete)
+        /// <summary>
+        /// Checks internet connection asynchronously using UniTask.
+        /// </summary>
+        /// <param name="token">Cancellation token to cancel the operation</param>
+        public async UniTask<bool> CheckInternetConnectionAsync(CancellationToken token = default)
         {
-            StartCoroutine(ConnectionDiagnosticRoutine(onComplete));
-        }
+            using var request = UnityWebRequest.Get(PingUrl);
+            request.timeout = TimeoutSeconds; // Add timeout to prevent hanging
 
-        private IEnumerator ConnectionDiagnosticRoutine(Action<bool> onComplete)
-        {
-            using var request = UnityWebRequest.Get(URL);
-            yield return request.SendWebRequest();
+            // Use the provided token, or destroyCancellationToken if none provided.
+            var effectiveToken = token == default ? destroyCancellationToken : token;
 
-            if (request.result != UnityWebRequest.Result.Success)
+            try
             {
-                onComplete?.Invoke(false);
-                Debug.LogWarning($"Failed to connect to {URL.Italic()} via internet.".Colorize(Palette.VibrantRed));
+                await request.SendWebRequest().WithCancellation(effectiveToken);
+            }
+            catch (OperationCanceledException)
+            {
+                HasInternet = false;
+                return false;
+            }
+
+            bool isConnected = request.result == UnityWebRequest.Result.Success;
+            HasInternet = isConnected;
+
+            if (isConnected)
+            {
+                Debug.Log("Internet connection verified.".Colorize(Palette.MintEmerald));
             }
             else
             {
-                onComplete?.Invoke(true);
-                Debug.Log($"Internet connection successfully established.".Colorize(Palette.PumpkinOrange));
+                Debug.LogWarning($"Failed to connect to {PingUrl.Italic()}".Colorize(Palette.VibrantRed));
             }
+
+            OnInternetRefresh?.Invoke(isConnected);
+            return isConnected;
         }
 
-        public void RunConnectionDiagnosticLoop(float interval = CheckInterval, string url = URL)
+        /// <summary>
+        /// Starts monitoring internet connection with UniTask.
+        /// </summary>
+        /// <param name="token">Cancellation token to stop monitoring</param>
+        public async UniTaskVoid StartMonitoringAsync(CancellationToken token = default)
         {
-            _connectionDiagnosticRoutine = StartCoroutine(ConnectionDiagnosticLoopRoutine(interval, url));
-        }
+            // Stop any existing monitoring
+            StopMonitoring();
 
-        public void StopConnectionDiagnosticLoop()
-        {
-            if (IsDiagnosticRunning)
+            // Create linked token that combines destroyCancellationToken with external token
+            _monitoringCts = token == default
+                ? CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken)
+                : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token);
+
+            Debug.Log("Init internet monitoring.".Colorize(Palette.PumpkinOrange));
+
+            try
             {
-                StopCoroutine(_connectionDiagnosticRoutine);
-                _connectionDiagnosticRoutine = null;
+                while (!_monitoringCts.IsCancellationRequested)
+                {
+                    // Pass the combined token directly - no double linking
+                    await CheckInternetConnectionAsync(_monitoringCts.Token);
+                    await UniTask.Delay(TimeSpan.FromSeconds(CheckIntervalSeconds), cancellationToken: _monitoringCts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.Log("Internet monitoring cancelled.".Colorize(Palette.VibrantRed));
+            }
+            finally
+            {
+                _monitoringCts?.Dispose();
+                _monitoringCts = null;
             }
         }
 
-        private IEnumerator ConnectionDiagnosticLoopRoutine(float interval, string url)
+        /// <summary>
+        /// Stops monitoring internet connection.
+        /// </summary>
+        public void StopMonitoring()
         {
-            while (true)
-            {
-                using var request = UnityWebRequest.Get(url);
-                yield return request.SendWebRequest();
+            _monitoringCts?.Cancel();
+            _monitoringCts?.Dispose();
+            _monitoringCts = null;
+        }
 
-                if (request.result != UnityWebRequest.Result.Success)
-                {
-                    OnConnectionRefresh?.Invoke(false);
-                    Debug.LogWarning($"Internet connection lost.".Colorize(Palette.VibrantRed));
-                }
-                else
-                {
-                    OnConnectionRefresh?.Invoke(true);
-                    Debug.Log($"Internet connection restored.".Colorize(Palette.MintEmerald));
-                }
-
-                yield return Utils.GetWaitForSecondsRealtime(interval);
-            }
+        private void OnDestroy()
+        {
+            StopMonitoring();
         }
     }
 }

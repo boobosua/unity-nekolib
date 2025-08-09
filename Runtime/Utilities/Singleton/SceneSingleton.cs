@@ -10,39 +10,48 @@ namespace NekoLib.Singleton
     /// Do not reference the instance in OnDestroy(), OnDisable() or OnApplicationQuit().
     /// </summary>
     /// <typeparam name="T"> The type of the singleton. </typeparam>
+    [DisallowMultipleComponent]
     public abstract class SceneSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T s_instance;
-        private static readonly object s_lock = new();
-        private static bool s_queueForDestroy = false;
+        private static bool s_isInitializing = false;
 
         public static T Instance
         {
             get
             {
-                lock (s_lock)
+                if (s_instance != null)
                 {
-                    if (s_queueForDestroy)
+                    // Debug.Log($"Returning existing instance of {typeof(T).Name.Colorize(Palette.Lavender)}.");
+                    return s_instance;
+                }
+
+                s_isInitializing = true;
+
+                var allInstances = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+                if (allInstances.Length == 1)
+                {
+                    s_instance = allInstances[0];
+                    // Debug.Log($"Using existing instance of {typeof(T).Name.Colorize(Palette.Lavender)}.");
+                }
+                else if (allInstances.Length > 1)
+                {
+                    // Debug.LogWarning($"Found multiple instances of {typeof(T).Name.Colorize(Palette.VibrantRed)}. Using the first one found.");
+                    s_instance = allInstances[0];
+
+                    for (int i = 1; i < allInstances.Length; i++)
                     {
-                        Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Palette.GoldenAmber)} already queued for destroy. Won't create again - returning null.");
-                        return null;
+                        Debug.LogWarning($"Destroying duplicate instance of {allInstances[i].name.Colorize(Palette.GoldenAmber)}.");
+                        Destroy(allInstances[i].gameObject);
                     }
+                }
 
-                    if (s_instance == null)
-                    {
-                        s_instance = FindFirstObjectByType<T>(FindObjectsInactive.Include);
+                s_isInitializing = false;
 
-                        if (s_instance == null)
-                        {
-                            var obj = new GameObject
-                            {
-                                name = $"{typeof(T).Name} (Singleton)"
-                            };
-
-                            s_instance = obj.AddComponent<T>();
-                            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Palette.Lavender)}.");
-                        }
-                    }
+                if (s_instance == null)
+                {
+                    Debug.LogError($"Instance {typeof(T).Name.Colorize(Palette.GoldenAmber)} is null.");
                 }
 
                 return s_instance;
@@ -51,18 +60,14 @@ namespace NekoLib.Singleton
 
         protected virtual void Awake()
         {
-            if (s_instance == null)
+            if (s_instance == null && !s_isInitializing)
             {
                 s_instance = this as T;
             }
-            else
+            else if (s_instance != null && s_instance != this && !s_isInitializing)
             {
-                if (s_instance != this)
-                {
-                    Debug.LogWarning($"Destroyed a duplicate {gameObject.name.Colorize(Palette.GoldenAmber)} ({gameObject.GetInstanceID()}).");
-                    Destroy(gameObject);
-                    return;
-                }
+                Debug.LogWarning($"Destroying duplicate instance of {gameObject.name.Colorize(Palette.GoldenAmber)}.");
+                Destroy(gameObject);
             }
         }
 
@@ -73,12 +78,6 @@ namespace NekoLib.Singleton
                 gameObject.name = $"{typeof(T).Name} (Singleton {gameObject.GetInstanceID()})";
         }
 #endif
-
-        protected virtual void OnDestroy()
-        {
-            s_queueForDestroy = true;
-            s_instance = null;
-        }
     }
 }
 

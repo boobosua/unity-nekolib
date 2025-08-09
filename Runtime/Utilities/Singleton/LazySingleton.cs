@@ -9,6 +9,7 @@ namespace NekoLib.Singleton
     /// Lazy singleton automatically creates a new singleton game object when a script uses it.
     /// Does not work if you have multiple singleton objects of type T in the scene.
     /// </summary>
+    [DisallowMultipleComponent]
     public abstract class LazySingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static readonly Lazy<T> s_lazyInstance = new(CreateSingleton);

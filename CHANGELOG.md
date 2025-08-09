@@ -1,3 +1,8 @@
+## [1.3.0] - 2025-08-10
+
+- Improve Singleton patterns
+- Refactor NetworkManager to use UniTask instead of Coroutine
+
 ## [1.1.0] - 2025-06-20
 
 ### World API Request
