@@ -9,9 +9,13 @@ A comprehensive utility package for Unity game development with built-in UniTask
 - [Dependencies](#dependencies)
 - [Usage Examples](#usage-examples)
   - [NetworkManager](#networkmanager)
-  - [DateTime Utilities](#datetime-utilities)
-  - [Singleton Pattern](#singleton-pattern)
-  - [Extensions](#extensions)
+  - [DateTimeManager](#datetimemanager)
+  - [Singleton Patterns](#singleton-patterns)
+  - [Timer Components](#timer-components)
+  - [Text Extensions](#text-extensions)
+  - [Vector Extensions](#vector-extensions)
+  - [Color Palette](#color-palette)
+  - [Utilities](#utilities)
 - [Requirements](#requirements)
 - [License](#license)
 - [Changelog](#changelog)
@@ -34,13 +38,14 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 
 ## Features
 
-- **Singleton Pattern**: Easy-to-use singleton implementations
-- **NetworkManager**: Internet connection monitoring with async/await support
-- **Extensions**: Useful extension methods for Unity types
-- **Color Palette**: Predefined color palettes for debugging and UI
-- **DateTime Utilities**: Date and time manipulation tools
-- **Utilities**: Various utility functions for common tasks
-- **UniTask Integration**: Built-in async/await support for better performance
+- **NetworkManager**: Internet connection monitoring with async/await support and UniTask integration
+- **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
+- **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
+- **Timer System**: Class-based (Countdown, Stopwatch) and MonoBehaviour-based timers
+- **Text Extensions**: Rich text formatting (bold, italic, underline) and colorization
+- **Vector Extensions**: Enhanced Vector2/Vector3 operations and coordinate conversions
+- **Color Palette**: Predefined color palette for consistent UI and debugging
+- **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and common helper functions
 
 ## Dependencies
 
@@ -53,62 +58,122 @@ This package automatically installs and includes:
 ### NetworkManager
 
 ```csharp
-// Check internet connection
+// Check internet connection with timeout
 bool isConnected = await NetworkManager.Instance.CheckInternetConnectionAsync();
 
-// Start monitoring
+// Start automatic monitoring (checks every 5 seconds)
 NetworkManager.Instance.StartMonitoringAsync().Forget();
 
-// Subscribe to status changes
+// Subscribe to connection status changes
 NetworkManager.Instance.OnInternetRefresh += (connected) =>
     Debug.Log($"Internet: {connected}");
 ```
 
-### DateTime Utilities
+### DateTimeManager
 
 ```csharp
-// Get current timestamp
-long timestamp = DateTimeUtility.GetCurrentTimestamp();
+// Sync server time from TimeAPI.io or Google
+await DateTimeManager.Instance.FetchTimeFromServerAsync();
 
-// Convert to DateTime
-DateTime dateTime = DateTimeUtility.TimestampToDateTime(timestamp);
+// Get current UTC time (synced)
+DateTime utcNow = DateTimeManager.Instance.UtcNow();
 
-// Format time
-string formatted = DateTimeUtility.FormatTime(DateTime.Now, "HH:mm:ss");
+// Get local time
+DateTime localTime = DateTimeManager.Instance.Now();
 
-// Time difference
-TimeSpan diff = DateTimeUtility.GetTimeDifference(startTime, endTime);
+// Get today's date
+DateTime today = DateTimeManager.Instance.Today();
 ```
 
-### Singleton Pattern
+### Singleton Patterns
 
 ```csharp
-public class GameManager : Singleton<GameManager>
+// LazySingleton - auto-creates when accessed
+public class GameManager : LazySingleton<GameManager>
 {
-    public void Initialize()
-    {
-        // Your initialization code
-    }
+    public void Initialize() { }
 }
 
-// Usage
-GameManager.Instance.Initialize();
+// SceneSingleton - exists only in current scene
+public class UIManager : SceneSingleton<UIManager>
+{
+    public void ShowMenu() { }
+}
+
+// PersistentSingleton - survives scene changes
+public class AudioManager : PersistentSingleton<AudioManager>
+{
+    public void PlayMusic() { }
+}
 ```
 
-### Extensions
+### Timer Components
 
 ```csharp
-// GameObject extensions
-gameObject.SetActiveOptimized(true);
+// Class-based Countdown timer
+var countdown = new Countdown(10f).SetLoop(true);
+countdown.OnStop += () => Debug.Log("Timer finished!");
+countdown.Start();
 
-// Vector3 extensions
-Vector3 position = transform.position.WithY(5f);
-
-// Color extensions
-Color randomColor = ColorPalette.GetRandomColor();
+// MonoBehaviour Timer component
+var timer = GetComponent<Timer>();
+timer.OnTimeOut.AddListener(() => Debug.Log("Timeout!"));
+timer.Begin();
 ```
 
-## Requirements
+### Text Extensions
+
+```csharp
+// Rich text formatting
+string text = "Hello World".Bold().Italic().Colorize(Palette.VibrantRed);
+
+// Selective formatting
+string formatted = "Make this bold".Bold("this");
+
+// Colorize specific words
+string colored = "Error message".Colorize(Palette.VibrantRed, "Error");
+```
+
+### Vector Extensions
+
+```csharp
+// Modify specific components
+Vector3 newPos = transform.position.With(y: 5f);
+
+// Coordinate conversions
+Vector3 screenPos = worldPosition.WorldToScreen();
+Vector3 worldPos = screenPosition.ScreenToWorld();
+
+// Utility operations
+bool inRange = playerPos.InRangeOf(targetPos, 5f);
+Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 10f);
+```
+
+### Color Palette
+
+```csharp
+// Use predefined colors
+Debug.Log("Success!".Colorize(Palette.MintEmerald));
+Debug.LogError("Error!".Colorize(Palette.VibrantRed));
+
+// Available color categories: Gray, Yellow, Red, Green, Blue, Purple, Orange
+Color uiColor = Palette.AzureTeal;
+```
+
+### Utilities
+
+````csharp
+// Cached WaitForSeconds (no memory allocation)
+yield return Utils.GetWaitForSeconds(1.5f);
+
+// Mouse/pointer detection
+bool overUI = Utils.IsPointerOverUIElement(uiLayer);
+bool over3D = Utils.IsPointerOverAny3DObject();
+bool over2D = Utils.IsPointerOverAny2DObject();
+
+// Mouse world position (2D)
+Vector2 mouseWorld = Utils.MouseWorldPosition;
+```## Requirements
 
 - Unity 2020.3 or later
 - UniTask (automatically installed)
@@ -120,3 +185,4 @@ See [LICENSE.md](LICENSE.md) for licensing information.
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
+````
