@@ -173,7 +173,8 @@ bool over2D = Utils.IsPointerOverAny2DObject();
 
 // Mouse world position (2D)
 Vector2 mouseWorld = Utils.MouseWorldPosition;
-```## Requirements
+```
+## Requirements
 
 - Unity 2020.3 or later
 - UniTask (automatically installed)
