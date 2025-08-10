@@ -7,13 +7,13 @@ using NekoLib.Singleton;
 using NekoLib.Extensions;
 using NekoLib.ColorPalette;
 
-namespace NekoLib.Networking
+namespace NekoLib.NetworkServices
 {
     public sealed class NetworkManager : LazySingleton<NetworkManager>
     {
         private const float CheckIntervalSeconds = 5f;
         private const string PingUrl = "https://google.com";
-        private const int TimeoutSeconds = 10;
+        private const int TimeoutSeconds = 5;
 
         public event Action<bool> OnInternetRefresh;
 
@@ -48,11 +48,11 @@ namespace NekoLib.Networking
 
             if (isConnected)
             {
-                Debug.Log("Internet connection verified.".Colorize(Palette.MintEmerald));
+                Debug.Log("[NetworkManager] Internet connection verified.".Colorize(Palette.MintEmerald));
             }
             else
             {
-                Debug.LogWarning($"Failed to connect to {PingUrl.Italic()}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[NetworkManager] Failed to connect to {PingUrl.Italic()}".Colorize(Palette.VibrantRed));
             }
 
             OnInternetRefresh?.Invoke(isConnected);
@@ -73,7 +73,7 @@ namespace NekoLib.Networking
                 ? CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken)
                 : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token);
 
-            Debug.Log("Init internet monitoring.".Colorize(Palette.PumpkinOrange));
+            Debug.Log("[NetworkManager] Init internet monitoring.".Colorize(Palette.PumpkinOrange));
 
             try
             {
@@ -86,7 +86,7 @@ namespace NekoLib.Networking
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("Internet monitoring cancelled.".Colorize(Palette.VibrantRed));
+                Debug.Log("[NetworkManager] Internet monitoring cancelled.".Colorize(Palette.VibrantRed));
             }
             finally
             {

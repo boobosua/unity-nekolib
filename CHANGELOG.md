@@ -1,3 +1,7 @@
+## [1.3.1] - 2025-08-10
+
+- Refactor WorldTimeAPI into DateTimeManager
+
 ## [1.3.0] - 2025-08-10
 
 - Improve Singleton patterns
