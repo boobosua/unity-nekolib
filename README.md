@@ -162,7 +162,7 @@ Color uiColor = Palette.AzureTeal;
 
 ### Utilities
 
-````csharp
+```csharp
 // Cached WaitForSeconds (no memory allocation)
 yield return Utils.GetWaitForSeconds(1.5f);
 
@@ -174,6 +174,7 @@ bool over2D = Utils.IsPointerOverAny2DObject();
 // Mouse world position (2D)
 Vector2 mouseWorld = Utils.MouseWorldPosition;
 ```
+
 ## Requirements
 
 - Unity 2020.3 or later
@@ -186,4 +187,3 @@ See [LICENSE.md](LICENSE.md) for licensing information.
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
-````
