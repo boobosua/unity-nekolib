@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace NekoLib.Timer
 {
@@ -9,7 +10,7 @@ namespace NekoLib.Timer
         /// <summary>
         /// A timer that counts up until manually stopped or based on a certain predicate.
         /// </summary>
-        public Stopwatch(Func<bool> stopCondition = null) : base()
+        public Stopwatch(MonoBehaviour ownerComponent, Func<bool> stopCondition = null) : base(ownerComponent)
         {
             _stopCondition = stopCondition;
         }

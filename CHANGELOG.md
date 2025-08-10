@@ -1,10 +1,22 @@
+## [1.3.2] - 2025-08-11
+
+### Refactor Timer API
+
+- Manage every timer inside TimerManager
+- Add extensions to create timers directly in Monobehavior
+- Add a fluent builder pattern to create timers
+
 ## [1.3.1] - 2025-08-10
 
-- Refactor WorldTimeAPI into DateTimeManager
+### Refactor Services
+
+- Convert WorldTimeAPI into DateTimeManager
 
 ## [1.3.0] - 2025-08-10
 
-- Improve Singleton patterns
+### Refactor Services
+
+- Improve and fix bugs for Singleton patterns
 - Refactor NetworkManager to use UniTask instead of Coroutine
 
 ## [1.1.0] - 2025-06-20

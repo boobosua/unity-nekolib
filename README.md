@@ -41,7 +41,7 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 - **NetworkManager**: Internet connection monitoring with async/await support and UniTask integration
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
 - **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
-- **Timer System**: Class-based (Countdown, Stopwatch) and MonoBehaviour-based timers
+- **Timer System**: Modern timer pool with automatic lifecycle management, fluent builder pattern, and unscaled time support
 - **Text Extensions**: Rich text formatting (bold, italic, underline) and colorization
 - **Vector Extensions**: Enhanced Vector2/Vector3 operations and coordinate conversions
 - **Color Palette**: Predefined color palette for consistent UI and debugging
@@ -107,18 +107,31 @@ public class AudioManager : PersistentSingleton<AudioManager>
 }
 ```
 
-### Timer Components
+### Timer System
 
 ```csharp
-// Class-based Countdown timer
-var countdown = new Countdown(10f).SetLoop(true);
+// Simple extension method timers
+var countdown = this.CreateCountdown(5f);
 countdown.OnStop += () => Debug.Log("Timer finished!");
 countdown.Start();
 
-// MonoBehaviour Timer component
-var timer = GetComponent<Timer>();
-timer.OnTimeOut.AddListener(() => Debug.Log("Timeout!"));
-timer.Begin();
+var stopwatch = this.CreateStopwatch();
+stopwatch.Start();
+
+// Fluent builder pattern (advanced)
+var advancedTimer = TimerFactory.CreateCountdown(this)
+    .SetDuration(10f)
+    .SetUnscaledTime()
+    .SetLoop(3)
+    .Build();
+
+// Unscaled time (ignores Time.timeScale)
+var uiTimer = this.CreateCountdown(2f).SetUnscaledTime();
+
+// Method chaining
+var loopTimer = this.CreateCountdown(1f)
+    .SetLoop(-1)  // infinite loops
+    .Start();
 ```
 
 ### Text Extensions
