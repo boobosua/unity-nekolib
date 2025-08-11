@@ -1,9 +1,8 @@
 using System;
 using UnityEngine;
 using NekoLib.Extensions;
-using NekoLib.ColorPalette;
 
-namespace NekoLib.Timer
+namespace NekoLib.Utilities
 {
     public enum LoopType
     {
@@ -18,7 +17,7 @@ namespace NekoLib.Timer
     /// </summary>
     public class Countdown : TimerBase
     {
-        public event Action OnLoopComplete;
+        public event Action OnLoop;
 
         private readonly float _originalTotalTime; // Total time for countdown
         private float _totalTime;
@@ -210,7 +209,7 @@ namespace NekoLib.Timer
 
                 if (shouldContinueLooping)
                 {
-                    OnLoopComplete?.Invoke(); // Signal completion of current loop
+                    OnLoop?.Invoke(); // Signal completion of current loop
                     _elapsedTime = _totalTime; // Reset timer for next loop
                 }
                 else
@@ -222,6 +221,7 @@ namespace NekoLib.Timer
             else
             {
                 _elapsedTime -= deltaTime;
+                InvokeUpdate();
             }
         }
     }

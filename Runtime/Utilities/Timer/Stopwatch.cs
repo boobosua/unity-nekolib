@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace NekoLib.Utilities
 {
     public class Stopwatch : TimerBase
     {
@@ -33,6 +33,7 @@ namespace NekoLib.Timer
             }
 
             _elapsedTime += deltaTime;
+            InvokeUpdate();
         }
 
         public void StopAndGetTime(out float endTime)

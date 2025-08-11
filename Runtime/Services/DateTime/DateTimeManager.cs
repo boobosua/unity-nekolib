@@ -3,11 +3,10 @@ using System.Globalization;
 using UnityEngine;
 using UnityEngine.Networking;
 using Cysharp.Threading.Tasks;
-using NekoLib.Singleton;
+using NekoLib.Utilities;
 using NekoLib.Extensions;
-using NekoLib.ColorPalette;
 
-namespace NekoLib.DateTimeServices
+namespace NekoLib.Services
 {
     public class DateTimeManager : LazySingleton<DateTimeManager>
     {

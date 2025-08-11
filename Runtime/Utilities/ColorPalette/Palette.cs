@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.ColorPalette
+namespace NekoLib.Utilities
 {
     public static class Palette
     {

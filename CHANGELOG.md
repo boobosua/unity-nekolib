@@ -1,3 +1,11 @@
+## [1.3.3] - 2025-08-12
+
+### Timer Component Enhacement
+
+- Refactor timer component
+- Add editor debug for timer component
+- Add update event for timers
+
 ## [1.3.2] - 2025-08-11
 
 ### Refactor Timer API

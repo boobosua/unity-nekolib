@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using NekoLib.Singleton;
 
-namespace NekoLib.Timer
+namespace NekoLib.Utilities
 {
     public class TimerManager : LazySingleton<TimerManager>
     {

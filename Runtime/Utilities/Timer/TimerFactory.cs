@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace NekoLib.Utilities
 {
     /// <summary>
     /// Factory class for creating timers with fluent builder pattern.

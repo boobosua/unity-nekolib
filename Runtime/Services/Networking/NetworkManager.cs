@@ -3,11 +3,10 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Cysharp.Threading.Tasks;
-using NekoLib.Singleton;
+using NekoLib.Utilities;
 using NekoLib.Extensions;
-using NekoLib.ColorPalette;
 
-namespace NekoLib.NetworkServices
+namespace NekoLib.Services
 {
     public sealed class NetworkManager : LazySingleton<NetworkManager>
     {

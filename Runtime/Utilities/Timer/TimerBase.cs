@@ -2,12 +2,13 @@ using System;
 using UnityEngine;
 using NekoLib.Extensions;
 
-namespace NekoLib.Timer
+namespace NekoLib.Utilities
 {
     public abstract class TimerBase
     {
         public event Action OnStart;
         public event Action OnStop;
+        public event Action OnUpdate;
 
         protected float _elapsedTime;
         private readonly GameObject _owner;
@@ -129,6 +130,11 @@ namespace NekoLib.Timer
         protected void InvokeStop()
         {
             OnStop?.Invoke();
+        }
+
+        protected void InvokeUpdate()
+        {
+            OnUpdate?.Invoke();
         }
 
         public void Resume()
