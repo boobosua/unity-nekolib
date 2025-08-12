@@ -66,11 +66,23 @@ namespace NekoLib.Services
             return isConnected;
         }
 
+        public void StartMonitoring(CancellationToken token = default)
+        {
+            // Prevent multiple monitoring instances
+            if (_monitoringCts != null && !_monitoringCts.IsCancellationRequested)
+            {
+                Debug.LogWarning("[NetworkManager] Monitoring is already running.".Colorize(Palette.PumpkinOrange));
+                return;
+            }
+
+            _ = StartMonitoringAsync(token);
+        }
+
         /// <summary>
         /// Starts monitoring internet connection with Task.
         /// </summary>
         /// <param name="token">Cancellation token to stop monitoring</param>
-        public async Task StartMonitoringAsync(CancellationToken token = default)
+        private async Task StartMonitoringAsync(CancellationToken token = default)
         {
             // Stop any existing monitoring
             StopMonitoring();
@@ -94,11 +106,6 @@ namespace NekoLib.Services
             catch (OperationCanceledException)
             {
                 Debug.Log("[NetworkManager] Internet monitoring cancelled.".Colorize(Palette.VibrantRed));
-            }
-            finally
-            {
-                _monitoringCts?.Dispose();
-                _monitoringCts = null;
             }
         }
 

@@ -1,3 +1,9 @@
+## [1.3.6] - 2025-08-12
+
+### Minor Fixes
+
+- Testing new Task extension
+
 ## [1.3.5] - 2025-08-12
 
 ### Breaking Changes

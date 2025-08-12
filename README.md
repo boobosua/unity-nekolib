@@ -33,7 +33,7 @@ Also grateful to GitHub Copilot for assistance with smaller tasks and code refin
 Add this package via Unity Package Manager:
 
 ```
-https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
+https://github.com/boobosua/unity-nekolib.git
 ```
 
 ### Manual Installation
@@ -44,7 +44,7 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 
 ## Features
 
-- **NetworkManager**: Internet connection monitoring with async/await support using standard C# Tasks
+- **NetworkManager**: Internet connection monitoring with async/await support, cancellation tokens, and automatic duplicate monitoring prevention
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
 - **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
 - **Timer System**: Modern timer pool with automatic lifecycle management, fluent builder pattern, and unscaled time support
@@ -58,15 +58,34 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 ### NetworkManager
 
 ```csharp
-// Check internet connection with timeout
+// Check internet connection with timeout and cancellation support
 bool isConnected = await NetworkManager.Instance.CheckInternetConnectionAsync();
 
+// Check with custom cancellation token
+var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+bool result = await NetworkManager.Instance.CheckInternetConnectionAsync(cts.Token);
+
 // Start automatic monitoring (checks every 5 seconds)
-_ = NetworkManager.Instance.StartMonitoringAsync(); // Fire and forget
+NetworkManager.Instance.StartMonitoring(); // Fire and forget
+
+// Start monitoring with cancellation token
+var monitoringCts = new CancellationTokenSource();
+NetworkManager.Instance.StartMonitoring(monitoringCts.Token);
+
+// Stop monitoring manually
+NetworkManager.Instance.StopMonitoring();
 
 // Subscribe to connection status changes
-NetworkManager.Instance.OnInternetRefresh += (connected) =>
-    Debug.Log($"Internet: {connected}");
+NetworkManager.Instance.OnInternetRefresh += (isConnected) =>
+{
+    if (isConnected)
+        Debug.Log("Internet connection restored!".Colorize(Palette.MintEmerald));
+    else
+        Debug.LogWarning("Internet connection lost!".Colorize(Palette.VibrantRed));
+};
+
+// Check current connection status (cached from last check)
+bool currentStatus = NetworkManager.Instance.HasInternet;
 ```
 
 ### DateTimeManager
