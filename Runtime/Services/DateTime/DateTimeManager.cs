@@ -1,8 +1,9 @@
 using System;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Cysharp.Threading.Tasks;
 using NekoLib.Utilities;
 using NekoLib.Extensions;
 
@@ -18,11 +19,15 @@ namespace NekoLib.Services
         private float _syncedAtRealtime;
         private bool _hasSynced;
 
-        public async UniTask FetchTimeFromServerAsync()
+        public async Task FetchTimeFromServerAsync(CancellationToken token = default)
         {
+            var effectiveToken = token == default
+                ? destroyCancellationToken
+                : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token).Token;
+
             _syncedTime = DateTime.UtcNow;
 
-            if (await TryFetchTimeFromTimeApi())
+            if (await TryFetchTimeFromTimeApi(effectiveToken))
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
@@ -30,7 +35,7 @@ namespace NekoLib.Services
                 return;
             }
 
-            if (await TryFetchTimeFromHttpHeader())
+            if (await TryFetchTimeFromHttpHeader(effectiveToken))
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
@@ -81,7 +86,7 @@ namespace NekoLib.Services
             return Now().Date;
         }
 
-        private async UniTask<bool> TryFetchTimeFromTimeApi()
+        private async Task<bool> TryFetchTimeFromTimeApi(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
             request.timeout = TimeoutSeconds;
@@ -89,7 +94,14 @@ namespace NekoLib.Services
 
             try
             {
-                await request.SendWebRequest().WithCancellation(destroyCancellationToken);
+                var operation = request.SendWebRequest();
+
+                // Wait for completion using cancellation token
+                while (!operation.isDone)
+                {
+                    token.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
@@ -122,7 +134,7 @@ namespace NekoLib.Services
             }
         }
 
-        private async UniTask<bool> TryFetchTimeFromHttpHeader()
+        private async Task<bool> TryFetchTimeFromHttpHeader(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(HeaderUrl);
             request.downloadHandler = new DownloadHandlerBuffer();
@@ -130,7 +142,14 @@ namespace NekoLib.Services
 
             try
             {
-                await request.SendWebRequest().WithCancellation(destroyCancellationToken);
+                var operation = request.SendWebRequest();
+
+                // Wait for completion using cancellation token
+                while (!operation.isDone)
+                {
+                    token.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {

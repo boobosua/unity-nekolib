@@ -40,11 +40,11 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 
 1. Download the package
 2. Import into your Unity project
-3. UniTask will be automatically installed as a dependency
+3. No external dependencies required
 
 ## Features
 
-- **NetworkManager**: Internet connection monitoring with async/await support and UniTask integration
+- **NetworkManager**: Internet connection monitoring with async/await support using standard C# Tasks
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
 - **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
 - **Timer System**: Modern timer pool with automatic lifecycle management, fluent builder pattern, and unscaled time support
@@ -52,12 +52,6 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 - **Vector Extensions**: Enhanced Vector2/Vector3 operations and coordinate conversions
 - **Color Palette**: Predefined color palette for consistent UI and debugging
 - **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and common helper functions
-
-## Dependencies
-
-This package automatically installs and includes:
-
-- **[UniTask](https://github.com/Cysharp/UniTask)**: For async/await patterns and better performance than coroutines
 
 ## Usage Examples
 
@@ -68,7 +62,7 @@ This package automatically installs and includes:
 bool isConnected = await NetworkManager.Instance.CheckInternetConnectionAsync();
 
 // Start automatic monitoring (checks every 5 seconds)
-NetworkManager.Instance.StartMonitoringAsync().Forget();
+_ = NetworkManager.Instance.StartMonitoringAsync(); // Fire and forget
 
 // Subscribe to connection status changes
 NetworkManager.Instance.OnInternetRefresh += (connected) =>
@@ -197,7 +191,7 @@ Vector2 mouseWorld = Utils.MouseWorldPosition;
 ## Requirements
 
 - Unity 2020.3 or later
-- UniTask (automatically installed)
+- No external dependencies required
 
 ## License
 

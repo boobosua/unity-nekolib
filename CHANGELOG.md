@@ -1,3 +1,13 @@
+## [1.3.5] - 2025-08-12
+
+### Breaking Changes
+
+- **Remove UniTask dependency**: Convert all async operations from UniTask to standard C# Task
+- NetworkManager and DateTimeManager now use System.Threading.Tasks instead of Cysharp.Threading.Tasks
+- Update all async method signatures to use Task<T> instead of UniTask<T>
+- Improve cancellation token handling with proper destroyCancellationToken integration
+- No external dependencies required - library is now fully self-contained
+
 ## [1.3.4] - 2025-08-12
 
 ### Fix Import Errors

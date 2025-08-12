@@ -1,12 +1,10 @@
 {
   "name": "com.nekoindie.nekolib",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "displayName": "NekoLib",
   "description": "A comprehensive utility package for Unity game development inspired by various sources and my own experiences.",
   "unity": "2020.3",
-  "dependencies": {
-    "com.cysharp.unitask": "2.5.10"
-  },
+  "dependencies": {},
   "author": {
     "name": "Nguyen Thanh Trung",
     "url": "https://nekoindie.itch.io/"
@@ -17,7 +15,7 @@
     "networking",
     "singleton",
     "async",
-    "unitask",
+    "task",
     "await"
   ]
 }

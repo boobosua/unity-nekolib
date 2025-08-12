@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Cysharp.Threading.Tasks;
 using NekoLib.Utilities;
 using NekoLib.Extensions;
 
@@ -21,20 +21,28 @@ namespace NekoLib.Services
         private CancellationTokenSource _monitoringCts;
 
         /// <summary>
-        /// Checks internet connection asynchronously using UniTask.
+        /// Checks internet connection asynchronously using Task.
         /// </summary>
         /// <param name="token">Cancellation token to cancel the operation</param>
-        public async UniTask<bool> CheckInternetConnectionAsync(CancellationToken token = default)
+        public async Task<bool> CheckInternetConnectionAsync(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PingUrl);
             request.timeout = TimeoutSeconds; // Add timeout to prevent hanging
 
-            // Use the provided token, or destroyCancellationToken if none provided.
-            var effectiveToken = token == default ? destroyCancellationToken : token;
+            var cancellationToken = token == default
+                ? destroyCancellationToken
+                : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token).Token;
 
             try
             {
-                await request.SendWebRequest().WithCancellation(effectiveToken);
+                var operation = request.SendWebRequest();
+
+                // Wait for completion using cancellation token
+                while (!operation.isDone)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -59,10 +67,10 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Starts monitoring internet connection with UniTask.
+        /// Starts monitoring internet connection with Task.
         /// </summary>
         /// <param name="token">Cancellation token to stop monitoring</param>
-        public async UniTaskVoid StartMonitoringAsync(CancellationToken token = default)
+        public async Task StartMonitoringAsync(CancellationToken token = default)
         {
             // Stop any existing monitoring
             StopMonitoring();
@@ -80,7 +88,7 @@ namespace NekoLib.Services
                 {
                     // Pass the combined token directly - no double linking
                     await CheckInternetConnectionAsync(_monitoringCts.Token);
-                    await UniTask.Delay(TimeSpan.FromSeconds(CheckIntervalSeconds), cancellationToken: _monitoringCts.Token);
+                    await Task.Delay(TimeSpan.FromSeconds(CheckIntervalSeconds), _monitoringCts.Token);
                 }
             }
             catch (OperationCanceledException)
