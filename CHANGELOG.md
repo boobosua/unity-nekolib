@@ -1,6 +1,12 @@
+## [1.3.4] - 2025-08-12
+
+### Fix Import Errors
+
+- Fix dependencies section for UniTask
+
 ## [1.3.3] - 2025-08-12
 
-### Timer Component Enhacement
+### Timer Component Enhancement
 
 - Refactor timer component
 - Add editor debug for timer component

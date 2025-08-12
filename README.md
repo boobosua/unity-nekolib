@@ -1,6 +1,12 @@
 # NekoLib
 
-A comprehensive utility package for Unity game development with built-in UniTask support for modern async/await patterns.
+A comprehensive utility package for Unity game development inspired by various sources and my own experiences.
+
+## Acknowledgments
+
+Special thanks to [Adam Myhre](https://github.com/adammyhre) for inspiring the development of this library through his excellent Unity tutorials and architectural patterns.
+
+Also grateful to GitHub Copilot for assistance with smaller tasks and code refinements throughout the development process.
 
 ## Table of Contents
 
@@ -51,7 +57,7 @@ https://github.com/boobosua/unity-nekolib.git?path=Assets/NekoLib
 
 This package automatically installs and includes:
 
-- **UniTask**: For async/await patterns and better performance than coroutines
+- **[UniTask](https://github.com/Cysharp/UniTask)**: For async/await patterns and better performance than coroutines
 
 ## Usage Examples
 
