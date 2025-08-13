@@ -1,3 +1,11 @@
+## [1.4.0] - 2025-08-13
+
+### Fix Object Detections
+
+- New mouse detections for 2D/3D
+- New object detections for 2D/3D
+- Remove camera related extensions for vector2 and vector3
+
 ## [1.3.6] - 2025-08-12
 
 ### Minor Fixes

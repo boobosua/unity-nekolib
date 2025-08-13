@@ -33,54 +33,6 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts a world position to a screen position.
-        /// </summary>
-        public static Vector2 WorldToScreen(this Vector2 vector)
-        {
-            return Camera.main.WorldToScreenPoint(vector);
-        }
-
-        /// <summary>
-        /// Converts a viewport position to a screen position.
-        /// </summary>
-        public static Vector2 ViewportToScreen(this Vector2 vector)
-        {
-            return Camera.main.ViewportToScreenPoint(vector);
-        }
-
-        /// <summary>
-        /// Converts a screen position to a world position.
-        /// </summary>
-        public static Vector2 ScreenToWorld(this Vector2 vector)
-        {
-            return Camera.main.ScreenToWorldPoint(vector);
-        }
-
-        /// <summary>
-        /// Converts a viewport position to a world position.
-        /// </summary>
-        public static Vector2 ViewportToWorld(this Vector2 vector)
-        {
-            return Camera.main.ViewportToWorldPoint(vector);
-        }
-
-        /// <summary>
-        /// Converts a world position to a viewport position.
-        /// </summary>
-        public static Vector2 WorldToViewport(this Vector2 vector)
-        {
-            return Camera.main.WorldToViewportPoint(vector);
-        }
-
-        /// <summary>
-        /// Converts a screen position to a viewport position.
-        /// </summary>
-        public static Vector2 ScreenToViewport(this Vector2 vector)
-        {
-            return Camera.main.ScreenToViewportPoint(vector);
-        }
-
-        /// <summary>
         /// Returns a Boolean indicating whether the current Vector2 is in a given range from another Vector2
         /// </summary>
         public static bool InRangeOf(this Vector2 current, Vector2 target, float range)

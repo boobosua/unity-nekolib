@@ -1,6 +1,6 @@
 {
   "name": "com.nekoindie.nekolib",
-  "version": "1.3.6",
+  "version": "1.4.0",
   "displayName": "NekoLib",
   "description": "A comprehensive utility package for Unity game development inspired by various sources and my own experiences.",
   "unity": "2020.3",

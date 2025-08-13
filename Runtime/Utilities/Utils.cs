@@ -129,6 +129,10 @@ namespace NekoLib.Utilities
         #endregion
 
         #region  2D Object Detection
+        /// <summary>
+        /// Returns 'true' if the mouse is over any 2D object.
+        /// Only works if camera is orthographic.
+        /// </summary>
         public static bool IsPointerOverAny2DObject(int layerMask = Physics2D.DefaultRaycastLayers)
         {
             var position = GetMousePosition2D();
@@ -136,6 +140,10 @@ namespace NekoLib.Utilities
             return hit != null;
         }
 
+        /// <summary>
+        /// Returns 'true' if the mouse is over any 2D object.
+        /// Only works if camera is orthographic.
+        /// </summary>
         public static bool IsPointerOverAny2DObject(Camera camera, int layerMask = Physics2D.DefaultRaycastLayers)
         {
             var position = GetMousePosition2D(camera);
@@ -143,6 +151,10 @@ namespace NekoLib.Utilities
             return hit != null;
         }
 
+        /// <summary>
+        /// Returns 'true' if the mouse is over any 2D object.
+        /// Only works if camera is orthographic.
+        /// </summary>
         public static bool IsPointerOverAny2DObject(out Collider2D hit, Camera camera = null, int layerMask = Physics2D.DefaultRaycastLayers)
         {
             var position = GetMousePosition2D(camera);
@@ -206,13 +218,13 @@ namespace NekoLib.Utilities
         // Gets all event system raycast results of current mouse or touch position.
         private static List<RaycastResult> GetEventSystemRaycastResults()
         {
-            PointerEventData eventData = new(EventSystem.current) { position = Input.mousePosition };
             if (EventSystem.current == null)
             {
                 Debug.LogWarning("EventSystem is null. Returning empty raycast results.");
                 return new List<RaycastResult>();
             }
 
+            PointerEventData eventData = new(EventSystem.current) { position = Input.mousePosition };
             List<RaycastResult> raycastResults = new();
             EventSystem.current.RaycastAll(eventData, raycastResults);
             return raycastResults;
@@ -242,7 +254,7 @@ namespace NekoLib.Utilities
                 return Vector2.zero;
             }
 
-            var mousePos = Input.mousePosition.With(z: 0f);
+            var mousePos = Input.mousePosition;
             return cam.ScreenToWorldPoint(mousePos);
         }
 

@@ -39,64 +39,6 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts a world position to a screen position.
-        /// </summary>
-        public static Vector3 WorldToScreen(this Vector3 vector, bool useCameraDistance = false)
-        {
-            var pos = Camera.main.WorldToScreenPoint(vector);
-            pos.z = useCameraDistance ? pos.z : 0f;
-            return pos;
-        }
-
-        /// <summary>
-        /// Converts a viewport position to a screen position.
-        /// </summary>
-        public static Vector3 ViewportToScreen(this Vector3 vector)
-        {
-            var pos = Camera.main.ViewportToScreenPoint(vector);
-            pos.z = 0f;
-            return pos;
-        }
-
-        /// <summary>
-        /// Converts a screen position to a world position.
-        /// </summary>
-        public static Vector3 ScreenToWorld(this Vector3 vector, bool useCameraDistance = false)
-        {
-            var nearClipPlanePos = vector.With(z: Camera.main.nearClipPlane + 1);
-            var worldPos = Camera.main.ScreenToWorldPoint(nearClipPlanePos);
-            worldPos.z = useCameraDistance ? worldPos.z : 0f;
-            return worldPos;
-        }
-
-        /// <summary>
-        /// Converts a viewport position to a world position.
-        /// </summary>
-        public static Vector3 ViewportToWorld(this Vector3 vector, bool useCameraDistance = false)
-        {
-            var nearClipPlanePos = vector.With(z: Camera.main.nearClipPlane + 1);
-            var worldPos = Camera.main.ViewportToWorldPoint(nearClipPlanePos);
-            worldPos.z = useCameraDistance ? worldPos.z : 0f;
-            return worldPos;
-        }
-
-        /// <summary>
-        /// Converts a screen position to a viewport position.
-        /// </summary>
-        public static Vector3 ScreenToViewport(this Vector3 vector)
-        {
-            return Camera.main.ScreenToViewportPoint(vector.With(z: 0f));
-        }
-
-        /// <summary>
-        /// Converts a world position to a viewport position.
-        /// </summary>
-        public static Vector3 WorldToViewport(this Vector3 vector)
-        {
-            return Camera.main.WorldToViewportPoint(vector.With(z: 0f));
-        }
-
-        /// <summary>
         /// Returns a Boolean indicating whether the current Vector3 is in a given range from another Vector3
         /// </summary>
         public static bool InRangeOf(this Vector3 current, Vector3 target, float range)
@@ -105,10 +47,10 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Computes a random point in an annulus (a ring-shaped area) based on minimum and 
-        /// maximum radius values around a central Vector3 point (origin).
+        /// Computes a random point in an annulus (ring-shaped area) around a central Vector3 point.
         /// </summary>
-        public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius)
+        /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
+        public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, AnnulusPlane plane = AnnulusPlane.XZ)
         {
             float angle = Random.value * Mathf.PI * 2f;
             Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
@@ -118,10 +60,24 @@ namespace NekoLib.Extensions
             float maxRadiusSquared = maxRadius * maxRadius;
             float distance = Mathf.Sqrt(Random.value * (maxRadiusSquared - minRadiusSquared) + minRadiusSquared);
 
-            // Converting the 2D direction vector to a 3D position vector
-            Vector3 position = new Vector3(direction.x, 0, direction.y) * distance;
+            // Calculate the position vector based on the specified plane
+            Vector3 position = plane switch
+            {
+                AnnulusPlane.XY => new Vector3(direction.x, direction.y, 0) * distance,
+                AnnulusPlane.XZ => new Vector3(direction.x, 0, direction.y) * distance,
+                AnnulusPlane.YZ => new Vector3(0, direction.x, direction.y) * distance,
+                _ => new Vector3(direction.x, 0, direction.y) * distance
+            };
+
             return origin + position;
         }
+    }
+
+    public enum AnnulusPlane
+    {
+        XY, // Horizontal plane (standard 2D)
+        XZ, // Ground plane (typical for 3D games)
+        YZ  // Vertical plane
     }
 }
 
