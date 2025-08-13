@@ -75,7 +75,7 @@ namespace NekoLib.Services
                 return;
             }
 
-            _ = StartMonitoringAsync(token);
+            StartMonitoringAsync(token).Forget();
         }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -29,10 +30,13 @@ namespace NekoLib.Extensions
             return (layer & (1 << gameObject.layer)) != 0;
         }
 
-        public static void DestroyChildren(this GameObject gameObject)
+        public static void ClearChildTransforms(this GameObject gameObject)
         {
-            gameObject.transform.DestroyChildren();
+            gameObject.transform.Clear();
         }
+
+        [Obsolete("Use ClearChildTransforms instead.")]
+        public static void DestroyChildren(this GameObject gameObject) => ClearChildTransforms(gameObject);
     }
 }
 
