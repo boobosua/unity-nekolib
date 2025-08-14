@@ -13,7 +13,7 @@ namespace NekoLib.Extensions
 
         public static bool IsOdd(this int num)
         {
-            return num % 2 == 1;
+            return num % 2 != 0;
         }
 
         public static float PercentageOf(this int current, int total)
@@ -65,31 +65,38 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Returns 'true' if the random roll between min and max is less than or equal to the target roll.
+        /// Returns true if a random roll succeeds based on the probability rate.
         /// </summary>
-        public static bool HasChance(this float rate, float min = 0f, float max = 1f)
+        /// <param name="probability">The probability value (0.0 = never, 1.0 = always)</param>
+        /// <param name="min">Minimum range value</param>
+        /// <param name="max">Maximum range value</param>
+        public static bool RollChance(this float probability, float min = 0f, float max = 1f)
         {
-            if (rate < min || rate > max)
+            if (probability < min || probability > max)
             {
-                throw new ArgumentException($"rate '{rate}' is not in range of min '{min}' and max '{max}'");
+                throw new ArgumentException($"probability '{probability}' must be in range [{min}, {max}]");
             }
 
             var randomRoll = Random.Range(min, max);
-            return randomRoll <= rate;
+            return randomRoll <= probability;
         }
 
         /// <summary>
-        /// Returns 'true' if the random roll between min and max is less than or equal to the target roll.
+        /// Returns true if a random roll succeeds based on the percentage rate.
         /// </summary>
-        public static bool HasChance(int rate, int min = 0, int max = 100)
+        /// <param name="probability">The percentage value (0 = never, 100 = always)</param>
+        /// <param name="min">Minimum range value</param>
+        /// <param name="max">Maximum range value</param>
+        public static bool RollChance(this int probability, int min = 0, int max = 100)
         {
-            if (rate < min || rate > max)
+            if (probability < min || probability > max)
             {
-                throw new ArgumentException($"rate '{rate}' is not in range of min '{min}' and max '{max}'");
+                throw new ArgumentException($"percentage '{probability}' must be in range [{min}, {max}]");
             }
 
-            var randomRoll = Random.Range(min, max);
-            return randomRoll <= rate;
+            // For int Random.Range, max is exclusive, so we add 1 to include our max value
+            var randomRoll = Random.Range(min, max + 1);
+            return randomRoll <= probability;
         }
     }
 }

@@ -15,23 +15,26 @@ namespace NekoLib.Services
         private const string HeaderUrl = "https://www.google.com";
         private const int TimeoutSeconds = 5;
 
-        private DateTime _syncedTime;
+        private DateTime _syncedUtcTime;
         private float _syncedAtRealtime;
         private bool _hasSynced;
 
+        /// <summary>
+        /// Fetches the current time from the server.
+        /// </summary>
         public async Task FetchTimeFromServerAsync(CancellationToken token = default)
         {
             var effectiveToken = token == default
                 ? destroyCancellationToken
                 : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token).Token;
 
-            _syncedTime = DateTime.UtcNow;
+            _syncedUtcTime = DateTime.UtcNow;
 
             if (await TryFetchTimeFromTimeApi(effectiveToken))
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from TimeAPI.io: {_syncedTime}".Colorize(Palette.MintEmerald));
+                Debug.Log($"[DateTimeManager] Synced from TimeAPI.io: {_syncedUtcTime}".Colorize(Palette.MintEmerald));
                 return;
             }
 
@@ -39,7 +42,7 @@ namespace NekoLib.Services
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from Google header: {_syncedTime}".Colorize(Palette.MintEmerald));
+                Debug.Log($"[DateTimeManager] Synced from Google header: {_syncedUtcTime}".Colorize(Palette.MintEmerald));
                 return;
             }
 
@@ -48,44 +51,8 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets the current UTC time
+        /// Tries to fetch the current time from the TimeAPI.io service.
         /// </summary>
-        public DateTime UtcNow()
-        {
-            if (!_hasSynced)
-            {
-                Debug.LogWarning("[DateTimeManager] GetUtcNow() used before sync. Using DateTime.UtcNow.".Colorize(Palette.VibrantRed));
-                return DateTime.UtcNow;
-            }
-
-            var drift = Time.realtimeSinceStartup - _syncedAtRealtime;
-            return _syncedTime.AddSeconds(drift);
-        }
-
-        /// <summary>
-        /// Gets the current server time in local timezone
-        /// </summary>
-        public DateTime Now()
-        {
-            return UtcNow().ToLocalTime();
-        }
-
-        /// <summary>
-        /// Gets today's date (midnight) in server time
-        /// </summary>
-        public DateTime Today()
-        {
-            return UtcNow().Date;
-        }
-
-        /// <summary>
-        /// Gets today's date (midnight) in local timezone
-        /// </summary>
-        public DateTime TodayLocal()
-        {
-            return Now().Date;
-        }
-
         private async Task<bool> TryFetchTimeFromTimeApi(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
@@ -115,7 +82,7 @@ namespace NekoLib.Services
                 // Parse as UTC to avoid timezone issues
                 if (DateTime.TryParse(result.dateTime, null, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
                 {
-                    _syncedTime = parsedTime;
+                    _syncedUtcTime = parsedTime;
                     return true;
                 }
 
@@ -134,6 +101,9 @@ namespace NekoLib.Services
             }
         }
 
+        /// <summary>
+        /// Tries to fetch the current time from the HTTP header.
+        /// </summary>
         private async Task<bool> TryFetchTimeFromHttpHeader(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(HeaderUrl);
@@ -167,7 +137,7 @@ namespace NekoLib.Services
                 // Parse as UTC to avoid timezone issues
                 if (DateTime.TryParse(header, null, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
                 {
-                    _syncedTime = dateTime;
+                    _syncedUtcTime = dateTime;
                     return true;
                 }
 
@@ -190,6 +160,93 @@ namespace NekoLib.Services
         private class TimeApiResponse
         {
             public string dateTime;
+        }
+
+        /// <summary>
+        /// Gets the current UTC time
+        /// </summary>
+        public DateTime UtcNow()
+        {
+            if (!_hasSynced)
+            {
+                Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Palette.VibrantRed));
+                return DateTime.UtcNow;
+            }
+
+            var drift = Time.realtimeSinceStartup - _syncedAtRealtime;
+            return _syncedUtcTime.AddSeconds(drift);
+        }
+
+        /// <summary>
+        /// Gets the current server time in local timezone
+        /// </summary>
+        public DateTime Now()
+        {
+            return UtcNow().ToLocalTime();
+        }
+
+        /// <summary>
+        /// Gets today's date (midnight) in server time
+        /// </summary>
+        public DateTime TodayUtc()
+        {
+            return UtcNow().Date;
+        }
+
+        /// <summary>
+        /// Gets today's date (midnight) in local timezone
+        /// </summary>
+        public DateTime Today()
+        {
+            return Now().Date;
+        }
+
+        /// <summary>
+        /// Checks if today (local time) is the start of the week (Monday by default)
+        /// </summary>
+        public bool IsTodayStartOfWeek()
+        {
+            return Today().DayOfWeek == DayOfWeek.Monday;
+        }
+
+        /// <summary>
+        /// Checks if today (UTC) is the start of the week (Monday by default)
+        /// </summary>
+        public bool IsTodayStartOfWeekUtc()
+        {
+            return TodayUtc().DayOfWeek == DayOfWeek.Monday;
+        }
+
+        /// <summary>
+        /// Checks if today (local time) is the start of the month (1st day)
+        /// </summary>
+        public bool IsTodayStartOfMonth()
+        {
+            return Today().Day == 1;
+        }
+
+        /// <summary>
+        /// Checks if today (UTC) is the start of the month (1st day)
+        /// </summary>
+        public bool IsTodayStartOfMonthUtc()
+        {
+            return TodayUtc().Day == 1;
+        }
+
+        /// <summary>
+        /// Gets tomorrow (00:00:00) from current local time
+        /// </summary>
+        public DateTime NextDay()
+        {
+            return Today().AddDays(1);
+        }
+
+        /// <summary>
+        /// Gets tomorrow (00:00:00) from current UTC time
+        /// </summary>
+        public DateTime NextDayUtc()
+        {
+            return TodayUtc().AddDays(1);
         }
     }
 }

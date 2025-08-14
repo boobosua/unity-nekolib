@@ -1,3 +1,12 @@
+## [1.5.0] - 2025-08-15
+
+### Overhaul Time and Vector Extensions
+
+- Add more helper methods to DateTimeManager
+- Add more time extensions
+- Add more vector extensions (bug fixes too)
+- Remove long comments
+
 ## [1.4.0] - 2025-08-13
 
 ### Fix Object Detections

@@ -4,7 +4,7 @@ A comprehensive utility package for Unity game development inspired by various s
 
 ## Acknowledgments
 
-Special thanks to [Adam Myhre](https://github.com/adammyhre) for inspiring the development of this library through his excellent Unity tutorials and architectural patterns.
+Special thanks to [Adam Myhre](https://github.com/adammyhre) and [Code Monkey](https://www.youtube.com/@CodeMonkeyUnity) for inspiring the development of this library through his excellent Unity tutorials and architectural patterns.
 
 Also grateful to GitHub Copilot for assistance with smaller tasks and code refinements throughout the development process.
 
@@ -16,6 +16,7 @@ Also grateful to GitHub Copilot for assistance with smaller tasks and code refin
 - [Usage Examples](#usage-examples)
   - [NetworkManager](#networkmanager)
   - [DateTimeManager](#datetimemanager)
+  - [Time Extensions](#time-extensions)
   - [Singleton Patterns](#singleton-patterns)
   - [Timer System](#timer-system)
   - [Collection Extensions](#collection-extensions)
@@ -49,6 +50,7 @@ https://github.com/boobosua/unity-nekolib.git
 
 - **NetworkManager**: Internet connection monitoring with async/await support and cancellation tokens
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
+- **Time Extensions**: DateTime formatting, calculations, and manipulation with intuitive naming
 - **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
 - **Timer System**: Modern timer pool with fluent builder pattern and unscaled time support
 - **Collection Extensions**: Array/List/Dictionary operations with shuffling, random selection, and formatting
@@ -108,6 +110,37 @@ DateTime localTime = DateTimeManager.Instance.Now();
 
 // Get today's date
 DateTime today = DateTimeManager.Instance.Today();
+```
+
+### Time Extensions
+
+```csharp
+// Time formatting
+float gameTime = 3665.5f; // 1 hour, 1 minute, 5.5 seconds
+Debug.Log($"Game time: {gameTime.ToClock()}"); // "01:01:05"
+
+// Readable duration format
+TimeSpan duration = TimeSpan.FromSeconds(7890);
+Debug.Log($"Duration: {duration.ToReadableFormat()}"); // "2h 11m 30s"
+Debug.Log($"Compact: {7890.5f.ToReadableFormat(false)}"); // "2h11m30s"
+
+// Past time calculations (intuitive naming)
+DateTime pastTime = DateTime.Now.AddMinutes(-45);
+Debug.Log($"Minutes ago: {pastTime.MinutesAgo():F0}");
+Debug.Log($"Hours ago: {pastTime.HoursAgo():F1}");
+
+// Future time calculations
+DateTime futureTime = DateTime.Now.AddHours(3);
+Debug.Log($"Seconds from now: {futureTime.SecondsFromNow():F0}");
+Debug.Log($"Hours from now: {futureTime.HoursFromNow():F1}");
+
+// Date manipulation
+DateTime christmas = DateTime.Now.WithDate(month: 12, day: 25);
+DateTime meeting = DateTime.Now.WithTime(hour: 15, minute: 30);
+
+// Period checks
+bool isToday = someDate.IsToday();
+bool isStartOfWeek = someDate.IsStartOfWeek(); // Monday 00:00:00
 ```
 
 ### Singleton Patterns
@@ -180,14 +213,6 @@ timer.StartTimer();
 timer.Pause();
 timer.Resume();
 timer.Stop();
-
-// Access timer properties
-float timeLeft = timer.TimeLeft;
-int secondsLeft = timer.SecondsLeft;
-float progress = timer.Progress;  // 0.0 to 1.0
-string clockFormat = timer.ClockFormat;  // "00:02:35"
-bool isStopped = timer.IsStopped;
-bool isPaused = timer.Paused;
 ```
 
 ### Collection Extensions
