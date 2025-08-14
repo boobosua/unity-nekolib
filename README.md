@@ -17,7 +17,10 @@ Also grateful to GitHub Copilot for assistance with smaller tasks and code refin
   - [NetworkManager](#networkmanager)
   - [DateTimeManager](#datetimemanager)
   - [Singleton Patterns](#singleton-patterns)
-  - [Timer Components](#timer-components)
+  - [Timer System](#timer-system)
+  - [Collection Extensions](#collection-extensions)
+  - [GameObject Extensions](#gameobject-extensions)
+  - [Number Extensions](#number-extensions)
   - [Text Extensions](#text-extensions)
   - [Vector Extensions](#vector-extensions)
   - [Color Palette](#color-palette)
@@ -44,14 +47,17 @@ https://github.com/boobosua/unity-nekolib.git
 
 ## Features
 
-- **NetworkManager**: Internet connection monitoring with async/await support, cancellation tokens, and automatic duplicate monitoring prevention
+- **NetworkManager**: Internet connection monitoring with async/await support and cancellation tokens
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
 - **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
-- **Timer System**: Modern timer pool with automatic lifecycle management, fluent builder pattern, and unscaled time support
+- **Timer System**: Modern timer pool with fluent builder pattern and unscaled time support
+- **Collection Extensions**: Array/List/Dictionary operations with shuffling, random selection, and formatting
+- **GameObject Extensions**: Component management, layer checking, and child transform operations
+- **Number Extensions**: Mathematical utilities, percentage calculations, and chance systems
 - **Text Extensions**: Rich text formatting (bold, italic, underline) and colorization
-- **Vector Extensions**: Enhanced Vector2/Vector3 operations and coordinate conversions
+- **Vector Extensions**: Enhanced Vector2/Vector3 operations with mathematical functions and annulus generation
 - **Color Palette**: Predefined color palette for consistent UI and debugging
-- **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and common helper functions
+- **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and rotation utilities
 
 ## Usage Examples
 
@@ -153,32 +159,101 @@ var loopTimer = this.CreateCountdown(1f)
     .Start();
 ```
 
+### Timer Component
+
+```csharp
+// Unity component-based timer with UnityEvents
+Timer timer = GetComponent<Timer>();
+
+// Configure timer properties
+timer.SetWaitTime(5f);
+timer.SetOneShot(true);
+timer.SetIgnoreTimeScale(false);
+
+// Add event listeners (Editor-compatible)
+timer.AddTimeOutListener(() => Debug.Log("Timer finished!"));
+timer.AddBeginListener(() => Debug.Log("Timer started!"));
+timer.AddUpdateListener(() => Debug.Log($"Progress: {timer.Progress:P}"));
+
+// Control timer
+timer.StartTimer();
+timer.Pause();
+timer.Resume();
+timer.Stop();
+
+// Access timer properties
+float timeLeft = timer.TimeLeft;
+int secondsLeft = timer.SecondsLeft;
+float progress = timer.Progress;  // 0.0 to 1.0
+string clockFormat = timer.ClockFormat;  // "00:02:35"
+bool isStopped = timer.IsStopped;
+bool isPaused = timer.Paused;
+```
+
+### Collection Extensions
+
+```csharp
+// Array/List operations
+int randomItem = myArray.Rand();
+int[] shuffled = myArray.Shuffle();
+int[] swapped = myArray.Swap(0, 4);
+string formatted = myArray.Format(); // "[1, 2, 3, 4, 5]"
+
+// Dictionary operations
+var randomValue = myDict.RandV();
+var randomKey = myDict.RandK();
+```
+
+### GameObject Extensions
+
+```csharp
+// Component management
+var rigidbody = gameObject.GetOrAdd<Rigidbody>();
+myComponent.SetActive();    // gameObject.SetActive(true)
+
+// Layer checking and child management
+bool isInTargetLayer = gameObject.IsInLayer(targetLayer);
+gameObject.ClearChildTransforms();
+```
+
+### Number Extensions
+
+```csharp
+// Math utilities
+bool isEven = 42.IsEven();
+float percent = 75.PercentageOf(100);  // 0.75f
+
+// Range clamping and chance
+int clamped = 150.AtMost(100);  // 100
+bool success = 0.7f.HasChance();  // 70% chance
+```
+
 ### Text Extensions
 
 ```csharp
-// Rich text formatting
+// Basic formatting
 string text = "Hello World".Bold().Italic().Colorize(Palette.VibrantRed);
 
-// Selective formatting
+// Target specific words/characters
 string formatted = "Make this bold".Bold("this");
-
-// Colorize specific words
 string colored = "Error message".Colorize(Palette.VibrantRed, "Error");
+
+// Hex colors and predicates
+string hexColored = "Text".Colorize("#FF0000");
+string conditional = "Error".Bold(() => hasError);
 ```
 
 ### Vector Extensions
 
 ```csharp
-// Modify specific components
-Vector3 newPos = transform.position.With(y: 5f);
+// Component modification
+Vector3 newPos = transform.position.With(y: 5f, z: 10f);
+Vector2 adjusted = playerPos.Add(x: 2f).Multiply(y: 0.5f);
 
-// Coordinate conversions
-Vector3 screenPos = worldPosition.WorldToScreen();
-Vector3 worldPos = screenPosition.ScreenToWorld();
-
-// Utility operations
+// Range checking and random points
 bool inRange = playerPos.InRangeOf(targetPos, 5f);
-Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 10f);
+Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 10f, AnnulusPlane.XZ);
+Vector2 vec2 = someVector3.ToVector2();
 ```
 
 ### Color Palette
@@ -197,14 +272,59 @@ Color uiColor = Palette.AzureTeal;
 ```csharp
 // Cached WaitForSeconds (no memory allocation)
 yield return Utils.GetWaitForSeconds(1.5f);
+yield return Utils.GetWaitForSecondsRealtime(2f);  // Unscaled time
 
-// Mouse/pointer detection
-bool overUI = Utils.IsPointerOverUIElement(uiLayer);
+// 3D Object Detection
 bool over3D = Utils.IsPointerOverAny3DObject();
-bool over2D = Utils.IsPointerOverAny2DObject();
+bool over3DWithDistance = Utils.IsPointerOverAny3DObject(10f, myLayerMask);
+bool overSpecific = Utils.IsPointerOver3DObject(targetGameObject);
+bool overComponent = Utils.IsPointerOver3DObject<Collider>();
 
-// Mouse world position (2D)
-Vector2 mouseWorld = Utils.MouseWorldPosition;
+// With raycast hit information
+if (Utils.IsPointerOverAny3DObject(out RaycastHit hit))
+{
+    Debug.Log($"Hit: {hit.transform.name} at {hit.point}");
+}
+
+// 2D Object Detection (orthographic cameras)
+bool over2D = Utils.IsPointerOverAny2DObject();
+bool over2DSpecific = Utils.IsPointerOver2DObject(target2DObject);
+bool over2DComponent = Utils.IsPointerOver2DObject<Collider2D>();
+
+// With collision information
+if (Utils.IsPointerOverAny2DObject(out Collider2D hit2D))
+{
+    Debug.Log($"Hit 2D: {hit2D.name}");
+}
+
+// UI Detection
+bool overUI = Utils.IsPointerOverUI(uiLayerMask);
+
+// Mouse/Pointer Position
+bool inGameWindow = Utils.IsMouseInGameWindow();
+Vector2 mouse2D = Utils.GetMousePosition2D();              // For 2D/orthographic
+Vector3 mouse3D = Utils.GetMousePosition3D(distance: 10f); // At specific distance
+Vector3 mouseFromRay = Utils.GetMousePosition3DFromRaycast(); // From collision
+
+// Mouse Ray
+Ray mouseRay = Utils.GetMouseRay();
+Ray customCameraRay = Utils.GetMouseRay(myCamera);
+
+// Rotation Utilities
+float angle = Utils.GetAngleFromVector(direction);
+Quaternion randomRot = Utils.GetRandomRotation(Axis.Y); // Y-axis only
+Quaternion multiAxisRot = Utils.GetRandomRotation(
+    Axis.XYZ,
+    xRange: new Vector2(0, 90),
+    yRange: new Vector2(0, 360),
+    zRange: new Vector2(-45, 45)
+);
+
+#if UNITY_EDITOR
+// Editor-only asset finding
+ScriptableObject[] assets = Utils.FindAllAssets<ScriptableObject>("Assets/Data/");
+AudioClip[] sounds = Utils.FindAllAssets<AudioClip>("Assets/Audio/");
+#endif
 ```
 
 ## Requirements

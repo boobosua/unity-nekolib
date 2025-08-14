@@ -47,10 +47,120 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Returns a vector with the same direction but clamped to a maximum magnitude.
+        /// </summary>
+        public static Vector3 ClampMagnitude(this Vector3 vector, float maxMagnitude)
+        {
+            return Vector3.ClampMagnitude(vector, maxMagnitude);
+        }
+
+        /// <summary>
+        /// Returns a vector with the specified magnitude in the same direction.
+        /// Returns zero vector if original vector is zero.
+        /// </summary>
+        public static Vector3 WithMagnitude(this Vector3 vector, float magnitude)
+        {
+            return vector.sqrMagnitude > 0.0001f ? vector.normalized * magnitude : Vector3.zero;
+        }
+
+        /// <summary>
+        /// Returns the direction from this vector to the target vector.
+        /// </summary>
+        public static Vector3 DirectionTo(this Vector3 from, Vector3 to)
+        {
+            return (to - from).normalized;
+        }
+
+        /// <summary>
+        /// Returns the distance to the target vector.
+        /// </summary>
+        public static float DistanceTo(this Vector3 from, Vector3 to)
+        {
+            return Vector3.Distance(from, to);
+        }
+
+        /// <summary>
+        /// Reflects the vector across a surface with the given normal.
+        /// </summary>
+        public static Vector3 Reflect(this Vector3 vector, Vector3 normal)
+        {
+            return Vector3.Reflect(vector, normal);
+        }
+
+        /// <summary>
+        /// Projects this vector onto another vector.
+        /// </summary>
+        public static Vector3 ProjectOnto(this Vector3 vector, Vector3 onto)
+        {
+            return Vector3.Project(vector, onto);
+        }
+
+        /// <summary>
+        /// Returns the largest component of the vector.
+        /// </summary>
+        public static float MaxComponent(this Vector3 vector)
+        {
+            return Mathf.Max(vector.x, vector.y, vector.z);
+        }
+
+        /// <summary>
+        /// Returns the smallest component of the vector.
+        /// </summary>
+        public static float MinComponent(this Vector3 vector)
+        {
+            return Mathf.Min(vector.x, vector.y, vector.z);
+        }
+
+        /// <summary>
+        /// Checks if this point is inside a sphere.
+        /// </summary>
+        public static bool IsInsideSphere(this Vector3 point, Vector3 center, float radius)
+        {
+            return point.InRangeOf(center, radius);
+        }
+
+        /// <summary>
+        /// Checks if this point is inside a box defined by center and size.
+        /// </summary>
+        public static bool IsInsideBox(this Vector3 point, Vector3 center, Vector3 size)
+        {
+            Vector3 halfSize = size * 0.5f;
+            Vector3 min = center - halfSize;
+            Vector3 max = center + halfSize;
+            return point.x >= min.x && point.x <= max.x &&
+                    point.y >= min.y && point.y <= max.y &&
+                    point.z >= min.z && point.z <= max.z;
+        }
+
+        /// <summary>
+        /// Checks if this point is inside Unity Bounds.
+        /// </summary>
+        public static bool IsInsideBounds(this Vector3 point, Bounds bounds)
+        {
+            return bounds.Contains(point);
+        }
+
+        /// <summary>
+        /// Returns the closest point on the surface of bounds to this point.
+        /// </summary>
+        public static Vector3 ClosestPointOnBounds(this Vector3 point, Bounds bounds)
+        {
+            return bounds.ClosestPoint(point);
+        }
+
+        /// <summary>
+        /// Checks if this point is inside a Collider's bounds.
+        /// </summary>
+        public static bool IsInsideCollider(this Vector3 point, Collider collider)
+        {
+            return collider.bounds.Contains(point);
+        }
+
+        /// <summary>
         /// Computes a random point in an annulus (ring-shaped area) around a central Vector3 point.
         /// </summary>
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
-        public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, AnnulusPlane plane = AnnulusPlane.XZ)
+        public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, Plane2D plane = Plane2D.XZ)
         {
             float angle = Random.value * Mathf.PI * 2f;
             Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
@@ -63,9 +173,9 @@ namespace NekoLib.Extensions
             // Calculate the position vector based on the specified plane
             Vector3 position = plane switch
             {
-                AnnulusPlane.XY => new Vector3(direction.x, direction.y, 0) * distance,
-                AnnulusPlane.XZ => new Vector3(direction.x, 0, direction.y) * distance,
-                AnnulusPlane.YZ => new Vector3(0, direction.x, direction.y) * distance,
+                Plane2D.XY => new Vector3(direction.x, direction.y, 0) * distance,
+                Plane2D.XZ => new Vector3(direction.x, 0, direction.y) * distance,
+                Plane2D.YZ => new Vector3(0, direction.x, direction.y) * distance,
                 _ => new Vector3(direction.x, 0, direction.y) * distance
             };
 
@@ -73,7 +183,7 @@ namespace NekoLib.Extensions
         }
     }
 
-    public enum AnnulusPlane
+    public enum Plane2D
     {
         XY, // Horizontal plane (standard 2D)
         XZ, // Ground plane (typical for 3D games)
