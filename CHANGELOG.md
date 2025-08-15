@@ -1,3 +1,10 @@
+## [1.5.3] - 2025-08-15
+
+### Minor Improvements
+
+- Add auto destroy component
+- Add look at camera component
+
 ## [1.5.2] - 2025-08-15
 
 ### Additional Vector3 and Transform Extensions
