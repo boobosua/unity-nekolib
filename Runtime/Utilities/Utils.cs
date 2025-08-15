@@ -324,7 +324,7 @@ namespace NekoLib.Utilities
         }
 
         /// <summary>
-        /// Returns a random rotation based on the given axis.
+        /// Returns a random rotation based on the specified axis and ranges for each axis.
         /// </summary>
         public static Quaternion GetRandomRotation(Axis axis, Vector2 xRange = default, Vector2 yRange = default, Vector2 zRange = default)
         {

@@ -57,6 +57,30 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Rotates the vector around the X-axis by the given angle in degrees.
+        /// </summary>
+        public static Vector3 RotateX(this Vector3 vector, float degrees)
+        {
+            return Quaternion.AngleAxis(degrees, Vector3.right) * vector;
+        }
+
+        /// <summary>
+        /// Rotates the vector around the Y-axis by the given angle in degrees.
+        /// </summary>
+        public static Vector3 RotateY(this Vector3 vector, float degrees)
+        {
+            return Quaternion.AngleAxis(degrees, Vector3.up) * vector;
+        }
+
+        /// <summary>
+        /// Rotates the vector around the Z-axis by the given angle in degrees.
+        /// </summary>
+        public static Vector3 RotateZ(this Vector3 vector, float degrees)
+        {
+            return Quaternion.AngleAxis(degrees, Vector3.forward) * vector;
+        }
+
+        /// <summary>
         /// Returns a Boolean indicating whether the current Vector3 is in a given range from another Vector3
         /// </summary>
         public static bool InRangeOf(this Vector3 current, Vector3 target, float range)

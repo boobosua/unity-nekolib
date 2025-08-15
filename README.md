@@ -24,6 +24,8 @@ Also grateful to GitHub Copilot for assistance with smaller tasks and code refin
   - [Number Extensions](#number-extensions)
   - [Text Extensions](#text-extensions)
   - [Vector Extensions](#vector-extensions)
+  - [Transform Extensions](#transform-extensions)
+  - [Enum Utils](#enum-utils)
   - [Color Palette](#color-palette)
   - [Utilities](#utilities)
 - [Requirements](#requirements)
@@ -58,6 +60,8 @@ https://github.com/boobosua/unity-nekolib.git
 - **Number Extensions**: Mathematical utilities, percentage calculations, and chance systems
 - **Text Extensions**: Rich text formatting (bold, italic, underline) and colorization
 - **Vector Extensions**: Enhanced Vector2/Vector3 operations with mathematical functions and annulus generation
+- **Transform Extensions**: Child management, 2D rotation, orbital movement, and transform utilities
+- **Enum Utils**: Random enum selection, filtering, counting, and iteration utilities
 - **Color Palette**: Predefined color palette for consistent UI and debugging
 - **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and rotation utilities
 
@@ -185,6 +189,37 @@ playerPos.Add(x: 2f).Multiply(y: 0.5f);
 // Utilities
 playerPos.InRangeOf(targetPos, 5f);
 someVector3.ToVector2();
+```
+
+### Transform Extensions
+
+```csharp
+// Child management
+transform.Clear(); // Destroy all children
+Transform[] children = transform.GetChildren(includeInactive: true);
+
+// 2D rotation and orbiting
+transform.LookAt2D(targetPosition);
+transform.OrbitAround(target, horizontal: 45f, vertical: 30f, distance: 10f);
+
+// Complex orbital camera system
+var camera = Camera.main.transform;
+var player = GameObject.FindWithTag("Player").transform;
+
+// Orbit around player with clamped vertical angles
+camera.OrbitAroundClamped(player, mouseX, mouseY, 8f, minVertical: -60f, maxVertical: 80f);
+```
+
+### Enum Utils
+
+```csharp
+// Random enum selection
+GameState randomState = EnumUtils.GetRandom<GameState>();
+Direction direction = EnumUtils.GetRandomExcept(Direction.Up, Direction.Down);
+
+// Enum utilities
+int stateCount = EnumUtils.Count<GameState>();
+EnumUtils.ForEach<PowerUpType>(powerUp => Debug.Log(powerUp));
 ```
 
 ### Color Palette

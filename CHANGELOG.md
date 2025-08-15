@@ -1,3 +1,11 @@
+## [1.5.2] - 2025-08-15
+
+### Additional Vector3 and Transform Extensions
+
+- Add new Vector3 extensions
+- Add new Transform extensions
+- Fix minor bugs
+
 ## [1.5.1] - 2025-08-15
 
 ### Enum Utilities and Minor Fixes
