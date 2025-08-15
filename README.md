@@ -66,178 +66,93 @@ https://github.com/boobosua/unity-nekolib.git
 ### NetworkManager
 
 ```csharp
-// Check internet connection with timeout and cancellation support
+// Check internet connection
 bool isConnected = await NetworkManager.Instance.CheckInternetConnectionAsync();
 
-// Check with custom cancellation token
-var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-bool result = await NetworkManager.Instance.CheckInternetConnectionAsync(cts.Token);
-
-// Start automatic monitoring (checks every 5 seconds)
-NetworkManager.Instance.StartMonitoring(); // Fire and forget
-
-// Start monitoring with cancellation token
-var monitoringCts = new CancellationTokenSource();
-NetworkManager.Instance.StartMonitoring(monitoringCts.Token);
-
-// Stop monitoring manually
-NetworkManager.Instance.StopMonitoring();
-
-// Subscribe to connection status changes
-NetworkManager.Instance.OnInternetRefresh += (isConnected) =>
-{
-    if (isConnected)
-        Debug.Log("Internet connection restored!".Colorize(Palette.MintEmerald));
-    else
-        Debug.LogWarning("Internet connection lost!".Colorize(Palette.VibrantRed));
-};
-
-// Check current connection status (cached from last check)
-bool currentStatus = NetworkManager.Instance.HasInternet;
+// Start monitoring with events
+NetworkManager.Instance.OnInternetRefresh += (connected) =>
+    Debug.Log($"Internet: {connected}");
+NetworkManager.Instance.StartMonitoring();
 ```
 
 ### DateTimeManager
 
 ```csharp
-// Sync server time from TimeAPI.io or Google
+// Sync from TimeAPI.io and Google
 await DateTimeManager.Instance.FetchTimeFromServerAsync();
 
-// Get current UTC time (synced)
+// Get synced time
 DateTime utcNow = DateTimeManager.Instance.UtcNow();
-
-// Get local time
 DateTime localTime = DateTimeManager.Instance.Now();
-
-// Get today's date
-DateTime today = DateTimeManager.Instance.Today();
 ```
 
 ### Time Extensions
 
 ```csharp
-// Time formatting
-float gameTime = 3665.5f; // 1 hour, 1 minute, 5.5 seconds
-Debug.Log($"Game time: {gameTime.ToClock()}"); // "01:01:05"
+// Formatting
+float gameTime = 3665.5f;
+gameTime.ToClock(); // "01:01:05"
+TimeSpan.FromSeconds(7890).ToReadableFormat(); // "2h 11m 30s"
 
-// Readable duration format
-TimeSpan duration = TimeSpan.FromSeconds(7890);
-Debug.Log($"Duration: {duration.ToReadableFormat()}"); // "2h 11m 30s"
-Debug.Log($"Compact: {7890.5f.ToReadableFormat(false)}"); // "2h11m30s"
-
-// Past time calculations (intuitive naming)
-DateTime pastTime = DateTime.Now.AddMinutes(-45);
-Debug.Log($"Minutes ago: {pastTime.MinutesAgo():F0}");
-Debug.Log($"Hours ago: {pastTime.HoursAgo():F1}");
-
-// Future time calculations
-DateTime futureTime = DateTime.Now.AddHours(3);
-Debug.Log($"Seconds from now: {futureTime.SecondsFromNow():F0}");
-Debug.Log($"Hours from now: {futureTime.HoursFromNow():F1}");
-
-// Date manipulation
-DateTime christmas = DateTime.Now.WithDate(month: 12, day: 25);
-DateTime meeting = DateTime.Now.WithTime(hour: 15, minute: 30);
-
-// Period checks
-bool isToday = someDate.IsToday();
-bool isStartOfWeek = someDate.IsStartOfWeek(); // Monday 00:00:00
+// Calculations
+pastTime.MinutesAgo(); // Time difference
+DateTime.Now.WithDate(month: 12, day: 25); // Date manipulation
+someDate.IsToday(); // Period checks
 ```
 
 ### Singleton Patterns
 
 ```csharp
-// LazySingleton - auto-creates when accessed
-public class GameManager : LazySingleton<GameManager>
-{
-    public void Initialize() { }
-}
-
-// SceneSingleton - exists only in current scene
-public class UIManager : SceneSingleton<UIManager>
-{
-    public void ShowMenu() { }
-}
-
-// PersistentSingleton - survives scene changes
-public class AudioManager : PersistentSingleton<AudioManager>
-{
-    public void PlayMusic() { }
-}
+public class GameManager : LazySingleton<GameManager> { }      // Auto-creates
+public class UIManager : SceneSingleton<UIManager> { }        // Scene-bound
+public class AudioManager : PersistentSingleton<AudioManager> { } // Survives scenes
 ```
 
 ### Timer System
 
 ```csharp
-// Simple extension method timers
+// Extension methods
 var countdown = this.CreateCountdown(5f);
-countdown.OnStop += () => Debug.Log("Timer finished!");
+countdown.OnStop += () => Debug.Log("Done!");
 countdown.Start();
 
-var stopwatch = this.CreateStopwatch();
-stopwatch.Start();
-
-// Fluent builder pattern (advanced)
-var advancedTimer = TimerFactory.CreateCountdown(this)
+// Fluent builder
+TimerFactory.CreateCountdown(this)
     .SetDuration(10f)
     .SetUnscaledTime()
     .SetLoop(3)
     .Build();
-
-// Unscaled time (ignores Time.timeScale)
-var uiTimer = this.CreateCountdown(2f).SetUnscaledTime();
-
-// Method chaining
-var loopTimer = this.CreateCountdown(1f)
-    .SetLoop(-1)  // infinite loops
-    .Start();
 ```
 
 ### Timer Component
 
 ```csharp
-// Unity component-based timer with UnityEvents
+// Unity component with UnityEvents
 Timer timer = GetComponent<Timer>();
-
-// Configure timer properties
 timer.SetWaitTime(5f);
-timer.SetOneShot(true);
-timer.SetIgnoreTimeScale(false);
-
-// Add event listeners (Editor-compatible)
-timer.AddTimeOutListener(() => Debug.Log("Timer finished!"));
-timer.AddBeginListener(() => Debug.Log("Timer started!"));
-timer.AddUpdateListener(() => Debug.Log($"Progress: {timer.Progress:P}"));
-
-// Control timer
+timer.OnTimeOut.AddListener(() => Debug.Log("Timeout!"));
 timer.StartTimer();
-timer.Pause();
-timer.Resume();
-timer.Stop();
 ```
 
 ### Collection Extensions
 
 ```csharp
-// Array/List operations
+// Random operations
 int randomItem = myArray.Rand();
-int[] shuffled = myArray.Shuffle();
-int[] swapped = myArray.Swap(0, 4);
-string formatted = myArray.Format(); // "[1, 2, 3, 4, 5]"
-
-// Dictionary operations
-var randomValue = myDict.RandV();
 var randomKey = myDict.RandK();
+
+// Utilities
+int[] shuffled = myArray.Shuffle();
+string formatted = myList.Format(); // "{1, 2, 3}"
 ```
 
 ### GameObject Extensions
 
 ```csharp
-// Component management
+// Component utilities
 var rigidbody = gameObject.GetOrAdd<Rigidbody>();
-myComponent.SetActive();    // gameObject.SetActive(true)
-
-// Layer checking and child management
-bool isInTargetLayer = gameObject.IsInLayer(targetLayer);
+myComponent.SetActive(); // gameObject.SetActive(true)
+gameObject.IsInLayer(targetLayer);
 gameObject.ClearChildTransforms();
 ```
 
@@ -245,111 +160,57 @@ gameObject.ClearChildTransforms();
 
 ```csharp
 // Math utilities
-bool isEven = 42.IsEven();
-float percent = 75.PercentageOf(100);  // 0.75f
-
-// Range clamping and chance
-int clamped = 150.AtMost(100);  // 100
-bool success = 0.7f.HasChance();  // 70% chance
+42.IsEven(); // true
+75.PercentageOf(100); // 0.75f
+150.AtMost(100); // 100
+0.7f.HasChance(); // 70% chance
 ```
 
 ### Text Extensions
 
 ```csharp
-// Basic formatting
-string text = "Hello World".Bold().Italic().Colorize(Palette.VibrantRed);
-
-// Target specific words/characters
-string formatted = "Make this bold".Bold("this");
-string colored = "Error message".Colorize(Palette.VibrantRed, "Error");
-
-// Hex colors and predicates
-string hexColored = "Text".Colorize("#FF0000");
-string conditional = "Error".Bold(() => hasError);
+// Rich text formatting
+"Hello World".Bold().Italic().Colorize(Palette.VibrantRed);
+"Make this bold".Bold("this"); // Target specific words
+"Text".Colorize("#FF0000"); // Hex colors
 ```
 
 ### Vector Extensions
 
 ```csharp
 // Component modification
-Vector3 newPos = transform.position.With(y: 5f, z: 10f);
-Vector2 adjusted = playerPos.Add(x: 2f).Multiply(y: 0.5f);
+transform.position.With(y: 5f, z: 10f);
+playerPos.Add(x: 2f).Multiply(y: 0.5f);
 
-// Range checking and random points
-bool inRange = playerPos.InRangeOf(targetPos, 5f);
-Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 10f, AnnulusPlane.XZ);
-Vector2 vec2 = someVector3.ToVector2();
+// Utilities
+playerPos.InRangeOf(targetPos, 5f);
+someVector3.ToVector2();
 ```
 
 ### Color Palette
 
 ```csharp
-// Use predefined colors
+// Predefined colors
 Debug.Log("Success!".Colorize(Palette.MintEmerald));
 Debug.LogError("Error!".Colorize(Palette.VibrantRed));
-
-// Available color categories: Gray, Yellow, Red, Green, Blue, Purple, Orange
 Color uiColor = Palette.AzureTeal;
 ```
 
 ### Utilities
 
 ```csharp
-// Cached WaitForSeconds (no memory allocation)
+// Cached coroutines
 yield return Utils.GetWaitForSeconds(1.5f);
-yield return Utils.GetWaitForSecondsRealtime(2f);  // Unscaled time
 
-// 3D Object Detection
+// Object detection
 bool over3D = Utils.IsPointerOverAny3DObject();
-bool over3DWithDistance = Utils.IsPointerOverAny3DObject(10f, myLayerMask);
-bool overSpecific = Utils.IsPointerOver3DObject(targetGameObject);
-bool overComponent = Utils.IsPointerOver3DObject<Collider>();
-
-// With raycast hit information
-if (Utils.IsPointerOverAny3DObject(out RaycastHit hit))
-{
-    Debug.Log($"Hit: {hit.transform.name} at {hit.point}");
-}
-
-// 2D Object Detection (orthographic cameras)
+Utils.IsPointerOverAny3DObject(out RaycastHit hit);
 bool over2D = Utils.IsPointerOverAny2DObject();
-bool over2DSpecific = Utils.IsPointerOver2DObject(target2DObject);
-bool over2DComponent = Utils.IsPointerOver2DObject<Collider2D>();
 
-// With collision information
-if (Utils.IsPointerOverAny2DObject(out Collider2D hit2D))
-{
-    Debug.Log($"Hit 2D: {hit2D.name}");
-}
-
-// UI Detection
-bool overUI = Utils.IsPointerOverUI(uiLayerMask);
-
-// Mouse/Pointer Position
-bool inGameWindow = Utils.IsMouseInGameWindow();
-Vector2 mouse2D = Utils.GetMousePosition2D();              // For 2D/orthographic
-Vector3 mouse3D = Utils.GetMousePosition3D(distance: 10f); // At specific distance
-Vector3 mouseFromRay = Utils.GetMousePosition3DFromRaycast(); // From collision
-
-// Mouse Ray
+// Mouse utilities
+Vector2 mouse2D = Utils.GetMousePosition2D();
 Ray mouseRay = Utils.GetMouseRay();
-Ray customCameraRay = Utils.GetMouseRay(myCamera);
-
-// Rotation Utilities
-float angle = Utils.GetAngleFromVector(direction);
-Quaternion randomRot = Utils.GetRandomRotation(Axis.Y); // Y-axis only
-Quaternion multiAxisRot = Utils.GetRandomRotation(
-    Axis.XYZ,
-    xRange: new Vector2(0, 90),
-    yRange: new Vector2(0, 360),
-    zRange: new Vector2(-45, 45)
-);
-
-#if UNITY_EDITOR
-// Editor-only asset finding
-ScriptableObject[] assets = Utils.FindAllAssets<ScriptableObject>("Assets/Data/");
-AudioClip[] sounds = Utils.FindAllAssets<AudioClip>("Assets/Audio/");
-#endif
+Quaternion randomRot = Utils.GetRandomRotation(Axis.Y);
 ```
 
 ## Requirements

@@ -1,3 +1,10 @@
+## [1.5.1] - 2025-08-15
+
+### Enum Utilities and Minor Fixes
+
+- Remove some comments
+- Add Enum utilities along with int and string extensions for Enum
+
 ## [1.5.0] - 2025-08-15
 
 ### Overhaul Time and Vector Extensions

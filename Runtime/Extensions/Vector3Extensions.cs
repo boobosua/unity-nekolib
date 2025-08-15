@@ -4,31 +4,49 @@ namespace NekoLib.Extensions
 {
     public static class Vector3Extensions
     {
+        /// <summary>
+        /// Converts a Vector3 to a Vector2 by dropping the z component.
+        /// </summary>
         public static Vector2 ToVector2(this Vector3 vector)
         {
             return (Vector2)vector;
         }
 
+        /// <summary>
+        /// Returns a new Vector3 with the specified components replaced.
+        /// </summary>
         public static Vector3 With(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(x ?? vector.x, y ?? vector.y, z ?? vector.z);
         }
 
+        /// <summary>
+        /// Adds the specified components to the current vector.
+        /// </summary>
         public static Vector3 Add(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(vector.x + (x ?? 0), vector.y + (y ?? 0), vector.z + (z ?? 0));
         }
 
+        /// <summary>
+        /// Subtracts the specified components from the current vector.
+        /// </summary>
         public static Vector3 Subtract(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(vector.x - (x ?? 0), vector.y - (y ?? 0), vector.z - (z ?? 0));
         }
 
+        /// <summary>
+        /// Multiplies the current vector by the specified components.
+        /// </summary>
         public static Vector3 Multiply(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(vector.x * (x ?? 1), vector.y * (y ?? 1), vector.z * (z ?? 1));
         }
 
+        /// <summary>
+        /// Divides the current vector by the specified components.
+        /// </summary>
         public static Vector3 Divide(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
             return new Vector3(
@@ -55,8 +73,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Returns a vector with the specified magnitude in the same direction.
-        /// Returns zero vector if original vector is zero.
+        /// Returns a vector with the specified magnitude in the same direction (0 if original vector is zero).
         /// </summary>
         public static Vector3 WithMagnitude(this Vector3 vector, float magnitude)
         {

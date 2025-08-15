@@ -12,19 +12,15 @@ namespace NekoLib.Extensions
         /// </summary>
         public static float ParseFloatWithComma(this string input)
         {
-            // Null or empty check
             if (string.IsNullOrEmpty(input))
             {
                 throw new ArgumentException("Input string cannot be null or empty.", nameof(input));
             }
 
-            // Trim leading and trailing whitespace
             string trimmedInput = input.Trim();
 
-            // Replace comma with period
             string standardizedInput = trimmedInput.Replace(",", ".");
 
-            // Use InvariantCulture for parsing
             if (float.TryParse(standardizedInput, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
             {
                 return result;
@@ -45,42 +41,29 @@ namespace NekoLib.Extensions
             if (string.IsNullOrEmpty(input))
                 return false;
 
-            // Trim leading and trailing whitespace
             string trimmedInput = input.Trim();
 
-            // Replace comma with period
             string standardizedInput = trimmedInput.Replace(",", ".");
 
-            // Use InvariantCulture for parsing
             return float.TryParse(standardizedInput, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
         }
 
         /// <summary>
         /// Formats a number directly as percentage (25 → 25%).
         /// </summary>
+        public static string AsExactPercent(this float value, int decimalPlaces = 0)
+        {
+            var format = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "0";
+            return value.ToString(format) + "%";
+        }
+
+        /// <summary>
+        /// Converts floating value to percentage string (0.5f → 50%).
+        /// </summary>
         public static string AsPercent(this float value, int decimalPlaces = 0)
         {
-            return value.ToString($"F{decimalPlaces}") + "%";
-        }
-
-        /// <summary>
-        /// Converts progress value (0-1 range) to percentage string (0.5f → 50%).
-        /// </summary>
-        public static string AsProgressPercent(this float progress, int decimalPlaces = 0)
-        {
-            var clampedProgress = Mathf.Clamp01(progress);
-            var result = clampedProgress.ToString($"P{decimalPlaces}");
-            return result.WithoutSpaces();
-        }
-
-        /// <summary>
-        /// Formats a float value as percentage string without spaces.
-        /// </summary>
-        [Obsolete("ToPercentString is obsolete. Use AsProgressPercent() for 0-1 range values or AsPercent() for direct percentage values.", false)]
-        public static string ToPercentString(this float value, int decimalPlaces = 0)
-        {
-            return value.ToString($"P{decimalPlaces}")
-                .Replace(" ", "");
+            var format = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "0";
+            return (value * 100).ToString(format) + "%";
         }
 
         /// <summary>
@@ -234,6 +217,35 @@ namespace NekoLib.Extensions
         public static string ToShortABCFormat(this int value, int decimalPlaces = 1)
         {
             return ToShortABCFormat((decimal)value, decimalPlaces);
+        }
+
+        /// <summary>
+        /// Converts a string to the specified enum type.
+        /// </summary>
+        public static T ToEnum<T>(this string value) where T : struct, Enum
+        {
+            if (Enum.TryParse<T>(value, out var result))
+                return result;
+
+            throw new ArgumentException($"Unable to parse '{value}' as {typeof(T).Name}");
+        }
+
+        /// <summary>
+        /// Converts a string to the specified enum type, or returns a default value if the conversion fails.
+        /// </summary>
+        public static T ToEnumOrDefault<T>(this string value, T defaultValue = default) where T : struct, Enum
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Debug.LogWarning($"Null or empty string passed for enum {typeof(T).Name}, using default: {defaultValue}");
+                return defaultValue;
+            }
+
+            if (Enum.TryParse<T>(value, out var result))
+                return result;
+
+            Debug.LogWarning($"Failed to parse '{value}' to enum {typeof(T).Name}, using default: {defaultValue}");
+            return defaultValue;
         }
     }
 }

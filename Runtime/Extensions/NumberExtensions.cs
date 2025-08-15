@@ -6,16 +6,25 @@ namespace NekoLib.Extensions
 {
     public static class NumberExtensions
     {
+        /// <summary>
+        /// Returns true if the number is even.
+        /// </summary>
         public static bool IsEven(this int num)
         {
             return num % 2 == 0;
         }
 
+        /// <summary>
+        /// Returns true if the number is odd.
+        /// </summary>
         public static bool IsOdd(this int num)
         {
             return num % 2 != 0;
         }
 
+        /// <summary>
+        /// Returns the percentage of the current value relative to the total.
+        /// </summary>
         public static float PercentageOf(this int current, int total)
         {
             if (total == 0)
@@ -24,6 +33,9 @@ namespace NekoLib.Extensions
             return Mathf.Clamp01((float)current / total);
         }
 
+        /// <summary>
+        /// Returns the percentage of the current value relative to the total.
+        /// </summary>
         public static float PercentageOf(this float current, float total)
         {
             if (total == 0)
@@ -67,9 +79,6 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Returns true if a random roll succeeds based on the probability rate.
         /// </summary>
-        /// <param name="probability">The probability value (0.0 = never, 1.0 = always)</param>
-        /// <param name="min">Minimum range value</param>
-        /// <param name="max">Maximum range value</param>
         public static bool RollChance(this float probability, float min = 0f, float max = 1f)
         {
             if (probability < min || probability > max)
@@ -84,9 +93,6 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Returns true if a random roll succeeds based on the percentage rate.
         /// </summary>
-        /// <param name="probability">The percentage value (0 = never, 100 = always)</param>
-        /// <param name="min">Minimum range value</param>
-        /// <param name="max">Maximum range value</param>
         public static bool RollChance(this int probability, int min = 0, int max = 100)
         {
             if (probability < min || probability > max)
@@ -97,6 +103,31 @@ namespace NekoLib.Extensions
             // For int Random.Range, max is exclusive, so we add 1 to include our max value
             var randomRoll = Random.Range(min, max + 1);
             return randomRoll <= probability;
+        }
+
+        /// <summary>
+        /// Converts an integer to the specified enum type.
+        /// </summary>
+        public static T ToEnum<T>(this int value) where T : struct, Enum
+        {
+            var stringValue = value.ToString();
+            if (Enum.TryParse<T>(stringValue, out var result))
+                return result;
+
+            throw new ArgumentException($"Unable to parse {value} as {typeof(T).Name}");
+        }
+
+        /// <summary>
+        /// Converts an integer to the specified enum type, or returns a default value if the conversion fails.
+        /// </summary>
+        public static T ToEnumOrDefault<T>(this int value, T defaultValue = default) where T : struct, Enum
+        {
+            var stringValue = value.ToString();
+            if (Enum.TryParse<T>(stringValue, out var result))
+                return result;
+
+            Debug.LogWarning($"Failed to parse int {value} to enum {typeof(T).Name}, using default: {defaultValue}");
+            return defaultValue;
         }
     }
 }
