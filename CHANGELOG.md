@@ -1,3 +1,10 @@
+## [1.6.0] - 2025-08-21
+
+### Exception Handling Improvements
+
+- Add new extensions for color, transform and game object.
+- Add exception handling for some extensions.
+
 ## [1.5.3] - 2025-08-15
 
 ### Minor Improvements

@@ -203,6 +203,11 @@ namespace NekoLib.Extensions
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
         public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, Plane2D plane = Plane2D.XZ)
         {
+            if (minRadius < 0f)
+                throw new System.ArgumentException("minRadius cannot be negative", nameof(minRadius));
+            if (maxRadius < minRadius)
+                throw new System.ArgumentException("maxRadius cannot be less than minRadius", nameof(maxRadius));
+
             float angle = Random.value * Mathf.PI * 2f;
             Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
 

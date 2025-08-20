@@ -14,6 +14,8 @@ namespace NekoLib.Extensions
         /// </summary>
         public static void Clear(this Transform transform)
         {
+            if (transform.childCount == 0) return;
+
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
@@ -61,44 +63,92 @@ namespace NekoLib.Extensions
         public static void DestroyChildren(this Transform transform) => Clear(transform);
 
         /// <summary>
-        /// Orbits this transform around a target transform.
+        /// Sets orbit position around a target using specific angles. Use this for manual/static positioning.
         /// </summary>
-        public static void OrbitAround(this Transform transform, Transform target, float horizontal, float vertical, float distance)
+        public static void SetOrbitRotation(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance)
+        {
+            if (target == null)
+            {
+                Debug.LogWarning($"SetOrbitRotation: Target transform is null for {transform.name}");
+                return;
+            }
+            SetOrbitRotation(transform, target.position, horizontalAngle, verticalAngle, distance);
+            transform.LookAt(target);
+        }
+
+        /// <summary>
+        /// Sets orbit position around a target position using specific angles. Use this for manual/static positioning.
+        /// </summary>
+        public static void SetOrbitRotation(this Transform transform, Vector3 targetPosition, float horizontalAngle, float verticalAngle, float distance)
+        {
+            // Calculate orbital position
+            var offset = Vector3.back * distance;
+            offset = Quaternion.AngleAxis(verticalAngle, Vector3.right) * offset;
+            offset = Quaternion.AngleAxis(horizontalAngle, Vector3.up) * offset;
+
+            transform.position = targetPosition + offset;
+        }
+
+        /// <summary>
+        /// Sets orbit position with clamped vertical angles to prevent flipping.
+        /// </summary>
+        public static void SetOrbitRotationClamped(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance, float minVerticalAngle = -80f, float maxVerticalAngle = 80f)
+        {
+            if (target == null)
+            {
+                Debug.LogWarning($"SetOrbitRotationClamped: Target transform is null for {transform.name}");
+                return;
+            }
+            verticalAngle = Mathf.Clamp(verticalAngle, minVerticalAngle, maxVerticalAngle);
+            SetOrbitRotation(transform, target, horizontalAngle, verticalAngle, distance);
+        }
+
+        /// <summary>
+        /// Updates orbit position with automatic rotation. Call this in Update() for continuous motion.
+        /// </summary>
+        public static void OrbitAround(this Transform transform, Transform target, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
         {
             if (target == null)
             {
                 Debug.LogWarning($"OrbitAround: Target transform is null for {transform.name}");
                 return;
             }
-            OrbitAround(transform, target.position, horizontal, vertical, distance);
-            transform.LookAt(target);
-        }
 
-        /// <summary>
-        /// Orbits this transform around a target position.
-        /// </summary>
-        public static void OrbitAround(this Transform transform, Vector3 targetPosition, float horizontal, float vertical, float distance)
-        {
-            // Calculate orbital position
-            var offset = Vector3.back * distance;
-            offset = Quaternion.AngleAxis(vertical, Vector3.right) * offset;
-            offset = Quaternion.AngleAxis(horizontal, Vector3.up) * offset;
+            currentAngle += speed * Time.deltaTime;
+            if (currentAngle >= 360f)
+                currentAngle -= 360f;
+            if (currentAngle < 0f)
+                currentAngle += 360f;
 
-            transform.position = targetPosition + offset;
-        }
-
-        /// <summary>
-        /// Orbits around a target with clamped vertical angles to prevent flipping.
-        /// </summary>
-        public static void OrbitAroundClamped(this Transform transform, Transform target, float horizontal, float vertical, float distance, float minVertical = -80f, float maxVertical = 80f)
-        {
-            if (target == null)
+            if (orientation == Orientation.Horizontal)
             {
-                Debug.LogWarning($"OrbitAroundClamped: Target transform is null for {transform.name}");
-                return;
+                SetOrbitRotation(transform, target, currentAngle, staticAngle, distance);
             }
-            vertical = Mathf.Clamp(vertical, minVertical, maxVertical);
-            OrbitAround(transform, target, horizontal, vertical, distance);
+            else
+            {
+                SetOrbitRotation(transform, target, staticAngle, currentAngle, distance);
+            }
+        }
+
+        /// <summary>
+        /// Updates orbit position with automatic rotation around a target position. Call this in Update() for continuous motion.
+        /// </summary>
+        public static void OrbitAround(this Transform transform, Vector3 targetPosition, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
+        {
+            currentAngle += speed * Time.deltaTime;
+            if (currentAngle >= 360f)
+                currentAngle -= 360f;
+            if (currentAngle < 0f)
+                currentAngle += 360f;
+
+            if (orientation == Orientation.Horizontal)
+            {
+                SetOrbitRotation(transform, targetPosition, currentAngle, staticAngle, distance);
+            }
+            else
+            {
+                SetOrbitRotation(transform, targetPosition, staticAngle, currentAngle, distance);
+            }
         }
 
         /// <summary>

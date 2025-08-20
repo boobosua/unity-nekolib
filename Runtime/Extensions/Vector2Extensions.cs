@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -164,13 +165,18 @@ namespace NekoLib.Extensions
         /// </summary>
         public static Vector2 RandomPointInAnnulus(this Vector2 origin, float minRadius, float maxRadius)
         {
-            float angle = Random.value * Mathf.PI * 2f;
+            if (minRadius < 0f)
+                throw new ArgumentException("minRadius cannot be negative", nameof(minRadius));
+            if (maxRadius < minRadius)
+                throw new ArgumentException("maxRadius cannot be less than minRadius", nameof(maxRadius));
+
+            float angle = UnityEngine.Random.value * Mathf.PI * 2f;
             Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
 
             // Squaring and then square-rooting radii to ensure uniform distribution within the annulus
             float minRadiusSquared = minRadius * minRadius;
             float maxRadiusSquared = maxRadius * maxRadius;
-            float distance = Mathf.Sqrt(Random.value * (maxRadiusSquared - minRadiusSquared) + minRadiusSquared);
+            float distance = Mathf.Sqrt(UnityEngine.Random.value * (maxRadiusSquared - minRadiusSquared) + minRadiusSquared);
 
             // Calculate the position vector
             Vector2 position = direction * distance;

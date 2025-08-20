@@ -93,14 +93,26 @@ DateTime localTime = DateTimeManager.Instance.Now();
 ### Time Extensions
 
 ```csharp
-// Formatting
+// Time formatting
 float gameTime = 3665.5f;
 gameTime.ToClock(); // "01:01:05"
 TimeSpan.FromSeconds(7890).ToReadableFormat(); // "2h 11m 30s"
 
-// Calculations
-pastTime.MinutesAgo(); // Time difference
-DateTime.Now.WithDate(month: 12, day: 25); // Date manipulation
+// Large number formatting
+1500000.ToShortFormat(); // "1.5M"
+2500.ToShortABCFormat(); // "2.5a"
+
+// Date calculations (requires DateTimeManager sync)
+DateTime pastTime = DateTime.Now.AddHours(-3);
+pastTime.SecondsUntilNow(); // Seconds elapsed
+pastTime.MinutesUntilNow(); // Minutes elapsed
+
+DateTime futureTime = DateTime.Now.AddHours(2);
+futureTime.SecondsFromNow(); // Seconds remaining
+
+// Date manipulation
+DateTime.Now.WithDate(month: 12, day: 25); // Change date components
+DateTime.Now.WithTime(hour: 14, minute: 30); // Change time components
 someDate.IsToday(); // Period checks
 ```
 
@@ -141,13 +153,20 @@ timer.StartTimer();
 ### Collection Extensions
 
 ```csharp
-// Random operations
+// Safe random operations (throws on null/empty)
 int randomItem = myArray.Rand();
+int randomIndex = myList.RandIndex();
 var randomKey = myDict.RandK();
+var randomValue = myDict.RandV();
 
-// Utilities
+// Array/List utilities
 int[] shuffled = myArray.Shuffle();
-string formatted = myList.Format(); // "{1, 2, 3}"
+int[] swapped = myArray.Swap(0, 4); // By index
+string[] swappedByValue = myArray.Swap("a", "b"); // By element
+
+// Debug formatting
+Debug.Log(myList.Format()); // "{1, 2, 3}"
+Debug.Log(myDict.Format()); // "{key1: 1, key2: 2}"
 ```
 
 ### GameObject Extensions
@@ -166,8 +185,16 @@ gameObject.ClearChildTransforms();
 // Math utilities
 42.IsEven(); // true
 75.PercentageOf(100); // 0.75f
-150.AtMost(100); // 100
-0.7f.HasChance(); // 70% chance
+150.AtMost(100); // 100 (clamped)
+20.AtLeast(50); // 50 (clamped)
+
+// Probability (0.0-1.0 for float, 0-100 for int)
+0.7f.RollChance(); // 70% success
+25.RollChance(); // 25% success (out of 100)
+
+// Enum conversion
+5.ToEnum<GameState>(); // Convert int to enum
+5.ToEnumOrDefault<GameState>(defaultValue); // Safe conversion
 ```
 
 ### Text Extensions
@@ -177,6 +204,20 @@ gameObject.ClearChildTransforms();
 "Hello World".Bold().Italic().Colorize(Palette.VibrantRed);
 "Make this bold".Bold("this"); // Target specific words
 "Text".Colorize("#FF0000"); // Hex colors
+"Status".Colorize(Color.green, () => isActive); // Conditional
+
+// String parsing & conversion
+"3,14".ParseFloatWithComma(); // European decimal format
+"50".ToEnum<GameState>(); // String to enum
+"invalid".ToEnumOrDefault<GameState>(GameState.Default); // Safe conversion
+
+// Text processing
+"HelloWorldTest".SplitCamelCase(); // "Hello World Test"
+"remove spaces".WithoutSpaces(); // "removespaces"
+
+// Number formatting extensions (on strings)
+"25".AsPercent(); // "25%" (direct formatting)
+"0.25".AsExactPercent(); // Treats as 25%
 ```
 
 ### Vector Extensions
@@ -184,11 +225,25 @@ gameObject.ClearChildTransforms();
 ```csharp
 // Component modification
 transform.position.With(y: 5f, z: 10f);
-playerPos.Add(x: 2f).Multiply(y: 0.5f);
+playerPos.Add(x: 2f).Multiply(y: 0.5f).Divide(z: 2f);
 
-// Utilities
-playerPos.InRangeOf(targetPos, 5f);
-someVector3.ToVector2();
+// Spatial utilities
+playerPos.InRangeOf(targetPos, 5f); // Distance check
+playerPos.DistanceTo(targetPos); // Get distance
+playerPos.DirectionTo(targetPos); // Get direction
+
+// Vector3 specific
+someVector3.ToVector2(); // Drop Z component
+someVector3.RotateY(45f); // Rotate around axis
+
+// Geometric operations
+vector2.Rotate(90f); // 2D rotation
+vector2.Perpendicular(); // 90° counterclockwise
+vector3.ProjectOnto(normal); // Vector projection
+
+// Random points in annulus (ring shape)
+origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 5f); // Vector2
+origin.RandomPointInAnnulus(2f, 5f, Plane2D.XZ); // Vector3 on plane
 ```
 
 ### Transform Extensions
@@ -198,16 +253,22 @@ someVector3.ToVector2();
 transform.Clear(); // Destroy all children
 Transform[] children = transform.GetChildren(includeInactive: true);
 
-// 2D rotation and orbiting
+// 2D rotation
 transform.LookAt2D(targetPosition);
-transform.OrbitAround(target, horizontal: 45f, vertical: 30f, distance: 10f);
+transform.LookAt2D(targetPosition, angleOffset: 45f);
 
-// Complex orbital camera system
-var camera = Camera.main.transform;
-var player = GameObject.FindWithTag("Player").transform;
+// Orbital positioning (static)
+transform.SetOrbitRotation(target, horizontal: 45f, vertical: 30f, distance: 10f);
+transform.SetOrbitRotationClamped(target, 45f, 30f, 10f, minVertical: -60f, maxVertical: 80f);
 
-// Orbit around player with clamped vertical angles
-camera.OrbitAroundClamped(player, mouseX, mouseY, 8f, minVertical: -60f, maxVertical: 80f);
+// Orbital movement (continuous - call in Update)
+float currentAngle = 0f;
+transform.OrbitAround(target, Orientation.Horizontal, speed: 30f, staticVertical: 20f, distance: 8f, ref currentAngle);
+
+// Distance & direction utilities
+float distance = transform.DistanceTo(otherTransform);
+Vector3 direction = transform.DirectionTo(otherTransform);
+bool inRange = transform.InRangeOf(otherTransform, 5f);
 ```
 
 ### Enum Utils
@@ -245,7 +306,78 @@ bool over2D = Utils.IsPointerOverAny2DObject();
 // Mouse utilities
 Vector2 mouse2D = Utils.GetMousePosition2D();
 Ray mouseRay = Utils.GetMouseRay();
+float angle = Utils.GetAngleFromVector(direction);
 Quaternion randomRot = Utils.GetRandomRotation(Axis.Y);
+```
+
+## Advanced Examples
+
+### Orbital Camera System
+
+```csharp
+public class OrbitCamera : MonoBehaviour
+{
+    [SerializeField] private Transform target;
+    [SerializeField] private float distance = 8f;
+    [SerializeField] private float sensitivity = 2f;
+
+    private float horizontalAngle = 0f;
+    private float verticalAngle = 20f;
+
+    void Update()
+    {
+        if (target == null) return;
+
+        // Mouse input for manual control
+        if (Input.GetMouseButton(1)) // Right click
+        {
+            horizontalAngle += Input.GetAxis("Mouse X") * sensitivity;
+            verticalAngle -= Input.GetAxis("Mouse Y") * sensitivity;
+
+            // Manual positioning with clamped vertical
+            transform.SetOrbitRotationClamped(target, horizontalAngle, verticalAngle, distance);
+        }
+        else
+        {
+            // Auto orbit horizontally when not controlling
+            transform.OrbitAround(target, Orientation.Horizontal, speed: 15f, verticalAngle, distance, ref horizontalAngle);
+        }
+    }
+}
+```
+
+### Smart Collection Manager
+
+```csharp
+public class InventoryManager : MonoBehaviour
+{
+    private List<Item> items = new();
+    private Dictionary<ItemType, List<Item>> itemsByType = new();
+
+    public void AddRandomLoot()
+    {
+        // Safe random selection from weighted drops
+        if (!lootTable.IsNullOrEmpty())
+        {
+            var randomLoot = lootTable.Rand();
+            items.Add(randomLoot);
+            Debug.Log($"Found: {items.Format()}");
+        }
+    }
+
+    public void ShuffleInventory()
+    {
+        items = items.Shuffle(); // Non-destructive shuffle
+        UpdateUI();
+    }
+
+    public Item GetRandomItemOfType(ItemType type)
+    {
+        return itemsByType.TryGetValue(type, out var typeItems) && !typeItems.IsNullOrEmpty()
+            ? typeItems.Rand()
+            : null;
+    }
+}
 ```
 
 ## Requirements

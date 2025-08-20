@@ -21,6 +21,12 @@ namespace NekoLib.Utilities
         XYZ = X | Y | Z
     }
 
+    public enum Orientation
+    {
+        Horizontal = 0,
+        Vertical = 1
+    }
+
     public static class Utils
     {
         #region  Coroutine Cache

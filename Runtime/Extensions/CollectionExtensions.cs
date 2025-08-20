@@ -7,16 +7,29 @@ namespace NekoLib.Extensions
 {
     public static class CollectionExtensions
     {
+        /// <summary>
+        /// Returns a random element from the array.
+        /// </summary>
         public static T Rand<T>(this T[] arr)
         {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random element from null or empty array");
             return arr[Random.Range(0, arr.Length)];
         }
 
+        /// <summary>
+        /// Returns a random index from the array.
+        /// </summary>
         public static int RandIndex<T>(this T[] arr)
         {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random index from null or empty array");
             return Random.Range(0, arr.Length);
         }
 
+        /// <summary>
+        /// Shuffles the elements of the array.
+        /// </summary>
         public static T[] Shuffle<T>(this T[] arr)
         {
             T[] result = new T[arr.Length];
@@ -33,6 +46,9 @@ namespace NekoLib.Extensions
             return result;
         }
 
+        /// <summary>
+        /// Swaps two elements in the array.
+        /// </summary>
         public static T[] Swap<T>(this T[] arr, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= arr.Length || bIndex < 0 || bIndex >= arr.Length)
@@ -46,6 +62,9 @@ namespace NekoLib.Extensions
             return result;
         }
 
+        /// <summary>
+        /// Swaps two elements in the array.
+        /// </summary>
         public static T[] Swap<T>(this T[] arr, T a, T b)
         {
             if (a == null || b == null)
@@ -53,9 +72,18 @@ namespace NekoLib.Extensions
 
             int aIndex = Array.IndexOf(arr, a);
             int bIndex = Array.IndexOf(arr, b);
+
+            if (aIndex == -1)
+                throw new ArgumentException($"Element '{a}' not found in array");
+            if (bIndex == -1)
+                throw new ArgumentException($"Element '{b}' not found in array");
+
             return Swap(arr, aIndex, bIndex);
         }
 
+        /// <summary>
+        /// Checks if the array is null or empty.
+        /// </summary>
         public static bool IsNullOrEmpty<T>(this T[] arr)
         {
             return arr == null || arr.Length == 0;
@@ -79,16 +107,29 @@ namespace NekoLib.Extensions
             return "[" + string.Join(", ", arr) + "]";
         }
 
+        /// <summary>
+        /// Returns a random element from the list.
+        /// </summary>
         public static T Rand<T>(this List<T> list)
         {
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random element from null or empty list");
             return list[Random.Range(0, list.Count)];
         }
 
+        /// <summary>
+        /// Returns a random index from the list.
+        /// </summary>
         public static int RandIndex<T>(this List<T> list)
         {
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random index from null or empty list");
             return Random.Range(0, list.Count);
         }
 
+        /// <summary>
+        /// Shuffles the elements of the list.
+        /// </summary>
         public static List<T> Shuffle<T>(this List<T> list)
         {
             List<T> result = new(list);
@@ -102,6 +143,9 @@ namespace NekoLib.Extensions
             return result;
         }
 
+        /// <summary>
+        /// Swaps two elements in the list.
+        /// </summary>
         public static List<T> Swap<T>(this List<T> list, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= list.Count || bIndex < 0 || bIndex >= list.Count)
@@ -115,6 +159,9 @@ namespace NekoLib.Extensions
             return result;
         }
 
+        /// <summary>
+        /// Swaps two elements in the list.
+        /// </summary>
         public static List<T> Swap<T>(this List<T> list, T a, T b)
         {
             if (a == null || b == null)
@@ -122,9 +169,18 @@ namespace NekoLib.Extensions
 
             int aIndex = list.IndexOf(a);
             int bIndex = list.IndexOf(b);
+
+            if (aIndex == -1)
+                throw new ArgumentException($"Element '{a}' not found in list");
+            if (bIndex == -1)
+                throw new ArgumentException($"Element '{b}' not found in list");
+
             return Swap(list, aIndex, bIndex);
         }
 
+        /// <summary>
+        /// Checks if the list is null or empty.
+        /// </summary>
         public static bool IsNullOrEmpty<T>(this List<T> list)
         {
             return list == null || list.Count == 0;
@@ -153,6 +209,8 @@ namespace NekoLib.Extensions
         /// </summary>
         public static V RandV<K, V>(this Dictionary<K, V> dict)
         {
+            if (dict.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random value from null or empty dictionary");
             return dict.Values.ToArray().Rand();
         }
 
@@ -161,6 +219,8 @@ namespace NekoLib.Extensions
         /// </summary>
         public static K RandK<K, V>(this Dictionary<K, V> dict)
         {
+            if (dict.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random key from null or empty dictionary");
             return dict.Keys.ToArray().Rand();
         }
 
