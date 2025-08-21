@@ -4,6 +4,7 @@ using NekoLib.Extensions;
 namespace NekoLib
 {
     [DisallowMultipleComponent]
+    [AddComponentMenu("NekoLib/Look At Camera")]
     public class LookAtCamera : MonoBehaviour
     {
         private enum Mode

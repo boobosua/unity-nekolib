@@ -91,6 +91,9 @@ namespace NekoLib.Utilities
             return Physics.Raycast(mouseRay, out hit, maxDistance, layerMask);
         }
 
+        /// <summary>
+        /// Checks if the pointer is over a 3D object.
+        /// </summary>
         public static bool IsPointerOver3DObject(GameObject objectToCheck)
         {
             if (objectToCheck == null)
@@ -109,6 +112,9 @@ namespace NekoLib.Utilities
             return false;
         }
 
+        /// <summary>
+        /// Checks if the pointer is over a 3D object of the specified type.
+        /// </summary>
         public static bool IsPointerOver3DObject<T>() where T : Component
         {
             var ray = GetMouseRay();
@@ -120,6 +126,9 @@ namespace NekoLib.Utilities
             return false;
         }
 
+        /// <summary>
+        /// Checks if the pointer is over a 3D object of the specified type.
+        /// </summary>
         public static bool IsPointerOver3DObject<T>(out T component) where T : Component
         {
             var ray = GetMouseRay();
@@ -401,6 +410,81 @@ namespace NekoLib.Utilities
             {
                 Debug.LogError($"Unexpected error: {ex.Message}");
                 return new T[0];
+            }
+        }
+
+        /// <summary>
+        /// Draws an annulus (ring) gizmo in the Scene view.
+        /// </summary>
+        public static void DrawAnnulusGizmo(Vector3 center, float innerRadius, float outerRadius, Vector3 up = default, Color color = default, int segments = 36)
+        {
+            if (color == default) color = Palette.MintEmerald;
+            if (up == default) up = Vector3.up;
+
+            // Create a coordinate system based on the up vector
+            Vector3 forward = Vector3.Cross(up, Vector3.right);
+            if (forward.sqrMagnitude < 0.001f) // up is parallel to right, use forward instead
+                forward = Vector3.Cross(up, Vector3.forward);
+            forward = forward.normalized;
+            Vector3 right = Vector3.Cross(forward, up).normalized;
+
+            float angleStep = 360f / segments;
+            Vector3 lastInnerPoint = Vector3.zero;
+            Vector3 lastOuterPoint = Vector3.zero;
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = i * angleStep * Mathf.Deg2Rad;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                // Create points in the plane defined by the up vector
+                Vector3 direction = right * cos + forward * sin;
+                Vector3 innerPoint = center + direction * innerRadius;
+                Vector3 outerPoint = center + direction * outerRadius;
+
+                if (i > 0)
+                {
+                    Gizmos.color = color;
+                    Gizmos.DrawLine(lastInnerPoint, innerPoint);
+                    Gizmos.DrawLine(lastOuterPoint, outerPoint);
+                    Gizmos.DrawLine(innerPoint, outerPoint);
+                }
+
+                lastInnerPoint = innerPoint;
+                lastOuterPoint = outerPoint;
+            }
+        }
+
+        /// <summary>
+        /// Draws a circle gizmo in the Scene view.
+        /// </summary>
+        public static void DrawCircleGizmo(Vector3 center, float radius, Vector3 up = default, Color color = default, int segments = 64)
+        {
+            if (color == default) color = Palette.MintEmerald;
+            if (up == default) up = Vector3.up;
+
+            Vector3 forward = Vector3.Cross(up, Vector3.right);
+            if (forward.sqrMagnitude < 0.001f) // up is parallel to right, use forward instead
+                forward = Vector3.Cross(up, Vector3.forward);
+            forward = forward.normalized;
+            Vector3 right = Vector3.Cross(forward, up).normalized;
+
+            float angleStep = 360f / segments;
+            Vector3 lastPoint = center + right * radius;
+
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = i * angleStep * Mathf.Deg2Rad;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                Vector3 direction = right * cos + forward * sin;
+                Vector3 point = center + direction * radius;
+
+                Gizmos.color = color;
+                Gizmos.DrawLine(lastPoint, point);
+                lastPoint = point;
             }
         }
 #endif

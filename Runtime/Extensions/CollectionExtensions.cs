@@ -7,6 +7,7 @@ namespace NekoLib.Extensions
 {
     public static class CollectionExtensions
     {
+        #region Array
         /// <summary>
         /// Returns a random element from the array.
         /// </summary>
@@ -108,6 +109,118 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Gets the last element of the array.
+        /// </summary>
+        public static T Last<T>(this T[] arr)
+        {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get last element from null or empty array");
+            return arr[^1];
+        }
+
+        /// <summary>
+        /// Gets the first element of the array.
+        /// </summary>
+        public static T First<T>(this T[] arr)
+        {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get first element from null or empty array");
+            return arr[0];
+        }
+
+        /// <summary>
+        /// Gets a sub-array from the specified start index to the end.
+        /// </summary>
+        public static T[] Slice<T>(this T[] arr, int startIndex)
+        {
+            return arr.Slice(startIndex, arr.Length - startIndex);
+        }
+
+        /// <summary>
+        /// Gets a sub-array from the specified start index with the specified length.
+        /// </summary>
+        public static T[] Slice<T>(this T[] arr, int startIndex, int length)
+        {
+            if (arr.IsNullOrEmpty())
+                return new T[0];
+            if (startIndex < 0 || startIndex >= arr.Length)
+                throw new IndexOutOfRangeException($"Start index {startIndex} is out of bounds of array of length {arr.Length}");
+            if (length < 0 || startIndex + length > arr.Length)
+                throw new ArgumentException($"Length {length} would exceed array bounds from start index {startIndex}");
+
+            T[] result = new T[length];
+            Array.Copy(arr, startIndex, result, 0, length);
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if the array contains the specified element.
+        /// </summary>
+        public static bool Contains<T>(this T[] arr, T item)
+        {
+            return Array.IndexOf(arr, item) != -1;
+        }
+
+        /// <summary>
+        /// Reverses the array and returns a new array.
+        /// </summary>
+        public static T[] Reverse<T>(this T[] arr)
+        {
+            if (arr.IsNullOrEmpty())
+                return arr?.Clone() as T[] ?? new T[0];
+
+            T[] result = arr.Clone() as T[];
+            Array.Reverse(result);
+            return result;
+        }
+
+        /// <summary>
+        /// Returns multiple random elements from the array without replacement.
+        /// </summary>
+        public static T[] RandMultiple<T>(this T[] arr, int count)
+        {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random elements from null or empty array");
+            if (count < 0)
+                throw new ArgumentException("Count cannot be negative");
+            if (count > arr.Length)
+                throw new ArgumentException($"Cannot get {count} elements from array of length {arr.Length}");
+
+            if (count == 0)
+                return new T[0];
+
+            var shuffled = arr.Shuffle();
+            return shuffled.Slice(0, count);
+        }
+
+        /// <summary>
+        /// Returns a random element from the collection using weighted selection.
+        /// </summary>
+        public static T RandWeighted<T>(this T[] arr, Func<T, float> weightSelector)
+        {
+            if (arr.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random element from null or empty array");
+
+            float totalWeight = arr.Sum(weightSelector);
+            if (totalWeight <= 0)
+                throw new InvalidOperationException("Total weight must be greater than 0");
+
+            float randomValue = Random.Range(0f, totalWeight);
+            float currentWeight = 0f;
+
+            foreach (T item in arr)
+            {
+                currentWeight += weightSelector(item);
+                if (randomValue <= currentWeight)
+                    return item;
+            }
+
+            return arr.Last(); // Fallback, should rarely happen due to floating point precision
+        }
+        #endregion
+
+        #region List
+        /// <summary>
         /// Returns a random element from the list.
         /// </summary>
         public static T Rand<T>(this List<T> list)
@@ -205,9 +318,58 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Returns the last element of the list.
+        /// </summary>
+        public static T Last<T>(this List<T> list)
+        {
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get last element from null or empty list");
+            return list[^1];
+        }
+
+        /// <summary>
+        /// Returns the first element of the list.
+        /// </summary>
+        public static T First<T>(this List<T> list)
+        {
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get first element from null or empty list");
+            return list[0];
+        }
+
+        /// <summary>
+        /// Returns multiple random elements from the list without replacement.
+        /// </summary>
+        public static List<T> RandMultiple<T>(this List<T> list, int count)
+        {
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random elements from null or empty list");
+            if (count < 0)
+                throw new ArgumentException("Count cannot be negative");
+            if (count > list.Count)
+                throw new ArgumentException($"Cannot get {count} elements from list of length {list.Count}");
+
+            if (count == 0)
+                return new List<T>();
+
+            var shuffled = list.Shuffle();
+            return shuffled.Take(count).ToList();
+        }
+
+        /// <summary>
+        /// Returns a random element from the list using weighted selection.
+        /// </summary>
+        public static T RandWeighted<T>(this List<T> list, Func<T, float> weightSelector)
+        {
+            return list.ToArray().RandWeighted(weightSelector);
+        }
+        #endregion
+
+        #region Dictionary
+        /// <summary>
         /// Returns a random value from a dictionary.
         /// </summary>
-        public static V RandV<K, V>(this Dictionary<K, V> dict)
+        public static V RandV<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             if (dict.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random value from null or empty dictionary");
@@ -217,23 +379,34 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Returns a random key from a dictionary.
         /// </summary>
-        public static K RandK<K, V>(this Dictionary<K, V> dict)
+        public static K RandK<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             if (dict.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random key from null or empty dictionary");
             return dict.Keys.ToArray().Rand();
         }
 
-        public static bool IsNullOrEmpty<K, V>(this Dictionary<K, V> dict)
+        /// <summary>
+        /// Returns true if the dictionary is null or empty.
+        /// </summary>
+        public static bool IsNullOrEmpty<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             return dict == null || dict.Count == 0;
+        }
+
+        /// <summary>
+        /// Returns a new copy of the dictionary.
+        /// </summary>
+        public static Dictionary<K, V> AsNewCopy<K, V>(this Dictionary<K, V> dict) where K : notnull
+        {
+            return dict.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         /// <summary>
         /// Returns a string representation of a dictionary.
         /// Does not work on nested dictionaries or dictionary that is nested in other structures.
         /// </summary>
-        public static string Format<K, V>(this Dictionary<K, V> dict)
+        public static string Format<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             // Handle null.
             if (dict == null)
@@ -246,6 +419,7 @@ namespace NekoLib.Extensions
             return "{" + string.Join(", ", dict
                 .Select(kvp => $"{kvp.Key}: {kvp.Value}")) + "}";
         }
+        #endregion
 
         /// <summary>
         /// Returns a string representation of a queue.

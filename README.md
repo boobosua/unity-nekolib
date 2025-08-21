@@ -1,36 +1,23 @@
 # NekoLib
 
-A comprehensive utility package for Unity game development inspired by various sources and my own experiences.
+A comprehensive utility package for Unity game development providing extensions, components, and utilities for common tasks.
 
 ## Acknowledgments
 
-Special thanks to [Adam Myhre](https://github.com/adammyhre) and [Code Monkey](https://www.youtube.com/@CodeMonkeyUnity) for inspiring the development of this library through his excellent Unity tutorials and architectural patterns.
-
-Also grateful to GitHub Copilot for assistance with smaller tasks and code refinements throughout the development process.
+Special thanks to [Adam Myhre](https://github.com/adammyhre) and [Code Monkey](https://www.youtube.com/@CodeMonkeyUnity) for inspiring the development of this library through excellent Unity tutorials and architectural patterns.
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Features](#features)
-- [Dependencies](#dependencies)
 - [Usage Examples](#usage-examples)
-  - [NetworkManager](#networkmanager)
-  - [DateTimeManager](#datetimemanager)
-  - [Time Extensions](#time-extensions)
-  - [Singleton Patterns](#singleton-patterns)
-  - [Timer System](#timer-system)
-  - [Collection Extensions](#collection-extensions)
-  - [GameObject Extensions](#gameobject-extensions)
-  - [Number Extensions](#number-extensions)
-  - [Text Extensions](#text-extensions)
-  - [Vector Extensions](#vector-extensions)
-  - [Transform Extensions](#transform-extensions)
-  - [Enum Utils](#enum-utils)
-  - [Color Palette](#color-palette)
+  - [Components](#components)
+  - [Services](#services)
+  - [Extensions](#extensions)
   - [Utilities](#utilities)
+- [Related Packages](#related-packages)
 - [Requirements](#requirements)
 - [License](#license)
-- [Changelog](#changelog)
 
 ## Installation
 
@@ -46,28 +33,60 @@ https://github.com/boobosua/unity-nekolib.git
 
 1. Download the package
 2. Import into your Unity project
-3. No external dependencies required
 
 ## Features
 
-- **NetworkManager**: Internet connection monitoring with async/await support and cancellation tokens
+### Components
+
+- **AutoDestroy**: Automatically destroys GameObjects after a specified lifetime
+- **AutoOrbitAround**: Continuously orbits around a target with configurable speed and orientation
+- **LookAtCamera**: Makes objects face the camera with multiple mode options
+- **Timer**: Unity component with UnityEvents for timeout handling
+
+### Services
+
+- **NetworkManager**: Internet connection monitoring with async/await support
 - **DateTimeManager**: Server time synchronization from TimeAPI.io and Google
-- **Time Extensions**: DateTime formatting, calculations, and manipulation with intuitive naming
-- **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
-- **Timer System**: Modern timer pool with fluent builder pattern and unscaled time support
+
+### Extensions
+
 - **Collection Extensions**: Array/List/Dictionary operations with shuffling, random selection, and formatting
 - **GameObject Extensions**: Component management, layer checking, and child transform operations
 - **Number Extensions**: Mathematical utilities, percentage calculations, and chance systems
-- **Text Extensions**: Rich text formatting (bold, italic, underline) and colorization
-- **Vector Extensions**: Enhanced Vector2/Vector3 operations with mathematical functions and annulus generation
-- **Transform Extensions**: Child management, 2D rotation, orbital movement, and transform utilities
+- **String Extensions**: Rich text formatting, parsing, and text manipulation
+- **Task Extensions**: Fire-and-forget task handling with proper exception management
+- **Time Extensions**: DateTime formatting, calculations, and manipulation
+- **Timer Extensions**: Fluent timer creation with countdown and stopwatch functionality
+- **Transform Extensions**: Child management, 2D rotation, orbital movement, and utilities
+- **Vector Extensions**: Enhanced Vector2/Vector3 operations with mathematical functions
+- **Serialize Extensions**: JSON serialization/deserialization utilities
+
+### Utilities
+
+- **Singleton Patterns**: LazySingleton, SceneSingleton, and PersistentSingleton implementations
+- **Timer System**: Modern timer pool with fluent builder pattern and unscaled time support
 - **Enum Utils**: Random enum selection, filtering, counting, and iteration utilities
 - **Color Palette**: Predefined color palette for consistent UI and debugging
-- **Utilities**: Mouse/pointer detection, cached WaitForSeconds, and rotation utilities
+- **Utils**: Mouse/pointer detection, cached WaitForSeconds, and rotation utilities
+- **YieldTask**: Custom yield instruction for awaiting Tasks in coroutines
 
 ## Usage Examples
 
-### NetworkManager
+### Components
+
+#### Timer Component
+
+```csharp
+// Unity component with UnityEvents
+Timer timer = GetComponent<Timer>();
+timer.SetWaitTime(5f);
+timer.OnTimeOut.AddListener(() => Debug.Log("Timeout!"));
+timer.StartTimer();
+```
+
+### Services
+
+#### NetworkManager
 
 ```csharp
 // Check internet connection
@@ -79,7 +98,7 @@ NetworkManager.Instance.OnInternetRefresh += (connected) =>
 NetworkManager.Instance.StartMonitoring();
 ```
 
-### DateTimeManager
+#### DateTimeManager
 
 ```csharp
 // Sync from TimeAPI.io and Google
@@ -90,7 +109,25 @@ DateTime utcNow = DateTimeManager.Instance.UtcNow();
 DateTime localTime = DateTimeManager.Instance.Now();
 ```
 
-### Time Extensions
+### Extensions
+
+#### Task Extensions
+
+```csharp
+// Fire-and-forget tasks with proper exception handling
+SomeAsyncMethod().Forget();
+SomeAsyncMethod().Forget(ex => Debug.LogError($"Task failed: {ex}"));
+```
+
+#### Serialize Extensions
+
+```csharp
+// JSON serialization
+string json = myObject.Serialize(prettyPrint: true);
+MyClass obj = jsonString.Deserialize<MyClass>();
+```
+
+#### Time Extensions
 
 ```csharp
 // Time formatting
@@ -116,15 +153,7 @@ DateTime.Now.WithTime(hour: 14, minute: 30); // Change time components
 someDate.IsToday(); // Period checks
 ```
 
-### Singleton Patterns
-
-```csharp
-public class GameManager : LazySingleton<GameManager> { }      // Auto-creates
-public class UIManager : SceneSingleton<UIManager> { }        // Scene-bound
-public class AudioManager : PersistentSingleton<AudioManager> { } // Survives scenes
-```
-
-### Timer System
+#### Timer Extensions
 
 ```csharp
 // Extension methods
@@ -140,17 +169,7 @@ TimerFactory.CreateCountdown(this)
     .Build();
 ```
 
-### Timer Component
-
-```csharp
-// Unity component with UnityEvents
-Timer timer = GetComponent<Timer>();
-timer.SetWaitTime(5f);
-timer.OnTimeOut.AddListener(() => Debug.Log("Timeout!"));
-timer.StartTimer();
-```
-
-### Collection Extensions
+#### Collection Extensions
 
 ```csharp
 // Safe random operations (throws on null/empty)
@@ -169,7 +188,7 @@ Debug.Log(myList.Format()); // "{1, 2, 3}"
 Debug.Log(myDict.Format()); // "{key1: 1, key2: 2}"
 ```
 
-### GameObject Extensions
+#### GameObject Extensions
 
 ```csharp
 // Component utilities
@@ -179,7 +198,7 @@ gameObject.IsInLayer(targetLayer);
 gameObject.ClearChildTransforms();
 ```
 
-### Number Extensions
+#### Number Extensions
 
 ```csharp
 // Math utilities
@@ -197,7 +216,7 @@ gameObject.ClearChildTransforms();
 5.ToEnumOrDefault<GameState>(defaultValue); // Safe conversion
 ```
 
-### Text Extensions
+#### String Extensions
 
 ```csharp
 // Rich text formatting
@@ -220,7 +239,7 @@ gameObject.ClearChildTransforms();
 "0.25".AsExactPercent(); // Treats as 25%
 ```
 
-### Vector Extensions
+#### Vector Extensions
 
 ```csharp
 // Component modification
@@ -246,7 +265,7 @@ origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 5f); // Vector2
 origin.RandomPointInAnnulus(2f, 5f, Plane2D.XZ); // Vector3 on plane
 ```
 
-### Transform Extensions
+#### Transform Extensions
 
 ```csharp
 // Child management
@@ -271,7 +290,17 @@ Vector3 direction = transform.DirectionTo(otherTransform);
 bool inRange = transform.InRangeOf(otherTransform, 5f);
 ```
 
-### Enum Utils
+### Utilities
+
+#### Singleton Patterns
+
+```csharp
+public class GameManager : LazySingleton<GameManager> { }      // Auto-creates
+public class UIManager : SceneSingleton<UIManager> { }        // Scene-bound
+public class AudioManager : PersistentSingleton<AudioManager> { } // Survives scenes
+```
+
+#### Enum Utils
 
 ```csharp
 // Random enum selection
@@ -283,7 +312,7 @@ int stateCount = EnumUtils.Count<GameState>();
 EnumUtils.ForEach<PowerUpType>(powerUp => Debug.Log(powerUp));
 ```
 
-### Color Palette
+#### Color Palette
 
 ```csharp
 // Predefined colors
@@ -292,7 +321,7 @@ Debug.LogError("Error!".Colorize(Palette.VibrantRed));
 Color uiColor = Palette.AzureTeal;
 ```
 
-### Utilities
+#### Utils
 
 ```csharp
 // Cached coroutines
@@ -310,75 +339,26 @@ float angle = Utils.GetAngleFromVector(direction);
 Quaternion randomRot = Utils.GetRandomRotation(Axis.Y);
 ```
 
-## Advanced Examples
-
-### Orbital Camera System
+#### YieldTask
 
 ```csharp
-public class OrbitCamera : MonoBehaviour
+// Await tasks in coroutines
+StartCoroutine(WaitForTaskCoroutine());
+
+IEnumerator WaitForTaskCoroutine()
 {
-    [SerializeField] private Transform target;
-    [SerializeField] private float distance = 8f;
-    [SerializeField] private float sensitivity = 2f;
-
-    private float horizontalAngle = 0f;
-    private float verticalAngle = 20f;
-
-    void Update()
-    {
-        if (target == null) return;
-
-        // Mouse input for manual control
-        if (Input.GetMouseButton(1)) // Right click
-        {
-            horizontalAngle += Input.GetAxis("Mouse X") * sensitivity;
-            verticalAngle -= Input.GetAxis("Mouse Y") * sensitivity;
-
-            // Manual positioning with clamped vertical
-            transform.SetOrbitRotationClamped(target, horizontalAngle, verticalAngle, distance);
-        }
-        else
-        {
-            // Auto orbit horizontally when not controlling
-            transform.OrbitAround(target, Orientation.Horizontal, speed: 15f, verticalAngle, distance, ref horizontalAngle);
-        }
-    }
+    Task asyncTask = SomeAsyncMethod();
+    yield return new YieldTask(asyncTask);
+    Debug.Log("Task completed!");
 }
 ```
 
-### Smart Collection Manager
+## Related Packages
 
-```csharp
-public class InventoryManager : MonoBehaviour
-{
-    private List<Item> items = new();
-    private Dictionary<ItemType, List<Item>> itemsByType = new();
+NekoLib is part of a suite of Unity packages:
 
-    public void AddRandomLoot()
-    {
-        // Safe random selection from weighted drops
-        if (!lootTable.IsNullOrEmpty())
-        {
-            var randomLoot = lootTable.Rand();
-            items.Add(randomLoot);
-            Debug.Log($"Found: {items.Format()}");
-        }
-    }
-
-    public void ShuffleInventory()
-    {
-        items = items.Shuffle(); // Non-destructive shuffle
-        UpdateUI();
-    }
-
-    public Item GetRandomItemOfType(ItemType type)
-    {
-        return itemsByType.TryGetValue(type, out var typeItems) && !typeItems.IsNullOrEmpty()
-            ? typeItems.Rand()
-            : null;
-    }
-}
-```
+- **[NekoSerialize](https://github.com/boobosua/unity-neko-serialize)**: Save/load system using Newtonsoft.Json
+- **[NekoSignal](https://github.com/boobosua/unity-neko-signal)**: Event/signal system for Unity
 
 ## Requirements
 
@@ -388,7 +368,3 @@ public class InventoryManager : MonoBehaviour
 ## License
 
 See [LICENSE.md](LICENSE.md) for licensing information.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history and changes.

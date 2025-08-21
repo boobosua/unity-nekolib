@@ -1,3 +1,12 @@
+## [1.6.1] - 2025-08-22
+
+### More Components and Extensions
+
+- Add AutoOrbitAround component.
+- Adjust some text format extensions.
+- Add some new draw gizmo functions.
+- Add some new collection extensions.
+
 ## [1.6.0] - 2025-08-21
 
 ### Exception Handling Improvements
