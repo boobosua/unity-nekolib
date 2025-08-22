@@ -1,3 +1,9 @@
+## [1.6.3] - 2025-08-23
+
+### Color Utilities
+
+- Rename color palette for shorter calls.
+
 ## [1.6.2] - 2025-08-23
 
 ### Refactor Utilities

@@ -145,7 +145,7 @@ namespace NekoLib.Utilities
         {
             if (additionalTime < 0f)
             {
-                Debug.LogWarning($"[{nameof(Countdown)}] Cannot extend time with {"negative value".Colorize(Palette.VibrantRed)}: {additionalTime.ToString().Colorize(Palette.SunnyGold)}. Operation ignored.");
+                Debug.LogWarning($"[{nameof(Countdown)}] Cannot extend time with {"negative value".Colorize(Swatch.VR)}: {additionalTime.ToString().Colorize(Swatch.SG)}. Operation ignored.");
                 return;
             }
 
@@ -160,7 +160,7 @@ namespace NekoLib.Utilities
         {
             if (timeToReduce < 0f)
             {
-                Debug.LogWarning($"[{nameof(Countdown)}] Cannot reduce time with {"negative value".Colorize(Palette.VibrantRed)}: {timeToReduce.ToString().Colorize(Palette.SunnyGold)}. Operation ignored.");
+                Debug.LogWarning($"[{nameof(Countdown)}] Cannot reduce time with {"negative value".Colorize(Swatch.VR)}: {timeToReduce.ToString().Colorize(Swatch.SG)}. Operation ignored.");
                 return;
             }
 

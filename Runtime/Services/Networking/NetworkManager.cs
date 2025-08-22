@@ -55,11 +55,11 @@ namespace NekoLib.Services
 
             if (isConnected)
             {
-                Debug.Log("[NetworkManager] Internet connection verified.".Colorize(Palette.MintEmerald));
+                Debug.Log("[NetworkManager] Internet connection verified.".Colorize(Swatch.ME));
             }
             else
             {
-                Debug.LogWarning($"[NetworkManager] Failed to connect to {PingUrl.Italic()}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[NetworkManager] Failed to connect to {PingUrl.Italic()}".Colorize(Swatch.VR));
             }
 
             OnInternetRefresh?.Invoke(isConnected);
@@ -71,7 +71,7 @@ namespace NekoLib.Services
             // Prevent multiple monitoring instances
             if (_monitoringCts != null && !_monitoringCts.IsCancellationRequested)
             {
-                Debug.LogWarning("[NetworkManager] Monitoring is already running.".Colorize(Palette.PumpkinOrange));
+                Debug.LogWarning("[NetworkManager] Monitoring is already running.".Colorize(Swatch.PO));
                 return;
             }
 
@@ -92,7 +92,7 @@ namespace NekoLib.Services
                 ? CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken)
                 : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token);
 
-            Debug.Log("[NetworkManager] Init internet monitoring.".Colorize(Palette.PumpkinOrange));
+            Debug.Log("[NetworkManager] Init internet monitoring.".Colorize(Swatch.PO));
 
             try
             {
@@ -105,7 +105,7 @@ namespace NekoLib.Services
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("[NetworkManager] Internet monitoring cancelled.".Colorize(Palette.VibrantRed));
+                Debug.Log("[NetworkManager] Internet monitoring cancelled.".Colorize(Swatch.VR));
             }
         }
 

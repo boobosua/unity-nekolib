@@ -21,7 +21,7 @@ namespace NekoLib.Utilities
             var instance = ownerObject.AddComponent<T>();
             DontDestroyOnLoad(ownerObject);
 
-            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Palette.Lavender)}.");
+            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
 
             return instance;
         }

@@ -68,7 +68,7 @@ namespace NekoLib.Utilities
         /// </summary>
         public static void DrawAnnulusGizmo(Vector3 center, float innerRadius, float outerRadius, Vector3 up = default, Color color = default, int segments = 36)
         {
-            if (color == default) color = Palette.MintEmerald;
+            if (color == default) color = Swatch.ME;
             if (up == default) up = Vector3.up;
 
             // Create a coordinate system based on the up vector
@@ -111,7 +111,7 @@ namespace NekoLib.Utilities
         /// </summary>
         public static void DrawCircleGizmo(Vector3 center, float radius, Vector3 up = default, Color color = default, int segments = 64)
         {
-            if (color == default) color = Palette.MintEmerald;
+            if (color == default) color = Swatch.ME;
             if (up == default) up = Vector3.up;
 
             Vector3 forward = Vector3.Cross(up, Vector3.right);

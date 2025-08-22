@@ -41,7 +41,7 @@ namespace NekoLib.Utilities
 
                     for (int i = 1; i < allInstances.Length; i++)
                     {
-                        Debug.LogWarning($"Destroying duplicate instance of {allInstances[i].name.Colorize(Palette.GoldenAmber)}.");
+                        Debug.LogWarning($"Destroying duplicate instance of {allInstances[i].name.Colorize(Swatch.GA)}.");
                         Destroy(allInstances[i].gameObject);
                     }
                 }
@@ -50,7 +50,7 @@ namespace NekoLib.Utilities
 
                 if (s_instance == null)
                 {
-                    Debug.LogError($"Instance {typeof(T).Name.Colorize(Palette.GoldenAmber)} is null.");
+                    Debug.LogError($"Instance {typeof(T).Name.Colorize(Swatch.GA)} is null.");
                 }
 
                 return s_instance;
@@ -65,7 +65,7 @@ namespace NekoLib.Utilities
             }
             else if (s_instance != null && s_instance != this && !s_isInitializing)
             {
-                Debug.LogWarning($"Destroying duplicate instance of {gameObject.name.Colorize(Palette.GoldenAmber)}.");
+                Debug.LogWarning($"Destroying duplicate instance of {gameObject.name.Colorize(Swatch.GA)}.");
                 Destroy(gameObject);
             }
         }

@@ -24,7 +24,7 @@ namespace NekoLib.Utilities
                 {
                     if (s_applicationIsQuitting)
                     {
-                        Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Palette.GoldenAmber)} already destroyed on application quit. Won't create again - returning null.");
+                        Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Swatch.GA)} already destroyed on application quit. Won't create again - returning null.");
                         return null;
                     }
 
@@ -53,7 +53,7 @@ namespace NekoLib.Utilities
                         };
 
                         s_instance = obj.AddComponent<T>();
-                        Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Palette.Lavender)}.");
+                        Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
                     }
                     else
                     {
@@ -62,7 +62,7 @@ namespace NekoLib.Utilities
 
                         for (int i = 1; i < allInstances.Length; i++)
                         {
-                            Debug.LogWarning($"Destroyed duplicate instance of {allInstances[i].name.Colorize(Palette.GoldenAmber)}.");
+                            Debug.LogWarning($"Destroyed duplicate instance of {allInstances[i].name.Colorize(Swatch.GA)}.");
                             Destroy(allInstances[i].gameObject);
                         }
                     }
@@ -85,7 +85,7 @@ namespace NekoLib.Utilities
                 else if (s_instance != null && s_instance != this && !s_isInitializing)
                 {
                     // If there's already an instance and it's not this one, destroy this duplicate
-                    Debug.LogWarning($"Destroyed duplicate instance of {gameObject.name.Colorize(Palette.GoldenAmber)}.");
+                    Debug.LogWarning($"Destroyed duplicate instance of {gameObject.name.Colorize(Swatch.GA)}.");
                     Destroy(gameObject);
                     return;
                 }

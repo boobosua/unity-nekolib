@@ -48,7 +48,7 @@ namespace NekoLib
             if (_target == null)
                 return;
 
-            Gizmos.color = Palette.MintEmerald;
+            Gizmos.color = Swatch.ME;
             Gizmos.DrawLine(_target.position, transform.position);
             // Draw a circle representing the orbit path
             // Draw a circle representing the orbit path (horizontal plane)

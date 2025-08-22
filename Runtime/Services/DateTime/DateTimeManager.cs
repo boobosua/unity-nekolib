@@ -34,7 +34,7 @@ namespace NekoLib.Services
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from TimeAPI.io: {_syncedUtcTime}".Colorize(Palette.MintEmerald));
+                Debug.Log($"[DateTimeManager] Synced from TimeAPI.io: {_syncedUtcTime}".Colorize(Swatch.ME));
                 return;
             }
 
@@ -42,12 +42,12 @@ namespace NekoLib.Services
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from Google header: {_syncedUtcTime}".Colorize(Palette.MintEmerald));
+                Debug.Log($"[DateTimeManager] Synced from Google header: {_syncedUtcTime}".Colorize(Swatch.ME));
                 return;
             }
 
             _hasSynced = false;
-            Debug.LogWarning("[DateTimeManager] Failed to sync from all sources. Using fallback DateTime.UtcNow.".Colorize(Palette.VibrantRed));
+            Debug.LogWarning("[DateTimeManager] Failed to sync from all sources. Using fallback DateTime.UtcNow.".Colorize(Swatch.VR));
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeManager] TimeAPI.io error: {request.error}".Colorize(Palette.VibrantRed));
+                    Debug.LogWarning($"[DateTimeManager] TimeAPI.io error: {request.error}".Colorize(Swatch.VR));
                     return false;
                 }
 
@@ -86,17 +86,17 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io dateTime: {result.dateTime}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io dateTime: {result.dateTime}".Colorize(Swatch.VR));
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeManager] TimeAPI.io request was cancelled".Colorize(Palette.VibrantRed));
+                Debug.LogWarning("[DateTimeManager] TimeAPI.io request was cancelled".Colorize(Swatch.VR));
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io response: {e.Message}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io response: {e.Message}".Colorize(Swatch.VR));
                 return false;
             }
         }
@@ -123,14 +123,14 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeManager] Google request error: {request.error}".Colorize(Palette.VibrantRed));
+                    Debug.LogWarning($"[DateTimeManager] Google request error: {request.error}".Colorize(Swatch.VR));
                     return false;
                 }
 
                 var header = request.GetResponseHeader("Date");
                 if (string.IsNullOrEmpty(header))
                 {
-                    Debug.LogWarning("[DateTimeManager] 'Date' header missing from Google response.".Colorize(Palette.VibrantRed));
+                    Debug.LogWarning("[DateTimeManager] 'Date' header missing from Google response.".Colorize(Swatch.VR));
                     return false;
                 }
 
@@ -141,17 +141,17 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeManager] Failed to parse 'Date' header: {header}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[DateTimeManager] Failed to parse 'Date' header: {header}".Colorize(Swatch.VR));
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeManager] Google request was cancelled".Colorize(Palette.VibrantRed));
+                Debug.LogWarning("[DateTimeManager] Google request was cancelled".Colorize(Swatch.VR));
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeManager] Google request failed: {e.Message}".Colorize(Palette.VibrantRed));
+                Debug.LogWarning($"[DateTimeManager] Google request failed: {e.Message}".Colorize(Swatch.VR));
                 return false;
             }
         }
@@ -169,7 +169,7 @@ namespace NekoLib.Services
         {
             if (!_hasSynced)
             {
-                Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Palette.VibrantRed));
+                Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
                 return DateTime.UtcNow;
             }
 
