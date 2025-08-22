@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 namespace NekoLib.Utilities
 {
-    public static class EnumUtils
+    public static partial class Utils
     {
         /// <summary>
         /// Get a random enum value.

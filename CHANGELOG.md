@@ -1,3 +1,10 @@
+## [1.6.2] - 2025-08-23
+
+### Refactor Utilities
+
+- Add TimeSystem convenient class for shorter way to call for DateTimeManager.
+- Reorganize util methods into different scripts.
+
 ## [1.6.1] - 2025-08-22
 
 ### More Components and Extensions
