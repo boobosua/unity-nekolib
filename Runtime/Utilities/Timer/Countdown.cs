@@ -224,5 +224,12 @@ namespace NekoLib.Utilities
                 InvokeUpdate();
             }
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            OnLoop = null;
+            _loopStopCondition = null;
+        }
     }
 }

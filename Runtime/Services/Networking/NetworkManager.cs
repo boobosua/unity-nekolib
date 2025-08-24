@@ -8,13 +8,13 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Services
 {
-    public sealed class NetworkManager : LazySingleton<NetworkManager>
+    public sealed class NetworkManager : PersistentSingleton<NetworkManager>
     {
         private const float CheckIntervalSeconds = 5f;
         private const string PingUrl = "https://google.com";
         private const int TimeoutSeconds = 5;
 
-        public event Action<bool> OnInternetRefresh;
+        private static event Action<bool> OnInternetRefresh;
 
         public bool HasInternet { get; private set; } = false;
 
@@ -119,9 +119,36 @@ namespace NekoLib.Services
             _monitoringCts = null;
         }
 
-        private void OnDestroy()
+        /// <summary>
+        /// Adds a listener for internet connection refresh events.
+        /// </summary>
+        public static void AddInternetRefreshListener(Action<bool> listener)
+        {
+            if (HasInstance) OnInternetRefresh += listener;
+        }
+
+        /// <summary>
+        /// Removes a listener for internet connection refresh events.
+        /// </summary>
+        public static void RemoveInternetRefreshListener(Action<bool> listener)
+        {
+            if (HasInstance) OnInternetRefresh -= listener;
+        }
+
+        public void ClearAllInternetRefreshListeners()
+        {
+            OnInternetRefresh = null;
+        }
+
+        public void Dispose()
         {
             StopMonitoring();
+            ClearAllInternetRefreshListeners();
+        }
+
+        private void OnDestroy()
+        {
+            Dispose();
         }
     }
 }

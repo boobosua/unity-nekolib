@@ -9,7 +9,7 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Services
 {
-    public class DateTimeManager : LazySingleton<DateTimeManager>
+    public sealed class DateTimeManager : PersistentSingleton<DateTimeManager>
     {
         private const string PrimaryUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
         private const string HeaderUrl = "https://www.google.com";
@@ -163,7 +163,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets the current UTC time
+        /// Gets the current UTC time.
         /// </summary>
         public DateTime UtcNow()
         {
@@ -178,7 +178,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets the current server time in local timezone
+        /// Gets the current server time in local timezone.
         /// </summary>
         public DateTime Now()
         {
@@ -186,7 +186,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets today's date (midnight) in server time
+        /// Gets today's date (midnight) in server time.
         /// </summary>
         public DateTime TodayUtc()
         {
@@ -194,7 +194,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets today's date (midnight) in local timezone
+        /// Gets today's date (midnight) in local timezone.
         /// </summary>
         public DateTime Today()
         {
@@ -202,7 +202,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Checks if today (local time) is the start of the week (Monday by default)
+        /// Checks if today (local time) is the start of the week (Monday by default).
         /// </summary>
         public bool IsTodayStartOfWeek()
         {
@@ -210,7 +210,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Checks if today (UTC) is the start of the week (Monday by default)
+        /// Checks if today (UTC) is the start of the week (Monday by default).
         /// </summary>
         public bool IsTodayStartOfWeekUtc()
         {
@@ -218,7 +218,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Checks if today (local time) is the start of the month (1st day)
+        /// Checks if today (local time) is the start of the month (1st day).
         /// </summary>
         public bool IsTodayStartOfMonth()
         {
@@ -226,7 +226,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Checks if today (UTC) is the start of the month (1st day)
+        /// Checks if today (UTC) is the start of the month (1st day).
         /// </summary>
         public bool IsTodayStartOfMonthUtc()
         {
@@ -234,7 +234,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets tomorrow (00:00:00) from current local time
+        /// Gets tomorrow (00:00:00) from current local time.
         /// </summary>
         public DateTime NextDay()
         {
@@ -242,7 +242,7 @@ namespace NekoLib.Services
         }
 
         /// <summary>
-        /// Gets tomorrow (00:00:00) from current UTC time
+        /// Gets tomorrow (00:00:00) from current UTC time.
         /// </summary>
         public DateTime NextDayUtc()
         {

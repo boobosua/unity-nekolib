@@ -5,7 +5,7 @@ namespace NekoLib.Utilities
 {
     public class Stopwatch : TimerBase
     {
-        private readonly Func<bool> _stopCondition;
+        private Func<bool> _stopCondition;
 
         /// <summary>
         /// A timer that counts up until manually stopped or based on a certain predicate.
@@ -40,6 +40,12 @@ namespace NekoLib.Utilities
         {
             base.Stop();
             endTime = _elapsedTime;
+        }
+
+        override public void Dispose()
+        {
+            base.Dispose();
+            _stopCondition = null;
         }
     }
 }

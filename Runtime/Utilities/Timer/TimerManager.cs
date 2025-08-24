@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NekoLib.Utilities
 {
-    public class TimerManager : LazySingleton<TimerManager>
+    public sealed class TimerManager : PersistentSingleton<TimerManager>
     {
         private readonly List<TimerBase> _activeTimers = new();
         private readonly List<TimerBase> _timersToRemove = new();
@@ -112,8 +112,7 @@ namespace NekoLib.Utilities
             var timersToCleanup = GetTimersForObject(owner).ToList();
             foreach (var timer in timersToCleanup)
             {
-                timer.Stop();
-                UnregisterTimer(timer);
+                timer.StopAndDestroy();
             }
         }
 
@@ -127,8 +126,7 @@ namespace NekoLib.Utilities
             var timersToCleanup = GetTimersForComponent(component).ToList();
             foreach (var timer in timersToCleanup)
             {
-                timer.Stop();
-                UnregisterTimer(timer);
+                timer.StopAndDestroy();
             }
         }
 
@@ -136,6 +134,23 @@ namespace NekoLib.Utilities
         /// Get the total number of active timers.
         /// </summary>
         public int ActiveTimerCount => _activeTimers.Count;
+
+        private void OnDestroy()
+        {
+            foreach (var timer in _activeTimers)
+            {
+                timer?.Dispose();
+            }
+            _activeTimers.Clear();
+
+            foreach (var timer in _timersToRemove)
+            {
+                timer?.Dispose();
+            }
+            _timersToRemove.Clear();
+
+            Debug.Log("[TimerManager] Clearing all timers on destroy.");
+        }
 
 #if UNITY_EDITOR
         /// <summary>

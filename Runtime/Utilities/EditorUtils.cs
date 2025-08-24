@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace NekoLib.Utilities
 {
@@ -136,6 +139,15 @@ namespace NekoLib.Utilities
                 Gizmos.DrawLine(lastPoint, point);
                 lastPoint = point;
             }
+        }
+
+        /// <summary>
+        /// Checks if the reload domain is disabled in the editor.
+        /// </summary>
+        public static bool IsReloadDomainDisabled()
+        {
+            return EditorSettings.enterPlayModeOptionsEnabled &&
+                    EditorSettings.enterPlayModeOptions.HasFlag(EnterPlayModeOptions.DisableDomainReload);
         }
 #endif
     }

@@ -5,10 +5,8 @@ namespace NekoLib.Utilities
 {
     /// <summary>
     /// Singleton that will be destroyed when the scene is unloaded.
-    /// Can only be used within a scene.
     /// Do not reference the instance in OnDestroy(), OnDisable() or OnApplicationQuit().
     /// </summary>
-    /// <typeparam name="T"> The type of the singleton. </typeparam>
     [DisallowMultipleComponent]
     public abstract class SceneSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
@@ -19,7 +17,7 @@ namespace NekoLib.Utilities
         {
             get
             {
-                if (s_instance != null)
+                if (s_instance != null && s_instance.gameObject != null)
                 {
                     // Debug.Log($"Returning existing instance of {typeof(T).Name.Colorize(Palette.Lavender)}.");
                     return s_instance;
@@ -50,7 +48,7 @@ namespace NekoLib.Utilities
 
                 if (s_instance == null)
                 {
-                    Debug.LogError($"Instance {typeof(T).Name.Colorize(Swatch.GA)} is null.");
+                    Debug.LogError($"Instance {typeof(T).Name.Colorize(Swatch.GA)} is not in the scene.");
                 }
 
                 return s_instance;

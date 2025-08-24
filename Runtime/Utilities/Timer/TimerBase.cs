@@ -4,7 +4,7 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Utilities
 {
-    public abstract class TimerBase
+    public abstract class TimerBase : IDisposable
     {
         public event Action OnStart;
         public event Action OnStop;
@@ -119,7 +119,8 @@ namespace NekoLib.Utilities
         public void StopAndDestroy()
         {
             Stop();
-            TimerManager.Instance.UnregisterTimer(this);
+            if (TimerManager.HasInstance)
+                TimerManager.Instance.UnregisterTimer(this);
         }
 
         protected void InvokeStart()
@@ -157,5 +158,12 @@ namespace NekoLib.Utilities
         }
 
         public abstract void Tick(float deltaTime);
+
+        public virtual void Dispose()
+        {
+            OnStart = null;
+            OnStop = null;
+            OnUpdate = null;
+        }
     }
 }
