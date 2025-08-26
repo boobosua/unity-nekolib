@@ -1,3 +1,10 @@
+## [1.7.1] - 2025-08-26
+
+### Camera & GameObject Extensions
+
+- Add game object extensions to add layer mask.
+- Add camera extensions related to culling mask and FOV.
+
 ## [1.7.0] - 2025-08-24
 
 ### Refactor Singleton Pattern

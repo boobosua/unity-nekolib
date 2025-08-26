@@ -60,6 +60,46 @@ namespace NekoLib.Extensions
 
         [Obsolete("Use ClearChildTransforms instead.")]
         public static void DestroyChildren(this GameObject gameObject) => ClearChildTransforms(gameObject);
+
+        /// <summary>
+        /// Set GameObject to a specific layer.
+        /// </summary>
+        public static void SetLayer(this GameObject gameObject, int newLayer)
+        {
+            gameObject.layer = newLayer;
+        }
+
+        /// <summary>
+        /// Set GameObject to a layer using LayerMask (uses the first layer found in the mask).
+        /// </summary>
+        public static void SetLayer(this GameObject gameObject, LayerMask layerMask)
+        {
+            // Convert LayerMask to layer number by finding the first set bit
+            int layerNumber = 0;
+            int mask = layerMask.value;
+            while (mask > 1)
+            {
+                mask >>= 1;
+                layerNumber++;
+            }
+            gameObject.layer = layerNumber;
+        }
+
+        /// <summary>
+        /// Set GameObject to a layer by name.
+        /// </summary>
+        public static void SetLayer(this GameObject gameObject, string layerName)
+        {
+            int layerNumber = LayerMask.NameToLayer(layerName);
+            if (layerNumber != -1)
+            {
+                gameObject.layer = layerNumber;
+            }
+            else
+            {
+                Debug.LogWarning($"Layer '{layerName}' not found!");
+            }
+        }
     }
 }
 

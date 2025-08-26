@@ -186,5 +186,59 @@ namespace NekoLib.Extensions
         {
             return text.Replace(character.ToString(), $"<u>{character}</u>");
         }
+
+        /// <summary>
+        /// Wraps the entire string in <size> tags.
+        /// </summary>
+        public static string Size(this string text, float size)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
+            return $"<size={size}>{text}</size>";
+        }
+
+        /// <summary>
+        /// Wraps the specified word in <size> tags.
+        /// </summary>
+        public static string Size(this string text, float size, string word)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
+            return s_wordRegex.Replace(text, match => match.Value == word ? $"<size={size}>{word}</size>" : match.Value);
+        }
+
+        /// <summary>
+        /// Wraps the specified words in <size> tags.
+        /// </summary>
+        public static string Size(this string text, float size, params string[] words)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
+            foreach (var word in words)
+            {
+                text = text.Size(size, word);
+            }
+            return text;
+        }
+
+        /// <summary>
+        /// Wraps the entire string in <size> tags if the predicate is true.
+        /// </summary>
+        public static string Size(this string text, float size, Func<bool> predicate)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
+            return predicate() ? $"<size={size}>{text}</size>" : text;
+        }
+
+        /// <summary>
+        /// Wraps the specified word in <size> tags if the predicate is true.
+        /// </summary>
+        public static string Size(this string text, float size, Func<string, bool> predicate)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
+            return s_wordRegex.Replace(text, match => predicate(match.Value) ? $"<size={size}>{match.Value}</size>" : match.Value);
+        }
     }
 }
