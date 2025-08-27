@@ -1,3 +1,10 @@
+## [1.7.2] - 2025-08-27
+
+### New Time Extensions
+
+- Suppress warnings when getting time not from online sources.
+- New clock formats.
+
 ## [1.7.1] - 2025-08-26
 
 ### Camera & GameObject Extensions

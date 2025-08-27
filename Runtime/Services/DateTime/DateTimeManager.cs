@@ -18,6 +18,7 @@ namespace NekoLib.Services
         private DateTime _syncedUtcTime;
         private float _syncedAtRealtime;
         private bool _hasSynced;
+        private bool _suppressWarnings;
 
         /// <summary>
         /// Fetches the current time from the server.
@@ -156,6 +157,14 @@ namespace NekoLib.Services
             }
         }
 
+        /// <summary>
+        /// Suppresses warnings from the DateTimeManager.
+        /// </summary>
+        public void SuppressWarnings(bool suppress)
+        {
+            _suppressWarnings = suppress;
+        }
+
         [Serializable]
         private class TimeApiResponse
         {
@@ -169,7 +178,9 @@ namespace NekoLib.Services
         {
             if (!_hasSynced)
             {
-                Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
+                if (!_suppressWarnings)
+                    Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
+
                 return DateTime.UtcNow;
             }
 

@@ -15,7 +15,7 @@ namespace NekoLib.Extensions
 
         #region Time to String Formatting
         /// <summary>
-        /// Converts time in seconds to HH:MM:SS format
+        /// Converts time in seconds to HH:MM:SS format.
         /// </summary>
         public static string ToClock(this float time)
         {
@@ -23,7 +23,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts time in seconds to HH:MM:SS format
+        /// Converts time in seconds to HH:MM:SS format.
         /// </summary>
         public static string ToClock(this double time)
         {
@@ -31,11 +31,35 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts time in seconds to HH:MM:SS format
+        /// Converts time in seconds to HH:MM:SS format.
         /// </summary>
         public static string ToClock(this int time)
         {
             return TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss");
+        }
+
+        /// <summary>
+        /// Converts time in seconds to MM:SS format.
+        /// </summary>
+        public static string ToShortClock(this float time)
+        {
+            return TimeSpan.FromSeconds(time).ToString(@"mm\:ss");
+        }
+
+        /// <summary>
+        /// Converts time in seconds to MM:SS format.
+        /// </summary>
+        public static string ToShortClock(this double time)
+        {
+            return TimeSpan.FromSeconds(time).ToString(@"mm\:ss");
+        }
+
+        /// <summary>
+        /// Converts time in seconds to MM:SS format.
+        /// </summary>
+        public static string ToShortClock(this int time)
+        {
+            return TimeSpan.FromSeconds(time).ToString(@"mm\:ss");
         }
 
         /// <summary>
@@ -99,6 +123,24 @@ namespace NekoLib.Extensions
         #endregion
 
         #region DateTime Time Calculations
+
+        /// <summary>
+        /// Gets the time span from this DateTime to now (for past times).
+        /// </summary>
+        public static TimeSpan TimeUntilNow(this DateTime time)
+        {
+            var now = DateTimeManager.Instance.Now();
+            return now - time;
+        }
+
+        /// <summary>
+        /// Gets the time span from this DateTime to now (UTC, for past times).
+        /// </summary>
+        public static TimeSpan TimeUntilNowUtc(this DateTime time)
+        {
+            var now = DateTimeManager.Instance.UtcNow();
+            return now - time;
+        }
 
         /// <summary>
         /// Gets seconds elapsed from this DateTime to now (for past times)
@@ -185,6 +227,24 @@ namespace NekoLib.Extensions
         #endregion
 
         #region DateTime Future Time Calculations
+
+        /// <summary>
+        /// Gets the time span from this DateTime to now (for future times).
+        /// </summary>
+        public static TimeSpan TimeFromNow(this DateTime time)
+        {
+            var now = DateTimeManager.Instance.Now();
+            return time - now;
+        }
+
+        /// <summary>
+        /// Gets the time span from this DateTime to now (UTC, for past times).
+        /// </summary>
+        public static TimeSpan TimeFromNowUtc(this DateTime time)
+        {
+            var now = DateTimeManager.Instance.UtcNow();
+            return time - now;
+        }
 
         /// <summary>
         /// Gets seconds from now until this DateTime (for future times)
