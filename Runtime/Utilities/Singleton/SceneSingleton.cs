@@ -12,6 +12,9 @@ namespace NekoLib.Utilities
     {
         private static T s_instance;
         private static bool s_isInitializing = false;
+        public static bool HasInstance =>
+            s_instance != null &&
+            s_instance.gameObject != null;
 
         public static T Instance
         {
@@ -71,8 +74,8 @@ namespace NekoLib.Utilities
 #if UNITY_EDITOR
         protected virtual void OnValidate()
         {
-            if (gameObject.name != $"{typeof(T).Name} (Singleton {gameObject.GetInstanceID()})")
-                gameObject.name = $"{typeof(T).Name} (Singleton {gameObject.GetInstanceID()})";
+            if (gameObject.name != $"{typeof(T).Name} (Singleton)")
+                gameObject.name = $"{typeof(T).Name} (Singleton)";
         }
 #endif
     }

@@ -97,8 +97,8 @@ namespace NekoLib.Utilities
 #if UNITY_EDITOR
         protected virtual void OnValidate()
         {
-            if (gameObject.name != $"{typeof(T).Name} (Singleton {gameObject.GetInstanceID()})")
-                gameObject.name = $"{typeof(T).Name} (Singleton {gameObject.GetInstanceID()})";
+            if (gameObject.name != $"{typeof(T).Name} (Singleton)")
+                gameObject.name = $"{typeof(T).Name} (Singleton)";
         }
 
         private static void ResetFields()

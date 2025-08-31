@@ -28,9 +28,6 @@ namespace NekoLib.Components
         public bool IsStopped => _isStopped;
 
         private bool _paused = false;
-        /// <summary>
-        /// Gets whether the timer is paused. A paused timer does not process.
-        /// </summary>
         public bool Paused => _paused;
 
         public float TimeLeft
@@ -65,9 +62,9 @@ namespace NekoLib.Components
             }
         }
 
-        [Space(5)] public UnityEvent OnBegin;
-        [Space(5)] public UnityEvent OnUpdate;
-        [Space(5)] public UnityEvent OnTimeOut;
+        [Space(5), SerializeField] private UnityEvent _onBegin;
+        [Space(5), SerializeField] private UnityEvent _onUpdate;
+        [Space(5), SerializeField] private UnityEvent _onTimeOut;
 
         private void Awake()
         {
@@ -85,11 +82,11 @@ namespace NekoLib.Components
             float deltaTime = _ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
             _elapsedTime += deltaTime;
 
-            OnUpdate?.Invoke();
+            _onUpdate?.Invoke();
 
             if (_elapsedTime >= _waitTime)
             {
-                OnTimeOut?.Invoke();
+                _onTimeOut?.Invoke();
 
                 if (_oneShot)
                 {
@@ -105,26 +102,22 @@ namespace NekoLib.Components
         public void AddBeginListener(UnityAction action)
         {
 #if UNITY_EDITOR
-            // Only add persistent listener if the target is a Unity Object
             if (action.Target is UnityEngine.Object || action.Method.IsStatic)
             {
                 try
                 {
-                    UnityEventTools.AddPersistentListener(OnBegin, action);
+                    UnityEventTools.AddPersistentListener(_onBegin, action);
                 }
                 catch (Exception)
                 {
-                    // Silently fail for non-serializable targets (lambdas, non-Unity objects)
                 }
             }
             else
             {
-                // For non-Unity objects, fall back to runtime listener
-                OnBegin.AddListener(action);
+                _onBegin.AddListener(action);
             }
 #else
-            // In builds, always use runtime listeners
-            OnBegin.AddListener(action);
+            _onBegin.AddListener(action);
 #endif
         }
 
@@ -135,45 +128,40 @@ namespace NekoLib.Components
             {
                 try
                 {
-                    UnityEventTools.RemovePersistentListener(OnBegin, action);
+                    UnityEventTools.RemovePersistentListener(_onBegin, action);
                 }
                 catch (Exception)
                 {
-                    // Silently fail for non-serializable targets
                 }
             }
             else
             {
-                OnBegin.RemoveListener(action);
+                _onBegin.RemoveListener(action);
             }
 #else
-            OnBegin.RemoveListener(action);
+            _onBegin.RemoveListener(action);
 #endif
         }
 
         public void AddTimeOutListener(UnityAction action)
         {
 #if UNITY_EDITOR
-            // Only add persistent listener if the target is a Unity Object
             if (action.Target is UnityEngine.Object || action.Method.IsStatic)
             {
                 try
                 {
-                    UnityEventTools.AddPersistentListener(OnTimeOut, action);
+                    UnityEventTools.AddPersistentListener(_onTimeOut, action);
                 }
                 catch (Exception)
                 {
-                    // Silently fail for non-serializable targets (lambdas, non-Unity objects)
                 }
             }
             else
             {
-                // For non-Unity objects, fall back to runtime listener
-                OnTimeOut.AddListener(action);
+                _onTimeOut.AddListener(action);
             }
 #else
-            // In builds, always use runtime listeners
-            OnTimeOut.AddListener(action);
+            _onTimeOut.AddListener(action);
 #endif
         }
 
@@ -184,19 +172,18 @@ namespace NekoLib.Components
             {
                 try
                 {
-                    UnityEventTools.RemovePersistentListener(OnTimeOut, action);
+                    UnityEventTools.RemovePersistentListener(_onTimeOut, action);
                 }
                 catch (Exception)
                 {
-                    // Silently fail for non-serializable targets
                 }
             }
             else
             {
-                OnTimeOut.RemoveListener(action);
+                _onTimeOut.RemoveListener(action);
             }
 #else
-            OnTimeOut.RemoveListener(action);
+            _onTimeOut.RemoveListener(action);
 #endif
         }
 
@@ -207,21 +194,18 @@ namespace NekoLib.Components
             {
                 try
                 {
-                    UnityEventTools.AddPersistentListener(OnUpdate, action);
+                    UnityEventTools.AddPersistentListener(_onUpdate, action);
                 }
                 catch (Exception)
                 {
-                    // Silently fail for non-serializable targets
                 }
             }
             else
             {
-                // For non-Unity objects, fall back to runtime listener
-                OnUpdate.AddListener(action);
+                _onUpdate.AddListener(action);
             }
 #else
-            // In builds, always use runtime listeners
-            OnUpdate.AddListener(action);
+            _onUpdate.AddListener(action);
 #endif
         }
 
@@ -232,7 +216,7 @@ namespace NekoLib.Components
             {
                 try
                 {
-                    UnityEventTools.RemovePersistentListener(OnUpdate, action);
+                    UnityEventTools.RemovePersistentListener(_onUpdate, action);
                 }
                 catch (Exception)
                 {
@@ -241,41 +225,39 @@ namespace NekoLib.Components
             }
             else
             {
-                OnUpdate.RemoveListener(action);
+                _onUpdate.RemoveListener(action);
             }
 #else
-            OnUpdate.RemoveListener(action);
+            _onUpdate.RemoveListener(action);
 #endif
         }
 
         public void RemoveAllListeners()
         {
-            OnBegin.RemoveAllListeners();
-            OnUpdate.RemoveAllListeners();
-            OnTimeOut.RemoveAllListeners();
+            _onBegin.RemoveAllListeners();
+            _onUpdate.RemoveAllListeners();
+            _onTimeOut.RemoveAllListeners();
 #if UNITY_EDITOR
-            for (int i = OnBegin.GetPersistentEventCount() - 1; i >= 0; i--)
+            for (int i = _onBegin.GetPersistentEventCount() - 1; i >= 0; i--)
             {
-                UnityEventTools.RemovePersistentListener(OnBegin, i);
+                UnityEventTools.RemovePersistentListener(_onBegin, i);
             }
 
-            for (int i = OnUpdate.GetPersistentEventCount() - 1; i >= 0; i--)
+            for (int i = _onUpdate.GetPersistentEventCount() - 1; i >= 0; i--)
             {
-                UnityEventTools.RemovePersistentListener(OnUpdate, i);
+                UnityEventTools.RemovePersistentListener(_onUpdate, i);
             }
 
-            for (int i = OnTimeOut.GetPersistentEventCount() - 1; i >= 0; i--)
+            for (int i = _onTimeOut.GetPersistentEventCount() - 1; i >= 0; i--)
             {
-                UnityEventTools.RemovePersistentListener(OnTimeOut, i);
+                UnityEventTools.RemovePersistentListener(_onTimeOut, i);
             }
 #endif
         }
 
         /// <summary>
         /// Starts the timer, or resets the timer if it was started already.
-        /// If timeSec is greater than 0, this value is used for the wait_time.
         /// </summary>
-        /// <param name="timeSec">Optional time to override wait_time</param>
         public void StartTimer(float timeSec = -1f)
         {
             if (timeSec > 0f)
@@ -284,9 +266,12 @@ namespace NekoLib.Components
             _isStopped = false;
             _paused = false;
             Reset();
-            OnBegin?.Invoke();
+            _onBegin?.Invoke();
         }
 
+        /// <summary>
+        /// Resumes the timer if it is paused.
+        /// </summary>
         public void Resume()
         {
             if (_paused)
@@ -295,6 +280,9 @@ namespace NekoLib.Components
             }
         }
 
+        /// <summary>
+        /// Pauses the timer if it is running.
+        /// </summary>
         public void Pause()
         {
             if (!_paused)
@@ -303,17 +291,26 @@ namespace NekoLib.Components
             }
         }
 
+        /// <summary>
+        /// Stops the timer and resets its state.
+        /// </summary>
         public void Stop()
         {
             _isStopped = true;
             Reset();
         }
 
+        /// <summary>
+        /// Sets whether the timer is one-shot.
+        /// </summary>
         public void SetOneShot(bool oneShot)
         {
             _oneShot = oneShot;
         }
 
+        /// <summary>
+        /// Sets the wait time for the timer.
+        /// </summary>
         public void SetWaitTime(float waitTime)
         {
             _waitTime = Mathf.Max(waitTime, 0f);

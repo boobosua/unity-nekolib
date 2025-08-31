@@ -182,9 +182,9 @@ namespace NekoLib.Components
             DrawSectionHeader("🎯 Events", new Color(0.8f, 0.4f, 0.8f, 1f));
             EditorGUILayout.Space(8);
 
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("OnBegin"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("OnTimeOut"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("OnUpdate"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onBegin"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onTimeOut"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onUpdate"));
 
             EditorGUILayout.Space(10);
 

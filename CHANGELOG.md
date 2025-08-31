@@ -1,3 +1,11 @@
+## [1.7.3] - 2025-09-01
+
+### Simple sprite & UI animator
+
+- Sprite animator to animate an array of sprites on a SpriteRenderer.
+- UI sprite animator to animate an array of sprites on an Image.
+- Refactor singleton pattern.
+
 ## [1.7.2] - 2025-08-27
 
 ### New Time Extensions
