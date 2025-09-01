@@ -73,11 +73,6 @@ countdown.Start();
 // Monitor progress
 float progress = countdown.Progress; // 0.0 to 1.0
 string timeLeft = countdown.InverseClockFormat; // "MM:SS"
-
-// Control timers
-countdown.Pause();
-countdown.Resume();
-countdown.Stop();
 ```
 
 ## Color Swatch
@@ -88,14 +83,8 @@ Pre-defined color constants for consistent theming.
 // Available colors
 Color darkGray = Swatch.DG;
 Color vibrantRed = Swatch.VR;
-Color deepEmerald = Swatch.DE;
-Color vibrantCyan = Swatch.VC;
 
 // Usage in debug messages
 Debug.Log("Success!".Colorize(Swatch.DE));
-Debug.LogError("Error!".Colorize(Swatch.VR));
-
-// UI theming
 button.color = Swatch.VC;
-errorText.color = Swatch.VR;
 ```

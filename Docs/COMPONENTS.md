@@ -82,3 +82,50 @@ Frame-based sprite animation for UI Image components.
 // Same as SpriteAnimator but for UI Images
 // Assign sprites and configure timing in inspector
 ```
+
+## Background Scrolling Components
+
+### ScrollingImage
+
+Scrolling background using UI Image component.
+
+```csharp
+// Basic control
+scrollingImage.Play();
+scrollingImage.Pause();
+scrollingImage.Stop();
+
+// Runtime speed changes
+scrollingImage.SetSpeed(-2f, 0f);
+scrollingImage.SetSpeedX(-3f);
+```
+
+### ScrollingRawImage
+
+Scrolling background using RawImage component.
+
+```csharp
+// Same API as ScrollingImage
+scrollingRawImage.SetSpeed(-1.5f, 0f);
+bool isPlaying = scrollingRawImage.IsPlaying;
+```
+
+### ScrollingSpriteRenderer
+
+Scrolling background using SpriteRenderer.
+
+```csharp
+// Same API, for world space objects
+scrollingSpriteRenderer.SetSpeed(-2f, 0f);
+Vector2 speed = scrollingSpriteRenderer.Speed;
+```
+
+### ScrollingMeshRenderer
+
+Scrolling background using MeshRenderer.
+
+```csharp
+// Same API, best performance
+scrollingMeshRenderer.SetSpeed(-2f, 0f);
+scrollingMeshRenderer.Resume();
+```

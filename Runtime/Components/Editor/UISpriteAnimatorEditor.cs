@@ -3,6 +3,7 @@ using UnityEditor;
 
 namespace NekoLib.Components
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(UISpriteAnimator))]
     public class UISpriteAnimatorEditor : SpriteAnimatorEditorBase
     {

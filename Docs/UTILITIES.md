@@ -2,10 +2,6 @@
 
 Static utility classes for common operations.
 
-> **Note:** Core systems (Timer, Singletons, Color Swatches) are documented in **[Core](CORE.md)**.
-
-## Static Utilities
-
 ### TimeUtils
 
 Cached WaitForSeconds to reduce garbage collection.
@@ -156,8 +152,6 @@ UI element manipulation and utilities.
 // Check if pointer is over UI element
 bool isOverUI = Utils.IsPointerOverUI(LayerMask.GetMask("UI"));
 ```
-
-## Editor Utilities
 
 ### EditorUtils
 

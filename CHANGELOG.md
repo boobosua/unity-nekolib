@@ -1,3 +1,13 @@
+## [1.8.1] - 2025-09-02
+
+### Scrolling Background Components (Parallax)
+
+- Add ScrollingImage component for UI Image backgrounds.
+- Add ScrollingRawImage component for UI RawImage backgrounds.
+- Add ScrollingSprite component for SpriteRenderer backgrounds.
+- Add ScrollingMesh component for MeshRenderer backgrounds.
+- Fix document formatting.
+
 ## [1.8.0] - 2025-09-01
 
 ### Update Library Structure

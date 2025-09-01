@@ -3,6 +3,7 @@ using UnityEditor;
 
 namespace NekoLib.Components
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(LookAtCamera))]
     public class LookAtCameraEditor : Editor
     {

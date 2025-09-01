@@ -5,6 +5,7 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Components
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(Ticker))]
     public class TickerEditor : Editor
     {
