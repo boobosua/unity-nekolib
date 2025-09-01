@@ -13,11 +13,8 @@ namespace NekoLib.Components
             var timer = (Timer)target;
             serializedObject.Update();
 
-            EditorGUILayout.Space(10);
-
             // === TIMER SETTINGS ===
-            DrawSectionHeader("⚙️ Settings", new Color(0.4f, 0.7f, 1f, 1f));
-            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_waitTime"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_autoStart"));
@@ -34,13 +31,12 @@ namespace NekoLib.Components
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_oneShot"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_ignoreTimeScale"));
 
-            EditorGUILayout.Space(15);
-            DrawSeparator();
-            EditorGUILayout.Space(15);
+            // EditorGUILayout.Space(15);
+            // DrawSeparator();
+            // EditorGUILayout.Space(15);
 
             // === TIMER PROGRESS ===
-            DrawSectionHeader("📊 Progress", new Color(0.9f, 0.6f, 0.2f, 1f));
-            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Progress", EditorStyles.boldLabel);
 
             // Progress bar with percentage
             float progress = 0f;
@@ -66,7 +62,7 @@ namespace NekoLib.Components
             // Draw progress fill
             if (progress > 0)
             {
-                Rect fillRect = new Rect(progressRect.x, progressRect.y, progressRect.width * progress, progressRect.height);
+                Rect fillRect = new(progressRect.x, progressRect.y, progressRect.width * progress, progressRect.height);
 
                 if (isCompleted)
                 {
@@ -82,7 +78,7 @@ namespace NekoLib.Components
             GUI.color = originalColor;
 
             // Draw progress text
-            GUIStyle progressTextStyle = new GUIStyle(EditorStyles.boldLabel)
+            GUIStyle progressTextStyle = new(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 11
@@ -90,7 +86,7 @@ namespace NekoLib.Components
             progressTextStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
             GUI.Label(progressRect, progressText, progressTextStyle);
 
-            EditorGUILayout.Space(8);
+            EditorGUILayout.Space(5);
 
             // Clock display with better styling
             string clockText;
@@ -101,23 +97,23 @@ namespace NekoLib.Components
 
                 if (timer.IsStopped)
                 {
-                    clockText = $"⏱️ {formattedTime} (Stopped)";
+                    clockText = $"{formattedTime} (Stopped)";
                 }
                 else if (timer.Paused)
                 {
-                    clockText = $"⏱️ {formattedTime} (Paused)";
+                    clockText = $"{formattedTime} (Paused)";
                 }
                 else
                 {
-                    clockText = $"⏱️ {formattedTime} (Running)";
+                    clockText = $"{formattedTime} (Running)";
                 }
             }
             else
             {
-                clockText = "⏱️ 00:00:00 (Editor)";
+                clockText = "00:00:00 (Editor)";
             }
 
-            GUIStyle clockStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
+            GUIStyle clockStyle = new(EditorStyles.centeredGreyMiniLabel)
             {
                 fontSize = 13,
                 fontStyle = FontStyle.Bold
@@ -174,52 +170,51 @@ namespace NekoLib.Components
                 Repaint();
             }
 
-            EditorGUILayout.Space(15);
-            DrawSeparator();
-            EditorGUILayout.Space(15);
+            // EditorGUILayout.Space(15);
+            // DrawSeparator();
+            // EditorGUILayout.Space(15);
 
             // === EVENTS ===
-            DrawSectionHeader("🎯 Events", new Color(0.8f, 0.4f, 0.8f, 1f));
-            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_onBegin"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onTimeOut"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_onUpdate"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("_onTimeOut"));
 
             EditorGUILayout.Space(10);
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawSectionHeader(string title, Color accentColor)
-        {
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleLeft
-            };
+        // private void DrawSectionHeader(string title, Color accentColor)
+        // {
+        //     GUIStyle headerStyle = new(EditorStyles.boldLabel)
+        //     {
+        //         fontSize = 14,
+        //         fontStyle = FontStyle.Bold,
+        //         alignment = TextAnchor.MiddleLeft
+        //     };
 
-            headerStyle.normal.textColor = accentColor;
+        //     headerStyle.normal.textColor = accentColor;
 
-            Rect headerRect = EditorGUILayout.GetControlRect(false, 20);
-            GUI.Label(headerRect, title, headerStyle);
-        }
+        //     Rect headerRect = EditorGUILayout.GetControlRect(false, 20);
+        //     GUI.Label(headerRect, title, headerStyle);
+        // }
 
-        private void DrawSeparator()
-        {
-            Rect separatorRect = EditorGUILayout.GetControlRect(false, 1);
-            separatorRect.height = 1;
+        // private void DrawSeparator()
+        // {
+        //     Rect separatorRect = EditorGUILayout.GetControlRect(false, 1);
+        //     separatorRect.height = 1;
 
-            Color separatorColor = EditorGUIUtility.isProSkin
-                ? new Color(0.4f, 0.4f, 0.4f, 1f)
-                : new Color(0.6f, 0.6f, 0.6f, 1f);
+        //     Color separatorColor = EditorGUIUtility.isProSkin
+        //         ? new Color(0.4f, 0.4f, 0.4f, 1f)
+        //         : new Color(0.6f, 0.6f, 0.6f, 1f);
 
-            Color originalColor = GUI.color;
-            GUI.color = separatorColor;
-            GUI.DrawTexture(separatorRect, EditorGUIUtility.whiteTexture);
-            GUI.color = originalColor;
-        }
+        //     Color originalColor = GUI.color;
+        //     GUI.color = separatorColor;
+        //     GUI.DrawTexture(separatorRect, EditorGUIUtility.whiteTexture);
+        //     GUI.color = originalColor;
+        // }
     }
 }
 #endif

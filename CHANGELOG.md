@@ -1,3 +1,10 @@
+## [1.7.4] - 2025-09-01
+
+### Redesign Component Inspector
+
+- Change designs for Timer, AutoDestroy and SpriteAnimators.
+- Switch back to normal UnityEvent add/remove listeners for all components.
+
 ## [1.7.3] - 2025-09-01
 
 ### Simple sprite & UI animator

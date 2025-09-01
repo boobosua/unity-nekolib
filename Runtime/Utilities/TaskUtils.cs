@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace NekoLib.Utilities
 {
+    public static partial class Utils
+    {
+
+    }
+
     public class YieldTask : CustomYieldInstruction
     {
         public Task Task { get; }

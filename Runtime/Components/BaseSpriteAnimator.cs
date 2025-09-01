@@ -1,9 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-#if UNITY_EDITOR
-using UnityEditor.Events;
-#endif
 using NekoLib.Extensions;
 
 namespace NekoLib.Components
@@ -36,6 +33,9 @@ namespace NekoLib.Components
         [SerializeField] protected UnityEvent _onAnimationComplete;
         [SerializeField] protected UnityEvent _onLoopComplete;
 
+        public UnityEvent OnAnimationComplete => _onAnimationComplete;
+        public UnityEvent OnLoopComplete => _onLoopComplete;
+
         [SerializeField] protected int _currentFrame = 0;
         [SerializeField] protected bool _isPlaying = false;
         [SerializeField] protected bool _isReversed = false;
@@ -46,15 +46,15 @@ namespace NekoLib.Components
         public class FrameEvent
         {
             [SerializeField] private int _frameIndex;
-            [SerializeField] private UnityEvent _event;
+            [SerializeField, Space(6)] private UnityEvent _onFrame;
 
             public int FrameIndex => _frameIndex;
-            public UnityEvent Event => _event;
+            public UnityEvent OnFrame => _onFrame;
 
             public FrameEvent(int frameIndex)
             {
                 _frameIndex = frameIndex;
-                _event = new UnityEvent();
+                _onFrame = new UnityEvent();
             }
         }
 
@@ -171,7 +171,7 @@ namespace NekoLib.Components
 
                 if (frameEvent.FrameIndex == _currentFrame)
                 {
-                    frameEvent.Event?.Invoke();
+                    frameEvent.OnFrame?.Invoke();
                 }
             }
         }
@@ -305,56 +305,6 @@ namespace NekoLib.Components
         {
             SetLoopMode(LoopMode.Once);
             Restart();
-        }
-
-        /// <summary>
-        /// Add a listener to be called when the animation completes.
-        /// </summary>
-        public void AddCompleteListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.AddPersistentListener(_onAnimationComplete, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onAnimationComplete.AddListener(action);
-            }
-#else
-            _onAnimationComplete.AddListener(action);
-#endif
-        }
-
-        /// <summary>
-        /// Remove a listener from being called when the animation completes.
-        /// </summary>
-        public void RemoveCompleteListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.RemovePersistentListener(_onAnimationComplete, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onAnimationComplete.RemoveListener(action);
-            }
-#else
-            _onAnimationComplete.RemoveListener(action);
-#endif
         }
     }
 }

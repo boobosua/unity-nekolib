@@ -2,9 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 using NekoLib.Extensions;
-#if UNITY_EDITOR
-using UnityEditor.Events;
-#endif
+using NekoLib.Utilities;
 
 namespace NekoLib.Components
 {
@@ -62,9 +60,21 @@ namespace NekoLib.Components
             }
         }
 
+        public string ShortClockFormat
+        {
+            get
+            {
+                return _elapsedTime.ToShortClock();
+            }
+        }
+
         [Space(5), SerializeField] private UnityEvent _onBegin;
-        [Space(5), SerializeField] private UnityEvent _onUpdate;
+        [Space(5), SerializeField] private FloatEvent _onUpdate;
         [Space(5), SerializeField] private UnityEvent _onTimeOut;
+
+        public UnityEvent OnBegin => _onBegin;
+        public FloatEvent OnUpdate => _onUpdate;
+        public UnityEvent OnTimeOut => _onTimeOut;
 
         private void Awake()
         {
@@ -82,7 +92,7 @@ namespace NekoLib.Components
             float deltaTime = _ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
             _elapsedTime += deltaTime;
 
-            _onUpdate?.Invoke();
+            _onUpdate?.Invoke(_elapsedTime);
 
             if (_elapsedTime >= _waitTime)
             {
@@ -97,162 +107,6 @@ namespace NekoLib.Components
                     Reset();
                 }
             }
-        }
-
-        public void AddBeginListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.AddPersistentListener(_onBegin, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onBegin.AddListener(action);
-            }
-#else
-            _onBegin.AddListener(action);
-#endif
-        }
-
-        public void RemoveBeginListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.RemovePersistentListener(_onBegin, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onBegin.RemoveListener(action);
-            }
-#else
-            _onBegin.RemoveListener(action);
-#endif
-        }
-
-        public void AddTimeOutListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.AddPersistentListener(_onTimeOut, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onTimeOut.AddListener(action);
-            }
-#else
-            _onTimeOut.AddListener(action);
-#endif
-        }
-
-        public void RemoveTimeOutListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.RemovePersistentListener(_onTimeOut, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onTimeOut.RemoveListener(action);
-            }
-#else
-            _onTimeOut.RemoveListener(action);
-#endif
-        }
-
-        public void AddUpdateListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.AddPersistentListener(_onUpdate, action);
-                }
-                catch (Exception)
-                {
-                }
-            }
-            else
-            {
-                _onUpdate.AddListener(action);
-            }
-#else
-            _onUpdate.AddListener(action);
-#endif
-        }
-
-        public void RemoveUpdateListener(UnityAction action)
-        {
-#if UNITY_EDITOR
-            if (action.Target is UnityEngine.Object || action.Method.IsStatic)
-            {
-                try
-                {
-                    UnityEventTools.RemovePersistentListener(_onUpdate, action);
-                }
-                catch (Exception)
-                {
-                    // Silently fail for non-serializable targets
-                }
-            }
-            else
-            {
-                _onUpdate.RemoveListener(action);
-            }
-#else
-            _onUpdate.RemoveListener(action);
-#endif
-        }
-
-        public void RemoveAllListeners()
-        {
-            _onBegin.RemoveAllListeners();
-            _onUpdate.RemoveAllListeners();
-            _onTimeOut.RemoveAllListeners();
-#if UNITY_EDITOR
-            for (int i = _onBegin.GetPersistentEventCount() - 1; i >= 0; i--)
-            {
-                UnityEventTools.RemovePersistentListener(_onBegin, i);
-            }
-
-            for (int i = _onUpdate.GetPersistentEventCount() - 1; i >= 0; i--)
-            {
-                UnityEventTools.RemovePersistentListener(_onUpdate, i);
-            }
-
-            for (int i = _onTimeOut.GetPersistentEventCount() - 1; i >= 0; i--)
-            {
-                UnityEventTools.RemovePersistentListener(_onTimeOut, i);
-            }
-#endif
         }
 
         /// <summary>
