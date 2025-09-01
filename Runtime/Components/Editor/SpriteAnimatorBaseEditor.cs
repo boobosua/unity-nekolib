@@ -4,8 +4,8 @@ using UnityEditor;
 
 namespace NekoLib.Components
 {
-    [CustomEditor(typeof(BaseSpriteAnimator), true)]
-    public class BaseSpriteAnimatorEditor : Editor
+    [CustomEditor(typeof(SpriteAnimatorBase), true)]
+    public class SpriteAnimatorEditorBase : Editor
     {
         private SerializedProperty _sprites;
         private SerializedProperty _frameRate;
@@ -24,7 +24,7 @@ namespace NekoLib.Components
         private Sprite[] _previousSprites;
         private int _selectedFrameToAdd = 0;
         private bool _frameEventsFoldout = true;
-        private BaseSpriteAnimator.LoopMode _previousLoopMode;
+        private SpriteAnimatorBase.LoopMode _previousLoopMode;
 
         protected virtual void OnEnable()
         {
@@ -75,16 +75,16 @@ namespace NekoLib.Components
             EditorGUILayout.PropertyField(_frameRate);
 
             // Check for loop mode changes before drawing the property
-            BaseSpriteAnimator.LoopMode currentLoopMode = (BaseSpriteAnimator.LoopMode)_loopMode.enumValueIndex;
+            SpriteAnimatorBase.LoopMode currentLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(_loopMode);
             if (EditorGUI.EndChangeCheck())
             {
                 // Loop mode changed, check if we need to clear events
-                BaseSpriteAnimator.LoopMode newLoopMode = (BaseSpriteAnimator.LoopMode)_loopMode.enumValueIndex;
-                if ((currentLoopMode == BaseSpriteAnimator.LoopMode.Loop ||
-                     currentLoopMode == BaseSpriteAnimator.LoopMode.PingPong) &&
-                    newLoopMode == BaseSpriteAnimator.LoopMode.Once)
+                SpriteAnimatorBase.LoopMode newLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
+                if ((currentLoopMode == SpriteAnimatorBase.LoopMode.Loop ||
+                     currentLoopMode == SpriteAnimatorBase.LoopMode.PingPong) &&
+                    newLoopMode == SpriteAnimatorBase.LoopMode.Once)
                 {
                     ClearUnityEvent(_onLoopComplete);
                     // Debug.Log("Cleared OnLoopComplete events because LoopMode changed to Once");
@@ -262,18 +262,18 @@ namespace NekoLib.Components
         {
             EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
 
-            BaseSpriteAnimator.LoopMode currentLoopMode = (BaseSpriteAnimator.LoopMode)_loopMode.enumValueIndex;
+            SpriteAnimatorBase.LoopMode currentLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
 
             // Always show onAnimationComplete
             EditorGUILayout.PropertyField(_onAnimationComplete);
 
             // Show onLoopComplete with context
-            if (currentLoopMode == BaseSpriteAnimator.LoopMode.Loop ||
-                currentLoopMode == BaseSpriteAnimator.LoopMode.PingPong)
+            if (currentLoopMode == SpriteAnimatorBase.LoopMode.Loop ||
+                currentLoopMode == SpriteAnimatorBase.LoopMode.PingPong)
             {
                 EditorGUILayout.PropertyField(_onLoopComplete);
             }
-            else if (currentLoopMode == BaseSpriteAnimator.LoopMode.Once)
+            else if (currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
             {
                 // Check if OnLoopComplete has any events
                 SerializedProperty persistentCalls = _onLoopComplete.FindPropertyRelative("m_PersistentCalls.m_Calls");
@@ -332,7 +332,7 @@ namespace NekoLib.Components
             // Control buttons
             GUILayout.BeginHorizontal();
 
-            BaseSpriteAnimator animator = (BaseSpriteAnimator)target;
+            SpriteAnimatorBase animator = (SpriteAnimatorBase)target;
 
             // Play button
             if (GUILayout.Button("Play", GUILayout.Height(30)))
@@ -432,19 +432,19 @@ namespace NekoLib.Components
 
         private void CacheCurrentLoopMode()
         {
-            _previousLoopMode = (BaseSpriteAnimator.LoopMode)_loopMode.enumValueIndex;
+            _previousLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
         }
 
         private void CheckForLoopModeChanges()
         {
-            BaseSpriteAnimator.LoopMode currentLoopMode = (BaseSpriteAnimator.LoopMode)_loopMode.enumValueIndex;
+            SpriteAnimatorBase.LoopMode currentLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
 
             if (currentLoopMode != _previousLoopMode)
             {
                 // Clear OnLoopComplete events when changing from Loop/PingPong to Once
-                if ((_previousLoopMode == BaseSpriteAnimator.LoopMode.Loop ||
-                     _previousLoopMode == BaseSpriteAnimator.LoopMode.PingPong) &&
-                    currentLoopMode == BaseSpriteAnimator.LoopMode.Once)
+                if ((_previousLoopMode == SpriteAnimatorBase.LoopMode.Loop ||
+                     _previousLoopMode == SpriteAnimatorBase.LoopMode.PingPong) &&
+                    currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
                 {
                     ClearUnityEvent(_onLoopComplete);
                     // Debug.Log("Cleared OnLoopComplete events because LoopMode changed to Once");

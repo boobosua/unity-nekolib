@@ -1,90 +1,84 @@
-# Components
+# COMPONENTS
 
-## Table of Contents
+MonoBehaviour components for common game functionality.
 
-- [AutoDestroy](#autodestroy)
-- [AutoOrbitAround](#autoorbitaround)
-- [LookAtCamera](#lookatcamera)
-- [Timer](#timer)
+## Timer Component
 
----
+### Ticker
 
-## AutoDestroy
-
-Automatically destroys a GameObject after a specified lifetime.
+Configurable timer component with events and state tracking.
 
 ```csharp
-public class ExplosionEffect : MonoBehaviour
-{
-    private void Start()
-    {
-        // Add AutoDestroy component and set lifetime to 3 seconds
-        AutoDestroy autoDestroy = gameObject.AddComponent<AutoDestroy>();
-        // Configure lifetime in inspector or via serialized field
-    }
-}
+// Start timer for 5 seconds
+ticker.StartTimer(5f);
+
+// Check timer state
+float progress = ticker.Progress; // 0.0 to 1.0
+float timeLeft = ticker.TimeLeft;
+string clock = ticker.ClockFormat; // "00:05"
+
+// Control timer
+ticker.Pause();
+ticker.Resume();
+ticker.Stop();
 ```
 
----
+## Destruction Component
 
-## AutoOrbitAround
+### AutoDestroy
 
-Makes a GameObject orbit around a target Transform with configurable speed and distance.
+Automatically destroys GameObject after specified time.
 
 ```csharp
-public class SatelliteController : MonoBehaviour
-{
-    public Transform planet;
-
-    private void Start()
-    {
-        AutoOrbitAround orbit = gameObject.AddComponent<AutoOrbitAround>();
-        // Configure target, distance, and speeds in inspector
-        // Supports horizontal and vertical orbit modes
-    }
-}
+// Set destruction time in inspector or via script
+autoDestroy.OnBeforeDestroy.AddListener(() => {
+    Debug.Log("About to be destroyed!");
+});
 ```
 
----
+## Camera Components
 
-## LookAtCamera
+### LookAtCamera
 
-Makes GameObjects always face the camera with different look-at modes.
+Makes object always face the camera with different modes.
 
 ```csharp
-public class Billboard : MonoBehaviour
-{
-    private void Start()
-    {
-        LookAtCamera lookAtCam = gameObject.AddComponent<LookAtCamera>();
-        // Configure mode (LookAt, LookAtInverted, CameraForward, CameraForwardInverted)
-        // Set custom camera if needed in inspector
-    }
-}
+// Component automatically handles camera facing
+// Configure mode in inspector:
+// - LookAt: Face camera center
+// - LookAtInverted: Face away from camera
+// - CameraForward: Match camera direction
+// - CameraForwardInverted: Opposite camera direction
 ```
 
----
+### AutoOrbitAround
 
-## Timer
-
-Event-driven timer component with UnityEvents for countdown functionality.
+Automatically orbits around a target transform.
 
 ```csharp
-public class GameTimer : MonoBehaviour
-{
-    private Timer timer;
+// Set target, distance, and speed in inspector
+// Two orbit modes available:
+// - AutoHorizontalOnly: Horizontal rotation only
+// - AutoVerticalOnly: Vertical rotation only
+```
 
-    private void Start()
-    {
-        timer = GetComponent<Timer>();
-        timer.SetWaitTime(10f);
-        timer.OnTimeOut.AddListener(OnTimerExpired);
-        timer.StartTimer();
-    }
+## Animation Components
 
-    private void OnTimerExpired()
-    {
-        Debug.Log("Timer finished!");
-    }
-}
+### SpriteAnimator
+
+Frame-based sprite animation for SpriteRenderer.
+
+```csharp
+// Assign sprites array in inspector
+// Configure frame rate and loop settings
+// Animation plays automatically on start
+```
+
+### UISpriteAnimator
+
+Frame-based sprite animation for UI Image components.
+
+```csharp
+// Same as SpriteAnimator but for UI Images
+// Assign sprites and configure timing in inspector
 ```

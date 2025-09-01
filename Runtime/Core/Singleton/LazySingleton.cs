@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using NekoLib.Extensions;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
     /// <summary>
     /// Lazy singleton automatically creates a new singleton game object when a script uses it.

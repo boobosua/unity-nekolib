@@ -1,7 +1,7 @@
 using UnityEngine;
 using NekoLib.Extensions;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
     /// <summary>
     /// Singleton that will be destroyed when the scene is unloaded.

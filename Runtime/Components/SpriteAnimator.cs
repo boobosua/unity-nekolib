@@ -5,7 +5,7 @@ namespace NekoLib.Components
 {
     [RequireComponent(typeof(SpriteRenderer))]
     [AddComponentMenu("NekoLib/Sprite Animator")]
-    public class SpriteAnimator : BaseSpriteAnimator
+    public class SpriteAnimator : SpriteAnimatorBase
     {
         private SpriteRenderer _spriteRenderer;
 

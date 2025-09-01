@@ -10,12 +10,13 @@ Navigate to each section below for complete API reference and usage examples:
 
 ### 📚 API Documentation
 
-| Category       | Description                                            | Link                                |
-| -------------- | ------------------------------------------------------ | ----------------------------------- |
-| **Components** | MonoBehaviour components for common game functionality | [📖 Components](Docs/components.md) |
-| **Services**   | Singleton services for networking and time management  | [📖 Services](Docs/services.md)     |
-| **Extensions** | Extension methods for Unity and C# types               | [📖 Extensions](Docs/extensions.md) |
-| **Utilities**  | Static utility classes and helper functions            | [📖 Utilities](Docs/utilities.md)   |
+| Category       | Description                                             | Link                                |
+| -------------- | ------------------------------------------------------- | ----------------------------------- |
+| **Core**       | Foundational systems: singletons, timers, and utilities | [📖 Core](Docs/CORE.md)             |
+| **Components** | MonoBehaviour components for common game functionality  | [📖 Components](Docs/COMPONENTS.md) |
+| **Services**   | Singleton services for networking and time management   | [📖 Services](Docs/SERVICES.md)     |
+| **Extensions** | Extension methods for Unity and C# types                | [📖 Extensions](Docs/EXTENSIONS.md) |
+| **Utilities**  | Static utility classes and helper functions             | [📖 Utilities](Docs/UTILITIES.md)   |
 
 ---
 

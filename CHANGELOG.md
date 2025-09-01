@@ -1,3 +1,10 @@
+## [1.8.0] - 2025-09-01
+
+### Update Library Structure
+
+- Move singleton, timer, and color swatch to Core.
+- Update other related libraries.
+
 ## [1.7.4] - 2025-09-01
 
 ### Redesign Component Inspector

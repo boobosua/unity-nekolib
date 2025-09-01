@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using NekoLib.Core;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

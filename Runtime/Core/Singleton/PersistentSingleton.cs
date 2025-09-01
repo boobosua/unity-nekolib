@@ -1,7 +1,8 @@
 using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Utilities;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
     /// <summary>
     /// DontDestroy singleton can be created and placed in a persistent scene and it will exist across scenes.

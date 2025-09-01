@@ -4,8 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using NekoLib.Utilities;
 using NekoLib.Extensions;
+using NekoLib.Core;
 
 namespace NekoLib.Services
 {
@@ -18,7 +18,7 @@ namespace NekoLib.Services
         private DateTime _syncedUtcTime;
         private float _syncedAtRealtime;
         private bool _hasSynced;
-        private bool _suppressWarnings;
+        private bool _suppressWarnings = true;
 
         /// <summary>
         /// Fetches the current time from the server.

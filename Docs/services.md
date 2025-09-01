@@ -1,51 +1,53 @@
-# Services
+# SERVICES
 
-## Table of Contents
+Singleton services for networking and time management.
 
-- [NetworkManager](#networkmanager)
-- [DateTimeManager](#datetimemanager)
+## DateTime Services
 
----
+### DateTimeManager
 
-## NetworkManager
-
-Monitors internet connectivity with async/await support.
+Server-synchronized time service with fallback to system time.
 
 ```csharp
-private async void Start()
-{
-    // Check connection once
-    bool isConnected = await NetworkManager.Instance.CheckInternetConnectionAsync();
+// Sync with server
+await DateTimeManager.Instance.FetchTimeFromServerAsync();
 
-    // Subscribe to connection changes
-    NetworkManager.Instance.OnInternetRefresh += OnConnectionChanged;
+// Get current time (server-synced)
+DateTime utcNow = DateTimeManager.Instance.UtcNow();
+DateTime localNow = DateTimeManager.Instance.Now();
 
-    // Start continuous monitoring
-    NetworkManager.Instance.StartMonitoring();
-}
-
-private void OnConnectionChanged(bool isConnected)
-{
-    Debug.Log($"Internet connection: {isConnected}");
-}
+// Time period checks
+bool isStartOfWeek = DateTimeManager.Instance.IsTodayStartOfWeek();
+bool isStartOfMonth = DateTimeManager.Instance.IsTodayStartOfMonth();
 ```
 
----
+### TimeSystem
 
-## DateTimeManager
-
-Synchronizes time with external servers to prevent client-side manipulation.
+Static wrapper for DateTimeManager.
 
 ```csharp
-private async void Start()
-{
-    // Fetch server time
-    await DateTimeManager.Instance.FetchTimeFromServerAsync();
+// Static access to time methods
+DateTime utcNow = TimeSystem.UtcNow();
+DateTime localNow = TimeSystem.Now();
+bool isStartOfWeek = TimeSystem.IsTodayStartOfWeek();
+```
 
-    // Get synchronized times
-    DateTime utcTime = DateTimeManager.Instance.UtcNow();
-    DateTime localTime = DateTimeManager.Instance.Now();
+## Networking Services
 
-    Debug.Log($"Server UTC: {utcTime}");
-}
+### NetworkManager
+
+Internet connection monitoring and detection.
+
+```csharp
+// Check internet connection
+bool hasInternet = await NetworkManager.Instance.CheckInternetConnectionAsync();
+
+// Start/stop monitoring
+NetworkManager.Instance.StartMonitoring();
+NetworkManager.Instance.StopMonitoring();
+
+// Listen for connection changes
+NetworkManager.AddInternetRefreshListener(isConnected => {
+    Debug.Log($"Internet: {isConnected}");
+});
 ```

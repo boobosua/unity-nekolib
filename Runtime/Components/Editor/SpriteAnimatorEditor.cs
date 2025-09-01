@@ -4,7 +4,7 @@ using UnityEditor;
 namespace NekoLib.Components
 {
     [CustomEditor(typeof(SpriteAnimator))]
-    public class SpriteAnimatorEditor : BaseSpriteAnimatorEditor
+    public class SpriteAnimatorEditor : SpriteAnimatorEditorBase
     {
 
     }

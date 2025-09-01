@@ -6,8 +6,8 @@ using NekoLib.Utilities;
 
 namespace NekoLib.Components
 {
-    [AddComponentMenu("NekoLib/Timer")]
-    public class Timer : MonoBehaviour
+    [AddComponentMenu("NekoLib/Ticker")]
+    public class Ticker : MonoBehaviour
     {
         [Tooltip("Time to wait before timeout (seconds)")]
         [SerializeField, Min(0f)] private float _waitTime = 1f;

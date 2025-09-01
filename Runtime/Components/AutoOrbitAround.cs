@@ -1,6 +1,7 @@
 using UnityEngine;
 using NekoLib.Extensions;
 using NekoLib.Utilities;
+using NekoLib.Core;
 
 namespace NekoLib
 {

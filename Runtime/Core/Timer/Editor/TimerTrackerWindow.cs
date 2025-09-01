@@ -4,23 +4,8 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
-    /// <summary>
-    /// Timer Tracker Window displays active timers in a tabbed interface with:
-    /// - Two tabs: Countdowns and Stopwatches
-    /// - Zebra striped rows for better readability
-    /// - Pagination (25 items per page)
-    /// - Clickable GameObjects that ping and select the object
-    /// - Smooth animated progress bars with color coding:
-    ///   * Blue: Running timers
-    ///   * Green: Completed timers
-    ///   * Yellow: Paused timers
-    /// - Statistics bar showing running, paused, completed, and leaked timers
-    /// - Time format: "1h25m25s (55%)" for countdowns, "1h25m25s" for stopwatches
-    /// 
-    /// Only available during Play Mode.
-    /// </summary>
     public class TimerTrackerWindow : EditorWindow
     {
         [MenuItem("Tools/Neko Indie/Timer Tracker")]
@@ -38,10 +23,10 @@ namespace NekoLib.Utilities
         private int _currentStopwatchPage = 0;
 
         // UI Colors
-        private readonly Color PROGRESS_BLUE = new Color(0.3f, 0.7f, 1f, 1f);
-        private readonly Color PROGRESS_GREEN = new Color(0.2f, 0.8f, 0.2f, 1f);
-        private readonly Color PROGRESS_YELLOW = new Color(1f, 0.8f, 0.2f, 1f);
-        private readonly Color ZEBRA_STRIPE = new Color(0f, 0f, 0f, 0.1f);
+        private readonly Color PROGRESS_BLUE = new(0.3f, 0.7f, 1f, 1f);
+        private readonly Color PROGRESS_GREEN = new(0.2f, 0.8f, 0.2f, 1f);
+        private readonly Color PROGRESS_YELLOW = new(1f, 0.8f, 0.2f, 1f);
+        private readonly Color ZEBRA_STRIPE = new(0f, 0f, 0f, 0.1f);
 
         private Vector2 _scrollPosition;
 

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
     public class Stopwatch : TimerBase
     {

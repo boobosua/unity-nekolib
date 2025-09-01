@@ -5,12 +5,12 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Components
 {
-    [CustomEditor(typeof(Timer))]
-    public class TimerEditor : Editor
+    [CustomEditor(typeof(Ticker))]
+    public class TickerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            var timer = (Timer)target;
+            var ticker = (Ticker)target;
             serializedObject.Update();
 
             // === TIMER SETTINGS ===
@@ -45,9 +45,9 @@ namespace NekoLib.Components
 
             if (Application.isPlaying)
             {
-                progress = timer.Progress;
+                progress = ticker.Progress;
                 progressText = $"{progress * 100:F1}%";
-                isCompleted = timer.IsStopped && progress >= 1.0f;
+                isCompleted = ticker.IsStopped && progress >= 1.0f;
             }
 
             // Custom progress bar styling
@@ -92,14 +92,14 @@ namespace NekoLib.Components
             string clockText;
             if (Application.isPlaying)
             {
-                float elapsedTime = timer.ElapsedTime;
+                float elapsedTime = ticker.ElapsedTime;
                 string formattedTime = elapsedTime.ToClock();
 
-                if (timer.IsStopped)
+                if (ticker.IsStopped)
                 {
                     clockText = $"{formattedTime} (Stopped)";
                 }
-                else if (timer.Paused)
+                else if (ticker.Paused)
                 {
                     clockText = $"{formattedTime} (Paused)";
                 }
@@ -129,33 +129,33 @@ namespace NekoLib.Components
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
 
-                if (timer.IsStopped)
+                if (ticker.IsStopped)
                 {
                     if (GUILayout.Button("▶ Start", GUILayout.Width(80)))
                     {
-                        timer.StartTimer();
+                        ticker.StartTimer();
                     }
                 }
-                else if (timer.Paused)
+                else if (ticker.Paused)
                 {
                     if (GUILayout.Button("▶ Resume", GUILayout.Width(80)))
                     {
-                        timer.Resume();
+                        ticker.Resume();
                     }
                     if (GUILayout.Button("⏹ Stop", GUILayout.Width(80)))
                     {
-                        timer.Stop();
+                        ticker.Stop();
                     }
                 }
                 else
                 {
                     if (GUILayout.Button("⏸ Pause", GUILayout.Width(80)))
                     {
-                        timer.Pause();
+                        ticker.Pause();
                     }
                     if (GUILayout.Button("⏹ Stop", GUILayout.Width(80)))
                     {
-                        timer.Stop();
+                        ticker.Stop();
                     }
                 }
 
@@ -166,7 +166,7 @@ namespace NekoLib.Components
             // Force repaint to update progress bar during play mode
             if (Application.isPlaying)
             {
-                EditorUtility.SetDirty(timer);
+                EditorUtility.SetDirty(ticker);
                 Repaint();
             }
 

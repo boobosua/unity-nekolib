@@ -1,263 +1,178 @@
-# Utilities
+# NekoLib Utilities
 
-## Table of Contents
+Static utility classes for common operations.
 
-- [Singletons](#singletons)
-- [Timer System](#timer-system)
-- [Enum Utils](#enum-utils)
-- [Mouse Utils](#mouse-utils)
-- [Time Utils](#time-utils)
-- [Swatch](#swatch)
-- [YieldTask](#yieldtask)
+> **Note:** Core systems (Timer, Singletons, Color Swatches) are documented in **[Core](CORE.md)**.
 
----
+## Static Utilities
 
-## Singletons
+### TimeUtils
 
-### LazySingleton
-
-Automatically creates a singleton GameObject when first accessed.
+Cached WaitForSeconds to reduce garbage collection.
 
 ```csharp
-public class GameManager : LazySingleton<GameManager>
-{
-    public int score;
-}
-
-// Usage anywhere in code
-GameManager.Instance.score = 100;
-```
-
-### SceneSingleton
-
-Singleton destroyed when scene unloads. Must exist in scene.
-
-```csharp
-public class UIManager : SceneSingleton<UIManager>
-{
-    public void ShowMenu() { }
-}
-
-// Usage
-UIManager.Instance.ShowMenu();
-```
-
-### PersistentSingleton
-
-Singleton that persists across all scenes.
-
-```csharp
-public class AudioManager : PersistentSingleton<AudioManager>
-{
-    public void PlaySound(AudioClip clip) { }
-}
-
-// Usage
-AudioManager.Instance.PlaySound(soundEffect);
-```
-
----
-
-## Timer System
-
-### TimerFactory.CreateCountdown
-
-Fluent API for creating countdown timers.
-
-```csharp
-var countdown = TimerFactory.CreateCountdown(this)
-    .SetDuration(10f)
-    .SetUnscaledTime()
-    .SetLoop(3)
-    .Build();
-
-countdown.Start();
-```
-
-### TimerFactory.CreateStopwatch
-
-Fluent API for creating stopwatch timers.
-
-```csharp
-var stopwatch = TimerFactory.CreateStopwatch(this)
-    .SetUnscaledTime()
-    .Build();
-
-stopwatch.Start();
-```
-
-### CreateCountdown (Extension)
-
-Direct countdown creation from MonoBehaviour.
-
-```csharp
-var countdown = this.CreateCountdown(5f);
-countdown.Start();
-```
-
-### CreateStopwatch (Extension)
-
-Direct stopwatch creation from MonoBehaviour.
-
-```csharp
-var stopwatch = this.CreateStopwatch();
-stopwatch.Start();
-```
-
----
-
-## Enum Utils
-
-### GetRandomEnum
-
-Get random enum value.
-
-```csharp
-public enum GameState { Menu, Playing, Paused }
-var randomState = Utils.GetRandomEnum<GameState>();
-```
-
-### GetRandomEnum (with exclusions)
-
-Get random enum excluding specific values.
-
-```csharp
-var state = Utils.GetRandomEnum<GameState>(GameState.Menu);
-```
-
-### CountEnum
-
-Count total enum values.
-
-```csharp
-int count = Utils.CountEnum<GameState>();
-```
-
-### AllEnum
-
-Get all enum values excluding specific ones.
-
-```csharp
-var allStates = Utils.AllEnum<GameState>(GameState.Menu);
-```
-
-### ForEnum
-
-Iterate through all enum values.
-
-```csharp
-Utils.ForEnum<GameState>(state => Debug.Log(state));
-```
-
----
-
-## Mouse Utils
-
-### IsMouseInGameWindow
-
-Check if mouse cursor is within game window bounds.
-
-```csharp
-if (Utils.IsMouseInGameWindow())
-{
-    // Handle mouse input
-}
-```
-
-### GetMousePosition2D
-
-Get mouse world position for 2D games (orthographic cameras).
-
-```csharp
-Vector2 mousePos = Utils.GetMousePosition2D();
-```
-
-### GetMousePosition3D
-
-Get mouse world position in 3D at specified distance from camera.
-
-```csharp
-Vector3 mousePos = Utils.GetMousePosition3D(10f);
-```
-
-### GetMousePosition3DFromRaycast
-
-Get 3D mouse position from raycast hit.
-
-```csharp
-Vector3 hitPoint = Utils.GetMousePosition3DFromRaycast();
-```
-
-### GetMouseRay
-
-Get mouse ray for raycasting.
-
-```csharp
-Ray mouseRay = Utils.GetMouseRay();
-```
-
----
-
-## Time Utils
-
-### GetWaitForSeconds
-
-Get cached WaitForSeconds to avoid memory allocation.
-
-```csharp
+// Get cached WaitForSeconds
 yield return Utils.GetWaitForSeconds(1.5f);
+
+// Get cached WaitForSecondsRealtime
+yield return Utils.GetWaitForSecondsRealtime(2.0f);
 ```
 
-### GetWaitForSecondsRealtime
+### TransformUtils
 
-Get cached WaitForSecondsRealtime (unaffected by Time.timeScale).
+Mathematical utilities for transforms and vectors.
 
 ```csharp
-yield return Utils.GetWaitForSecondsRealtime(2f);
+// Angle from Vector3
+float angle = Utils.GetAngleFromVector(direction);
+
+// Random rotation
+Quaternion randomY = Utils.GetRandomRotation(Axis.Y);
+Quaternion randomXZ = Utils.GetRandomRotation(Axis.XZ);
+
+// Custom ranges
+Quaternion custom = Utils.GetRandomRotation(
+    Axis.XY,
+    xRange: new Vector2(0f, 90f),
+    yRange: new Vector2(-45f, 45f)
+);
 ```
 
----
+### EnumUtils
 
-## Swatch
-
-Predefined color palette for consistent styling.
+Utilities for working with enumerations.
 
 ```csharp
-// Use predefined colors
-Color redColor = Swatch.CR;    // Candy Red
-Color greenColor = Swatch.ME;  // Mint Emerald
-Color blueColor = Swatch.AT;   // Azure Teal
-Color yellowColor = Swatch.GA; // Golden Amber
+// Get random enum value
+MyEnum randomValue = Utils.GetRandomEnum<MyEnum>();
 
-// Text colorization in logs
-Debug.Log("Success!".Colorize(Swatch.ME));
+// Get random enum excluding specific values
+MyEnum randomExcluding = Utils.GetRandomEnum(MyEnum.Value1, MyEnum.Value2);
+
+// Count enum values
+int count = Utils.CountEnum<MyEnum>();
+
+// Get all enum values (optionally excluding some)
+MyEnum[] allValues = Utils.AllEnum<MyEnum>();
+MyEnum[] someValues = Utils.AllEnum(MyEnum.Value1);
+
+// Iterate over all enum values
+Utils.ForEnum<MyEnum>(value => Debug.Log(value));
 ```
 
----
+### MouseUtils
 
-## YieldTask
-
-Bridge between async/await Tasks and Unity coroutines.
+Mouse input utilities and helper functions.
 
 ```csharp
-public class NetworkHandler : MonoBehaviour
-{
-    private async Task<string> FetchDataAsync()
-    {
-        await Task.Delay(2000);
-        return "Data received";
-    }
+// Check if mouse is in game window
+bool isInWindow = Utils.IsMouseInGameWindow();
 
-    private IEnumerator HandleNetworkRequest()
-    {
-        var task = FetchDataAsync();
-        yield return new YieldTask(task);
-        Debug.Log($"Result: {task.Result}");
-    }
+// Get 2D mouse world position (orthographic cameras)
+Vector2 mousePos2D = Utils.GetMousePosition2D();
+Vector2 mousePos2DCustom = Utils.GetMousePosition2D(myCamera);
 
-    private void Start()
-    {
-        StartCoroutine(HandleNetworkRequest());
-    }
-}
+// Get 3D mouse world position at distance
+Vector3 mousePos3D = Utils.GetMousePosition3D(10f);
+Vector3 mousePos3DCustom = Utils.GetMousePosition3D(5f, myCamera);
+
+// Get 3D position from raycast
+Vector3 raycastPos = Utils.GetMousePosition3DFromRaycast();
+Vector3 raycastPosLayer = Utils.GetMousePosition3DFromRaycast(LayerMask.GetMask("Ground"));
+
+// Get mouse ray
+Ray mouseRay = Utils.GetMouseRay();
+Ray mouseRayCustom = Utils.GetMouseRay(myCamera);
+```
+
+### EventUtils
+
+Unity event handling utilities.
+
+```csharp
+// FloatEvent class available for Unity Events
+[SerializeField] private FloatEvent onValueChanged;
+```
+
+### TaskUtils
+
+Async/await and Task utilities.
+
+```csharp
+// Use YieldTask to await tasks in coroutines
+yield return new YieldTask(myAsyncTask);
+```
+
+## Raycast Utilities
+
+### Raycast2DUtils
+
+2D raycasting operations and helpers.
+
+```csharp
+// Check if mouse is over any 2D object
+bool isOverAny = Utils.IsPointerOverAny2DObject();
+bool isOverAnyLayer = Utils.IsPointerOverAny2DObject(LayerMask.GetMask("Interactive"));
+bool isOverAnyCamera = Utils.IsPointerOverAny2DObject(myCamera);
+
+// Get hit info
+bool hitSomething = Utils.IsPointerOverAny2DObject(out Collider2D hit);
+
+// Check specific object
+bool isOverSpecific = Utils.IsPointerOver2DObject(myGameObject);
+
+// Check for component type
+bool hasComponent = Utils.IsPointerOver2DObject<MyComponent>();
+bool hasComponentOut = Utils.IsPointerOver2DObject<MyComponent>(out MyComponent component);
+```
+
+### Raycast3DUtils
+
+3D raycasting operations and helpers.
+
+```csharp
+// Check if mouse is over any 3D object
+bool isOverAny = Utils.IsPointerOverAny3DObject();
+bool isOverAnyDistance = Utils.IsPointerOverAny3DObject(10f);
+bool isOverAnyLayer = Utils.IsPointerOverAny3DObject(LayerMask.GetMask("Interactive"));
+
+// Get hit info
+bool hitSomething = Utils.IsPointerOverAny3DObject(out RaycastHit hit);
+bool hitSomethingCustom = Utils.IsPointerOverAny3DObject(out hit, myCamera, 15f);
+
+// Check specific object
+bool isOverSpecific = Utils.IsPointerOver3DObject(myGameObject);
+
+// Check for component type
+bool hasComponent = Utils.IsPointerOver3DObject<MyComponent>();
+bool hasComponentOut = Utils.IsPointerOver3DObject<MyComponent>(out MyComponent component);
+```
+
+### UIElementUtils
+
+UI element manipulation and utilities.
+
+```csharp
+// Check if pointer is over UI element
+bool isOverUI = Utils.IsPointerOverUI(LayerMask.GetMask("UI"));
+```
+
+## Editor Utilities
+
+### EditorUtils
+
+Editor-specific utilities (only available in editor builds).
+
+```csharp
+#if UNITY_EDITOR
+// Find all assets of type in directory
+MyScriptableObject[] assets = Utils.FindAllAssets<MyScriptableObject>("Assets/Data/");
+
+// Draw gizmos in Scene view
+Utils.DrawCircleGizmo(transform.position, 5f, Vector3.up, Color.red);
+Utils.DrawAnnulusGizmo(transform.position, 3f, 8f, Vector3.up, Color.blue, 64);
+
+// Check reload domain setting
+bool isDisabled = Utils.IsReloadDomainDisabled();
+#endif
 ```

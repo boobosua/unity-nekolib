@@ -3,8 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using NekoLib.Utilities;
 using NekoLib.Extensions;
+using NekoLib.Core;
 
 namespace NekoLib.Services
 {

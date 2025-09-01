@@ -1,486 +1,261 @@
-# Extensions
+# NekoLib Extensions
 
-## Table of Contents
+Extension methods for Unity and C# types.
 
-- [Collection](#collection)
-- [GameObject](#gameobject)
-- [Number](#number)
-- [String](#string)
-- [Task](#task)
-- [Time](#time)
-- [Timer](#timer)
-- [Transform](#transform)
-- [Vector2/3](#vector23)
-- [Serialize](#serialize)
+## Unity Extensions
 
----
-
-## Collection
-
-### Rand
-
-Get random element from array.
+### GameObjectExtensions
 
 ```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int randomNum = numbers.Rand();
+// Get or add component
+AudioSource audio = gameObject.GetOrAdd<AudioSource>();
+
+// Layer management
+bool inLayer = gameObject.IsInLayer(LayerMask.GetMask("Enemy"));
+gameObject.SetLayer("Player");
+
+// Child management
+gameObject.ClearChildTransforms();
 ```
 
-### RandIndex
-
-Get random index from array.
+### TransformExtensions
 
 ```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int randomIndex = numbers.RandIndex();
-```
+// Child management
+transform.Clear(); // Destroy all children
 
-### Shuffle
+// Orbital positioning
+transform.SetOrbitRotation(target, horizontalAngle: 45f, verticalAngle: 30f, distance: 5f);
 
-Shuffle array elements (returns new array).
-
-```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int[] shuffled = numbers.Shuffle();
-```
-
-### Swap
-
-Swap two elements in array by index.
-
-```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int[] swapped = numbers.Swap(0, 4); // Swaps first and last
-```
-
-### IsNullOrEmpty
-
-Check if array is null or empty.
-
-```csharp
-int[] numbers = {1, 2, 3};
-if (!numbers.IsNullOrEmpty()) { /* ... */ }
-```
-
-### Format
-
-Format array as string for display.
-
-```csharp
-List<string> items = new List<string> {"apple", "banana"};
-Debug.Log(items.Format()); // "apple, banana"
-```
-
-### Last
-
-Get last element from array.
-
-```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int last = numbers.Last(); // 5
-```
-
-### First
-
-Get first element from array.
-
-```csharp
-int[] numbers = {1, 2, 3, 4, 5};
-int first = numbers.First(); // 1
-```
-
----
-
-## GameObject
-
-### GetOrAdd
-
-Get component or add if missing.
-
-```csharp
-GameObject player = GameObject.FindWithTag("Player");
-Rigidbody rb = player.GetOrAdd<Rigidbody>();
-```
-
-### SetActive
-
-Set GameObject active (for MonoBehaviour).
-
-```csharp
-myMonoBehaviour.SetActive(); // Sets gameObject.SetActive(true)
-```
-
-### SetInactive
-
-Set GameObject inactive (for MonoBehaviour).
-
-```csharp
-myMonoBehaviour.SetInactive(); // Sets gameObject.SetActive(false)
-```
-
-### IsInLayer
-
-Check if GameObject is in specified layer.
-
-```csharp
-GameObject player = GameObject.FindWithTag("Player");
-if (player.IsInLayer("Player")) { }
-```
-
-### ClearChildTransforms
-
-Clear all child transforms.
-
-```csharp
-GameObject parent = GameObject.Find("Container");
-parent.ClearChildTransforms();
-```
-
----
-
-## Number
-
-### IsEven
-
-Check if number is even.
-
-```csharp
-int number = 42;
-bool isEven = number.IsEven(); // true
-```
-
-### IsOdd
-
-Check if number is odd.
-
-```csharp
-int number = 43;
-bool isOdd = number.IsOdd(); // true
-```
-
-### PercentageOf
-
-Calculate percentage of current relative to total.
-
-```csharp
-float percent = 75f.PercentageOf(100f); // 0.75
-```
-
-### AtLeast
-
-Ensure number doesn't go below minimum.
-
-```csharp
-int value = 5.AtLeast(10); // 10
-```
-
-### AtMost
-
-Ensure number doesn't go above maximum.
-
-```csharp
-int value = 15.AtMost(10); // 10
-```
-
-### RollChance (float)
-
-Roll chance with float probability (0.0 to 1.0).
-
-```csharp
-if (0.7f.RollChance())
-{
-    Debug.Log("70% chance succeeded!");
-}
-```
-
-### RollChance (int)
-
-Roll chance with integer percentage (0 to 100).
-
-```csharp
-if (85.RollChance())
-{
-    Debug.Log("85% chance succeeded!");
-}
-```
-
-### ToEnum
-
-Convert int to enum.
-
-```csharp
-public enum Direction { North, East, South, West }
-Direction dir = 2.ToEnum<Direction>(); // Direction.South
-```
-
-### ToEnumOrDefault
-
-Convert int to enum with default fallback.
-
-```csharp
-Direction safeDir = 10.ToEnumOrDefault(Direction.North);
-```
-
----
-
-## String
-
-### Bold
-
-Apply bold rich text formatting.
-
-```csharp
-string text = "Important".Bold();
-```
-
-### Italic
-
-Apply italic rich text formatting.
-
-```csharp
-string text = "Emphasis".Italic();
-```
-
-### Colorize
-
-Apply color to text.
-
-```csharp
-string colored = "Error".Colorize(Swatch.CR);
-```
-
-### SplitCamelCase
-
-Split camelCase into readable text.
-
-```csharp
-string readable = "HelloWorldTest".SplitCamelCase(); // "Hello World Test"
-```
-
-### ParseFloatWithComma
-
-Parse float with comma as decimal separator.
-
-```csharp
-float value = "3,14".ParseFloatWithComma(); // 3.14f
-```
-
-### ToShortFormat
-
-Format large numbers into short readable format.
-
-```csharp
-string shortFormat = 1500000.ToShortFormat(); // "1.5M"
-```
-
-### AsPercent
-
-Convert float to percentage string.
-
-```csharp
-string percent = 0.75f.AsPercent(); // "75%"
-```
-
-### WithoutSpaces
-
-Remove all spaces from string.
-
-```csharp
-string noSpaces = "Hello World".WithoutSpaces(); // "HelloWorld"
-```
-
----
-
-## Task
-
-### Forget
-
-Fire-and-forget task execution.
-
-```csharp
-SomeAsyncMethod().Forget();
-```
-
-### Forget (with error handling)
-
-Fire-and-forget with error callback.
-
-```csharp
-SomeAsyncMethod().Forget(exception =>
-{
-    Debug.LogError($"Task failed: {exception.Message}");
-});
-```
-
----
-
-## Time
-
-### ToClock
-
-Convert seconds to clock format.
-
-```csharp
-float seconds = 3665.5f;
-string clockTime = seconds.ToClock(); // "01:01:05"
-```
-
-### ToReadableFormat
-
-Convert TimeSpan to readable format.
-
-```csharp
-TimeSpan duration = TimeSpan.FromSeconds(7890);
-string readable = duration.ToReadableFormat(); // "2h 11m 30s"
-```
-
----
-
-## Timer
-
-### CreateCountdown
-
-Create countdown timer from MonoBehaviour.
-
-```csharp
-var countdown = this.CreateCountdown(5f);
-countdown.Start();
-```
-
-### CreateStopwatch
-
-Create stopwatch timer from MonoBehaviour.
-
-```csharp
-var stopwatch = this.CreateStopwatch();
-stopwatch.Start();
-```
-
----
-
-## Transform
-
-### Clear
-
-Destroy all child objects.
-
-```csharp
-Transform parent = transform;
-parent.Clear();
-```
-
-### GetChildren
-
-Get all direct children transforms.
-
-```csharp
-Transform[] children = transform.GetChildren();
-```
-
-### SetOrbitRotation
-
-Set orbit position around target using angles.
-
-```csharp
-transform.SetOrbitRotation(target, 45f, 30f, 5f);
-```
-
-### LookAt2D
-
-2D look-at for 2D games.
-
-```csharp
-Vector2 targetPosition = Vector2.right * 5f;
+// 2D look-at
 transform.LookAt2D(targetPosition);
+
+// Distance utilities
+float distance = transform.DistanceTo(otherTransform);
+bool inRange = transform.InRangeOf(otherTransform, 5f);
 ```
 
-### Distance
-
-Calculate distance between transforms.
+### CameraExtensions
 
 ```csharp
-float distance = transform.Distance(otherTransform);
+// Culling mask management
+bool isVisible = camera.IsLayerInCullingMask(LayerMask.GetMask("Enemy"));
+camera.AddToCullingMask(LayerMask.GetMask("UI"));
+camera.SetCullingMask(LayerMask.GetMask("Player", "Enemy"));
+
+// FOV control
+camera.ZoomIn(15f);
+camera.SetFOV(60f);
 ```
 
-### InRangeOf
-
-Check if transform is within range of target.
+### ColorExtensions
 
 ```csharp
-if (transform.InRangeOf(target, 5f)) { }
+// Component modification
+Color newColor = originalColor.WithAlpha(0.5f);
+
+// Color operations
+Color brighter = color.MultiplyRGB(1.5f);
+Color inverted = color.Invert();
+
+// Hex conversion
+string hex = color.ColorToHex(); // "#RRGGBBAA"
+Color color = "#FF0000FF".HexToColor();
 ```
 
----
-
-## Vector2/3
-
-### InRangeOf
-
-Check if vector is within range of target.
+### Vector2Extensions
 
 ```csharp
-Vector2 position = transform.position;
-Vector2 target = Vector2.right * 5f;
-if (position.InRangeOf(target, 2f)) { }
+// Component modification
+Vector2 modified = vector.With(x: 5f, y: 10f);
+Vector2 added = vector.Add(x: 2f);
+Vector2 multiplied = vector.Multiply(x: 2f, y: 0.5f);
+
+// Vector operations
+bool inRange = currentPos.InRangeOf(targetPos, 5f);
+Vector2 direction = fromPos.DirectionTo(toPos);
+float distance = fromPos.DistanceTo(toPos);
+Vector2 perpendicular = vector.Perpendicular();
+Vector2 rotated = vector.Rotate(45f);
+
+// Boundary checks
+bool insideCircle = point.IsInsideCircle(center, radius);
+bool insideRect = point.IsInsideRect(center, size);
+
+// Random point in annulus
+Vector2 randomPoint = origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 8f);
 ```
 
-### DirectionTo
-
-Get direction vector to target.
+### Vector3Extensions
 
 ```csharp
-Vector2 direction = position.DirectionTo(target);
+// Component modification
+Vector3 modified = vector.With(x: 5f, y: 10f, z: 15f);
+Vector3 rotatedX = vector.RotateX(45f);
+Vector3 rotatedY = vector.RotateY(90f);
+
+// Vector operations
+bool inRange = currentPos.InRangeOf(targetPos, 5f);
+Vector3 direction = fromPos.DirectionTo(toPos);
+Vector3 reflected = vector.Reflect(normal);
+Vector3 projected = vector.ProjectOnto(onto);
+
+// Boundary checks
+bool insideSphere = point.IsInsideSphere(center, radius);
+bool insideBox = point.IsInsideBox(center, size);
+bool insideBounds = point.IsInsideBounds(bounds);
+
+// Random point in 3D annulus
+Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
 ```
 
-### Rotate
+## C# Extensions
 
-Rotate Vector2 by angle.
+### StringExtensions
 
 ```csharp
-Vector2 rotated = direction.Rotate(45f);
+// Number parsing
+float value = "3,14".ParseFloatWithComma(); // 3.14f
+
+// Percentage formatting
+string percent = 0.25f.AsPercent(); // "25%"
+
+// Large number formatting
+string short = 1500000.ToShortFormat(1); // "1.5M"
+
+// Enum conversion
+MyEnum value = "EnumValue".ToEnum<MyEnum>();
 ```
 
-### WithY
-
-Replace Y component of Vector3.
+### NumberExtensions
 
 ```csharp
-Vector3 worldPos = transform.position;
-Vector3 onlyY = worldPos.WithY(0f);
+// Number checks
+bool isEven = 42.IsEven();
+bool isOdd = 13.IsOdd();
+
+// Percentage calculations
+float percentage = current.PercentageOf(total);
+
+// Range clamping
+int clamped = value.AtLeast(10).AtMost(100);
+float clampedFloat = value.AtLeast(0f).AtMost(1f);
+
+// Probability/chance
+bool success = 0.75f.RollChance(); // 75% chance
+bool luckyRoll = 25.RollChance(0, 100); // 25% chance out of 100
+
+// Enum conversion
+MyEnum enumValue = 1.ToEnum<MyEnum>();
+MyEnum safeEnum = 999.ToEnumOrDefault(MyEnum.Default);
 ```
 
-### RotateY
-
-Rotate Vector3 around Y axis.
+### CollectionExtensions
 
 ```csharp
-Vector3 rotatedY = worldPos.RotateY(45f);
+// Array operations
+T randomItem = array.Rand();
+int randomIndex = array.RandIndex();
+T[] shuffled = array.Shuffle();
+T[] swapped = array.Swap(0, 1);
+bool isEmpty = array.IsNullOrEmpty();
+string formatted = array.Format(); // "[item1, item2, item3]"
+T first = array.First();
+T last = array.Last();
+T[] sliced = array.Slice(2, 5);
+T[] multiple = array.RandMultiple(3);
+T weighted = array.RandWeighted(item => item.weight);
+
+// List operations
+T randomItem = list.Rand();
+List<T> shuffled = list.Shuffle();
+string formatted = list.Format(); // "{item1, item2, item3}"
+
+// Dictionary operations
+V randomValue = dict.RandV();
+K randomKey = dict.RandK();
+Dictionary<K, V> copy = dict.AsNewCopy();
+string formatted = dict.Format(); // "{key1: value1, key2: value2}"
 ```
 
----
-
-## Serialize
-
-### Serialize
-
-Convert object to JSON string.
+### TimeExtensions
 
 ```csharp
-[System.Serializable]
-public class PlayerData
-{
-    public string playerName;
-    public int level;
-}
+// Clock formatting
+string clock = 3661f.ToClock(); // "01:01:01"
+string short = 125f.ToShortClock(); // "02:05"
 
-PlayerData data = new PlayerData { playerName = "Player1", level = 5 };
-string json = data.Serialize(prettyPrint: true);
+// DateTime calculations
+DateTime pastTime = DateTime.Now.AddHours(-2);
+double hours = pastTime.HoursUntilNow(); // 2.0
+
+// DateTime manipulation
+DateTime newDate = original.WithDate(year: 2024);
+DateTime newTime = original.WithTime(hour: 9, minute: 0);
 ```
 
-### Deserialize
+## NekoLib Extensions
 
-Convert JSON string to object.
+### TimerExtensions
 
 ```csharp
-PlayerData loadedData = json.Deserialize<PlayerData>();
+// Create timers directly from components
+Countdown countdown = this.CreateCountdown(10f);
+Stopwatch stopwatch = this.CreateStopwatch();
+
+// Cleanup timers
+this.CleanupTimers();
+```
+
+### SerializeExtensions
+
+```csharp
+// JSON serialization
+string json = myObject.Serialize(prettyPrint: true);
+MyObject restored = json.Deserialize<MyObject>();
+```
+
+### TaskExtensions
+
+```csharp
+// Fire-and-forget tasks
+myAsyncTask.Forget();
+myAsyncTask.Forget(ex => Debug.LogError($"Task failed: {ex}"));
+```
+
+### TextColorizeExtensions
+
+```csharp
+// Basic colorization
+string colored = "Hello".Colorize(Color.red);
+string hexColored = "World".Colorize("#FF0000");
+
+// Selective colorization
+string selective = "Hello World".Colorize(Color.red, "Hello");
+string chars = "Hello!".Colorize(Color.blue, '!');
+string multiple = "Red and Blue".Colorize(Color.red, "Red", "Blue");
+
+// Conditional colorization
+string conditional = "Error".Colorize(Color.red, () => hasError);
+string predicate = "Some words".Colorize(Color.green, word => word.Length > 4);
+```
+
+### TextFormatExtensions
+
+```csharp
+// Bold formatting
+string bold = "Important".Bold(); // "<b>Important</b>"
+string selective = "This is important".Bold("important");
+
+// Italic formatting
+string italic = "Emphasis".Italic(); // "<i>Emphasis</i>"
+
+// Size formatting
+string sized = "Big Text".Size(24f); // "<size=24>Big Text</size>"
+
+// Chaining
+string formatted = "Important Warning"
+    .Bold("Important")
+    .Italic("Warning")
+    .Size(18f, "Warning");
 ```

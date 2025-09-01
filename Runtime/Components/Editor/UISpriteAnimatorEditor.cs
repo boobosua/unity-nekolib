@@ -4,7 +4,7 @@ using UnityEditor;
 namespace NekoLib.Components
 {
     [CustomEditor(typeof(UISpriteAnimator))]
-    public class UISpriteAnimatorEditor : BaseSpriteAnimatorEditor
+    public class UISpriteAnimatorEditor : SpriteAnimatorEditorBase
     {
         private SerializedProperty _preserveAspect;
         private SerializedProperty _pauseWhenInvisible;

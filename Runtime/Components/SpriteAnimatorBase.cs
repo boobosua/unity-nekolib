@@ -5,7 +5,7 @@ using NekoLib.Extensions;
 
 namespace NekoLib.Components
 {
-    public abstract class BaseSpriteAnimator : MonoBehaviour
+    public abstract class SpriteAnimatorBase : MonoBehaviour
     {
         [Tooltip("The sprites to animate through.")]
         [SerializeField] protected Sprite[] _sprites;

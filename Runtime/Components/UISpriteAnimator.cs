@@ -6,7 +6,7 @@ namespace NekoLib.Components
 {
     [RequireComponent(typeof(Image))]
     [AddComponentMenu("NekoLib/UI Sprite Animator")]
-    public class UISpriteAnimator : BaseSpriteAnimator
+    public class UISpriteAnimator : SpriteAnimatorBase
     {
         [Tooltip("Should the aspect ratio be preserved?")]
         [SerializeField] private bool _preserveAspect = true;

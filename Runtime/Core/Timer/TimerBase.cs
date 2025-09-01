@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using NekoLib.Extensions;
 
-namespace NekoLib.Utilities
+namespace NekoLib.Core
 {
     public abstract class TimerBase : IDisposable
     {
