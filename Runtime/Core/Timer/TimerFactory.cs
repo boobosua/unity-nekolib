@@ -11,8 +11,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Starts building a Countdown timer.
         /// </summary>
-        /// <param name="owner">The MonoBehaviour that will own the timer</param>
-        /// <returns>CountdownBuilder for configuring the countdown</returns>
         public static CountdownBuilder CreateCountdown(MonoBehaviour owner)
         {
             return new CountdownBuilder(owner);
@@ -21,8 +19,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Starts building a Stopwatch timer.
         /// </summary>
-        /// <param name="owner">The MonoBehaviour that will own the timer</param>
-        /// <returns>StopwatchBuilder for configuring the stopwatch</returns>
         public static StopwatchBuilder CreateStopwatch(MonoBehaviour owner)
         {
             return new StopwatchBuilder(owner);
@@ -39,7 +35,8 @@ namespace NekoLib.Core
         private bool _useUnscaledTime = false;
         private LoopType _loopType = LoopType.None;
         private int _loopCount = 0;
-        private Func<bool> _loopCondition = null;
+        private Func<bool> _updateCondition = null;
+        private Func<bool> _loopStopCondition = null;
 
         internal CountdownBuilder(MonoBehaviour owner)
         {
@@ -47,10 +44,17 @@ namespace NekoLib.Core
         }
 
         /// <summary>
+        /// Sets the condition for updating the timer.
+        /// </summary>
+        public CountdownBuilder SetUpdateWhen(Func<bool> updateCondition)
+        {
+            _updateCondition = updateCondition ?? throw new ArgumentNullException(nameof(updateCondition));
+            return this;
+        }
+
+        /// <summary>
         /// Sets the countdown duration.
         /// </summary>
-        /// <param name="duration">Duration in seconds</param>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetDuration(float duration)
         {
             _duration = Mathf.Max(0f, duration);
@@ -60,7 +64,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the timer to use unscaled time (ignores Time.timeScale).
         /// </summary>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetUnscaledTime()
         {
             _useUnscaledTime = true;
@@ -70,7 +73,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the timer to use scaled time (affected by Time.timeScale). This is the default.
         /// </summary>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetScaledTime()
         {
             _useUnscaledTime = false;
@@ -80,20 +82,17 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the countdown to loop infinitely.
         /// </summary>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetLoop()
         {
             _loopType = LoopType.Infinite;
             _loopCount = -1;
-            _loopCondition = null;
+            _loopStopCondition = null;
             return this;
         }
 
         /// <summary>
         /// Sets the countdown to loop a specific number of times.
         /// </summary>
-        /// <param name="count">Number of loops (0 = no loop, -1 = infinite)</param>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetLoop(int count)
         {
             if (count < -1)
@@ -115,18 +114,16 @@ namespace NekoLib.Core
                 _loopCount = count;
             }
 
-            _loopCondition = null;
+            _loopStopCondition = null;
             return this;
         }
 
         /// <summary>
         /// Sets the countdown to loop until a condition is met.
         /// </summary>
-        /// <param name="stopCondition">Function that returns true when looping should stop</param>
-        /// <returns>This builder for method chaining</returns>
         public CountdownBuilder SetLoop(Func<bool> stopCondition)
         {
-            _loopCondition = stopCondition ?? throw new ArgumentNullException(nameof(stopCondition));
+            _loopStopCondition = stopCondition ?? throw new ArgumentNullException(nameof(stopCondition));
             _loopType = LoopType.Condition;
             _loopCount = 0;
             return this;
@@ -135,13 +132,17 @@ namespace NekoLib.Core
         /// <summary>
         /// Builds and returns the configured Countdown timer.
         /// </summary>
-        /// <returns>A new Countdown timer with the specified configuration</returns>
         public Countdown Build()
         {
             var countdown = new Countdown(_owner, _duration);
 
             if (_useUnscaledTime)
                 countdown.SetUnscaledTime();
+
+            if (_updateCondition != null)
+            {
+                countdown.SetUpdateWhen(_updateCondition);
+            }
 
             // Apply loop configuration
             switch (_loopType)
@@ -156,7 +157,7 @@ namespace NekoLib.Core
                     countdown.SetLoop(_loopCount);
                     break;
                 case LoopType.Condition:
-                    countdown.SetLoop(_loopCondition);
+                    countdown.SetLoop(_loopStopCondition);
                     break;
             }
 
@@ -171,17 +172,26 @@ namespace NekoLib.Core
     {
         private readonly MonoBehaviour _owner;
         private bool _useUnscaledTime = false;
+        private Func<bool> _updateCondition = null;
         private Func<bool> _stopCondition = null;
 
         internal StopwatchBuilder(MonoBehaviour owner)
         {
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            _owner = owner != null ? owner : throw new ArgumentNullException(nameof(owner));
+        }
+
+        /// <summary>
+        /// Sets the condition for updating the stopwatch.
+        /// </summary>
+        public StopwatchBuilder SetUpdateWhen(Func<bool> updateCondition)
+        {
+            _updateCondition = updateCondition ?? throw new ArgumentNullException(nameof(updateCondition));
+            return this;
         }
 
         /// <summary>
         /// Sets the timer to use unscaled time (ignores Time.timeScale).
         /// </summary>
-        /// <returns>This builder for method chaining</returns>
         public StopwatchBuilder SetUnscaledTime()
         {
             _useUnscaledTime = true;
@@ -191,7 +201,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the timer to use scaled time (affected by Time.timeScale). This is the default.
         /// </summary>
-        /// <returns>This builder for method chaining</returns>
         public StopwatchBuilder SetScaledTime()
         {
             _useUnscaledTime = false;
@@ -201,24 +210,26 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets an automatic stop condition for the stopwatch.
         /// </summary>
-        /// <param name="stopCondition">Function that returns true when the stopwatch should stop</param>
-        /// <returns>This builder for method chaining</returns>
         public StopwatchBuilder SetStopCondition(Func<bool> stopCondition)
         {
-            _stopCondition = stopCondition;
+            _stopCondition = stopCondition ?? throw new ArgumentNullException(nameof(stopCondition));
             return this;
         }
 
         /// <summary>
         /// Builds and returns the configured Stopwatch timer.
         /// </summary>
-        /// <returns>A new Stopwatch timer with the specified configuration</returns>
         public Stopwatch Build()
         {
             var stopwatch = new Stopwatch(_owner, _stopCondition);
 
             if (_useUnscaledTime)
                 stopwatch.SetUnscaledTime();
+
+            if (_updateCondition != null)
+            {
+                stopwatch.SetUpdateWhen(_updateCondition);
+            }
 
             return stopwatch;
         }

@@ -23,7 +23,10 @@ namespace NekoLib.Core
 
         public override void Tick(float deltaTime)
         {
-            if (!IsRunning)
+            // if (!IsRunning)
+            //     return;
+
+            if (!ShouldTick)
                 return;
 
             if (_stopCondition != null && _stopCondition.Invoke())
@@ -33,7 +36,7 @@ namespace NekoLib.Core
             }
 
             _elapsedTime += deltaTime;
-            InvokeUpdate();
+            InvokeUpdate(_elapsedTime);
         }
 
         public void StopAndGetTime(out float endTime)

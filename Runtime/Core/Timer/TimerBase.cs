@@ -7,13 +7,14 @@ namespace NekoLib.Core
     public abstract class TimerBase : IDisposable
     {
         public event Action OnStart;
+        public event Action<float> OnUpdate;
         public event Action OnStop;
-        public event Action OnUpdate;
+
+        protected Func<bool> _updateCondition = null;
 
         protected float _elapsedTime;
         private readonly GameObject _owner;
-        private readonly MonoBehaviour _ownerComponent; // Track the specific component
-
+        private readonly MonoBehaviour _ownerComponent;
         public float ElapsedTime => _elapsedTime;
         public GameObject Owner => _owner;
         public MonoBehaviour OwnerComponent => _ownerComponent;
@@ -23,7 +24,6 @@ namespace NekoLib.Core
         private bool _useUnscaledTime = false;
         /// <summary>
         /// Whether this timer uses unscaled time (ignores Time.timeScale).
-        /// When true, the timer will continue running even when the game is paused.
         /// </summary>
         public bool UseUnscaledTime => _useUnscaledTime;
 
@@ -63,11 +63,30 @@ namespace NekoLib.Core
             }
         }
 
+        /// <summary>
+        /// Determines whether the timer should tick (update).
+        /// </summary>
+        protected bool ShouldTick
+        {
+            get
+            {
+                return IsRunning && (_updateCondition == null || _updateCondition.Invoke());
+            }
+        }
+
         public string ClockFormat
         {
             get
             {
                 return _elapsedTime.ToClock();
+            }
+        }
+
+        public string ShortClockFormat
+        {
+            get
+            {
+                return _elapsedTime.ToShortClock();
             }
         }
 
@@ -82,13 +101,13 @@ namespace NekoLib.Core
             _owner = ownerComponent.gameObject;
             _useUnscaledTime = false;
             IsRunning = false;
+            _updateCondition = null;
 
             TimerManager.Instance.RegisterTimer(this);
         }
 
         /// <summary>
         /// Sets the timer to use unscaled time (ignores Time.timeScale).
-        /// Useful for UI timers, pause menus, or any timer that should continue when the game is paused.
         /// </summary>
         public void SetUnscaledTime()
         {
@@ -97,13 +116,23 @@ namespace NekoLib.Core
 
         /// <summary>
         /// Sets the timer to use scaled time (affected by Time.timeScale).
-        /// This is the default behavior.
         /// </summary>
         public void SetScaledTime()
         {
             _useUnscaledTime = false;
         }
 
+        /// <summary>
+        /// Sets the condition for updating the timer.
+        /// </summary>
+        public void SetUpdateWhen(Func<bool> condition)
+        {
+            _updateCondition = condition;
+        }
+
+        /// <summary>
+        /// Stops the timer.
+        /// </summary>
         public virtual void Stop()
         {
             if (IsRunning)
@@ -119,6 +148,7 @@ namespace NekoLib.Core
         public void StopAndDestroy()
         {
             Stop();
+
             if (TimerManager.HasInstance)
                 TimerManager.Instance.UnregisterTimer(this);
         }
@@ -133,9 +163,9 @@ namespace NekoLib.Core
             OnStop?.Invoke();
         }
 
-        protected void InvokeUpdate()
+        protected void InvokeUpdate(float elapsedTime)
         {
-            OnUpdate?.Invoke();
+            OnUpdate?.Invoke(elapsedTime);
         }
 
         public void Resume()
@@ -164,6 +194,7 @@ namespace NekoLib.Core
             OnStart = null;
             OnStop = null;
             OnUpdate = null;
+            _updateCondition = null;
         }
     }
 }

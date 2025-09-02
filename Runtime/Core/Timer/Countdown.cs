@@ -99,7 +99,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the countdown to loop a specific number of times.
         /// </summary>
-        /// <param name="loopCount">Number of loops. -1 for infinite, 0 to disable looping, >0 for specific count</param>
         public void SetLoop(int loopCount = -1)
         {
             if (loopCount < -1)
@@ -128,7 +127,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Sets the countdown to loop infinitely until a condition is met.
         /// </summary>
-        /// <param name="stopWhen">Function that returns true when looping should stop</param>
         public void SetLoop(Func<bool> stopWhen)
         {
             _loopStopCondition = stopWhen ?? throw new ArgumentNullException(nameof(stopWhen));
@@ -140,7 +138,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Extends the countdown by adding time to the total duration.
         /// </summary>
-        /// <param name="additionalTime">Time to add in seconds</param>
         public void ExtendTime(float additionalTime)
         {
             if (additionalTime < 0f)
@@ -155,7 +152,6 @@ namespace NekoLib.Core
         /// <summary>
         /// Reduces the countdown by subtracting time from the total duration.
         /// </summary>
-        /// <param name="timeToReduce">Time to subtract in seconds</param>
         public void ReduceTime(float timeToReduce)
         {
             if (timeToReduce < 0f)
@@ -164,8 +160,17 @@ namespace NekoLib.Core
                 return;
             }
 
-            _totalTime = Mathf.Max(0f, _totalTime - timeToReduce);
-            _elapsedTime = Mathf.Min(_elapsedTime, _totalTime);
+            _totalTime = (_totalTime - timeToReduce).AtLeast(0f);
+            _elapsedTime = _elapsedTime.AtMost(_totalTime);
+        }
+
+        /// <summary>
+        /// Sets the total time for the countdown.
+        /// </summary>
+        public void SetTotalTime(float newTotalTime)
+        {
+            _totalTime = newTotalTime.AtLeast(0f);
+            _elapsedTime = _elapsedTime.AtMost(_totalTime);
         }
 
         /// <summary>
@@ -178,7 +183,10 @@ namespace NekoLib.Core
 
         public override void Tick(float deltaTime)
         {
-            if (!IsRunning)
+            // if (!IsRunning)
+            //     return;
+
+            if (!ShouldTick)
                 return;
 
             if (_elapsedTime <= 0)
@@ -221,7 +229,7 @@ namespace NekoLib.Core
             else
             {
                 _elapsedTime -= deltaTime;
-                InvokeUpdate();
+                InvokeUpdate(_elapsedTime);
             }
         }
 

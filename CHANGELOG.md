@@ -1,3 +1,11 @@
+## [1.8.2] - 2025-09-02
+
+### Improve Timer System
+
+- New Timer Tracker Window.
+- New utilities for countdown and stopwatch.
+- New extensions for timer.
+
 ## [1.8.1] - 2025-09-02
 
 ### Scrolling Background Components (Parallax)

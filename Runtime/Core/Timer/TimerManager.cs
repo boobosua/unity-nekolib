@@ -53,13 +53,13 @@ namespace NekoLib.Core
         {
             if (timer == null)
             {
-                Debug.LogWarning("Attempted to register a null timer");
+                Debug.LogWarning("Attempted to register a null timer.");
                 return;
             }
 
             if (timer.Owner == null)
             {
-                Debug.LogWarning("Attempted to register a timer with null owner");
+                Debug.LogWarning("Attempted to register a timer with null owner.");
                 return;
             }
 
@@ -76,6 +76,7 @@ namespace NekoLib.Core
         {
             if (timer != null)
             {
+                timer.Dispose();
                 _activeTimers.Remove(timer);
             }
         }
