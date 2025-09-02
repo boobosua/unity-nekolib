@@ -2,8 +2,6 @@
 
 Extension methods for Unity and C# types.
 
-## Unity Extensions
-
 ### GameObjectExtensions
 
 ```csharp
@@ -158,24 +156,41 @@ T randomItem = array.Rand();
 int randomIndex = array.RandIndex();
 T[] shuffled = array.Shuffle();
 T[] swapped = array.Swap(0, 1);
+T[] swappedByElement = array.Swap(item1, item2);
 bool isEmpty = array.IsNullOrEmpty();
+bool hasNulls = array.HasNullElements();
 string formatted = array.Format(); // "[item1, item2, item3]"
 T first = array.First();
 T last = array.Last();
 T[] sliced = array.Slice(2, 5);
 T[] multiple = array.RandMultiple(3);
 T weighted = array.RandWeighted(item => item.weight);
+T[] reversed = array.Reverse();
+bool contains = array.Contains(item);
 
 // List operations
 T randomItem = list.Rand();
+int randomIndex = list.RandIndex();
 List<T> shuffled = list.Shuffle();
+List<T> swapped = list.Swap(0, 1);
+bool hasNulls = list.HasNullElements();
 string formatted = list.Format(); // "{item1, item2, item3}"
+T first = list.First();
+T last = list.Last();
+List<T> multiple = list.RandMultiple(3);
+T weighted = list.RandWeighted(item => item.weight);
 
 // Dictionary operations
 V randomValue = dict.RandV();
 K randomKey = dict.RandK();
+bool hasNulls = dict.HasNullValues();
 Dictionary<K, V> copy = dict.AsNewCopy();
 string formatted = dict.Format(); // "{key1: value1, key2: value2}"
+
+// Other collections
+string queueFormatted = queue.Format();
+string stackFormatted = stack.Format();
+string setFormatted = hashSet.Format();
 ```
 
 ### TimeExtensions
@@ -194,7 +209,21 @@ DateTime newDate = original.WithDate(year: 2024);
 DateTime newTime = original.WithTime(hour: 9, minute: 0);
 ```
 
-## NekoLib Extensions
+### CoroutineExtensions
+
+```csharp
+// Sequential execution
+Coroutine sequence = this.StartCoroutineSequence(coroutineA, coroutineB, coroutineC);
+
+// Delayed execution
+Coroutine delayed = this.StartCoroutineDelayed(myCoroutine, 2f);
+
+// Conditional execution
+Coroutine conditional = this.StartCoroutineWhen(myCoroutine, () => isReady);
+
+// Parallel execution
+Coroutine parallel = this.StartCoroutineParallel(coroutineA, coroutineB, coroutineC);
+```
 
 ### TimerExtensions
 

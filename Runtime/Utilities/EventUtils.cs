@@ -9,4 +9,7 @@ namespace NekoLib.Utilities
     }
 
     [Serializable] public class FloatEvent : UnityEvent<float> { }
+    [Serializable] public class IntEvent : UnityEvent<int> { }
+    [Serializable] public class StringEvent : UnityEvent<string> { }
+    [Serializable] public class BoolEvent : UnityEvent<bool> { }
 }

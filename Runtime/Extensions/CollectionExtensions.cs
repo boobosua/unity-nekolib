@@ -83,6 +83,20 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Checks if the array contains any null elements.
+        /// </summary>
+        public static bool HasNullElements<T>(this T[] arr) where T : class
+        {
+            if (arr.IsNullOrEmpty()) return false;
+
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i] == null) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Checks if the array is null or empty.
         /// </summary>
         public static bool IsNullOrEmpty<T>(this T[] arr)
@@ -292,6 +306,20 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Checks if the list contains any null elements.
+        /// </summary>
+        public static bool HasNullElements<T>(this List<T> list) where T : class
+        {
+            if (list.IsNullOrEmpty()) return false;
+
+            foreach (var item in list)
+            {
+                if (item == null) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Checks if the list is null or empty.
         /// </summary>
         public static bool IsNullOrEmpty<T>(this List<T> list)
@@ -384,6 +412,21 @@ namespace NekoLib.Extensions
             if (dict.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random key from null or empty dictionary");
             return dict.Keys.ToArray().Rand();
+        }
+
+        /// <summary>
+        /// Checks if the dictionary contains any null values.
+        /// </summary>
+        public static bool HasNullValues<TKey, TValue>(this Dictionary<TKey, TValue> dictionary)
+            where TValue : class
+        {
+            if (dictionary.IsNullOrEmpty()) return false;
+
+            foreach (var kvp in dictionary)
+            {
+                if (kvp.Value == null) return true;
+            }
+            return false;
         }
 
         /// <summary>

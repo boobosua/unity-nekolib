@@ -1,3 +1,10 @@
+## [1.8.3] - 2025-09-03
+
+### Coroutine Extensions
+
+- Add null element check for collection extensions.
+- Add simple Monobehavior coroutine extensions.
+
 ## [1.8.2] - 2025-09-02
 
 ### Improve Timer System
