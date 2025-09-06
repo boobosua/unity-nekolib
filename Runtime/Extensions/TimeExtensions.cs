@@ -63,9 +63,9 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts TimeSpan to readable format (e.g., "2d 3h 45m")
+        /// Converts TimeSpan to readable format (e.g., "2d 3h 45m").
         /// </summary>
-        public static string ToReadableFormat(this TimeSpan timeSpan, bool useSpacing = true)
+        public static string ToReadableFormat(this TimeSpan timeSpan, bool useSpacing = false)
         {
             _stringBuilder.Clear();
 
@@ -105,7 +105,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts seconds to readable format
+        /// Converts seconds to readable format.
         /// </summary>
         public static string ToReadableFormat(this double seconds, bool useSpacing = true)
         {
@@ -113,7 +113,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Converts seconds to readable format
+        /// Converts seconds to readable format.
         /// </summary>
         public static string ToReadableFormat(this float seconds, bool useSpacing = true)
         {
@@ -129,8 +129,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeUntilNow(this DateTime time)
         {
-            var now = DateTimeManager.Instance.Now();
-            return now - time;
+            return DateTimeService.Now - time;
         }
 
         /// <summary>
@@ -138,16 +137,15 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeUntilNowUtc(this DateTime time)
         {
-            var now = DateTimeManager.Instance.UtcNow();
-            return now - time;
+            return DateTimeService.UtcNow - time;
         }
 
         /// <summary>
-        /// Gets seconds elapsed from this DateTime to now (for past times)
+        /// Gets seconds elapsed from this DateTime to now (for past times).
         /// </summary>
         public static double SecondsUntilNow(this DateTime time)
         {
-            var now = DateTimeManager.Instance.Now();
+            var now = DateTimeService.Now;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
@@ -160,11 +158,11 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets seconds elapsed from this DateTime to now (UTC, for past times)
+        /// Gets seconds elapsed from this DateTime to now (UTC, for past times).
         /// </summary>
         public static double SecondsUntilNowUtc(this DateTime time)
         {
-            var now = DateTimeManager.Instance.UtcNow();
+            var now = DateTimeService.UtcNow;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
@@ -177,7 +175,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets minutes elapsed from this DateTime to now (for past times)
+        /// Gets minutes elapsed from this DateTime to now (for past times).
         /// </summary>
         public static double MinutesUntilNow(this DateTime time)
         {
@@ -185,7 +183,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets minutes elapsed from this DateTime to now (UTC, for past times)
+        /// Gets minutes elapsed from this DateTime to now (UTC, for past times).
         /// </summary>
         public static double MinutesUntilNowUtc(this DateTime time)
         {
@@ -193,7 +191,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets hours elapsed from this DateTime to now (for past times)
+        /// Gets hours elapsed from this DateTime to now (for past times).
         /// </summary>
         public static double HoursUntilNow(this DateTime time)
         {
@@ -201,7 +199,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets hours elapsed from this DateTime to now (UTC, for past times)
+        /// Gets hours elapsed from this DateTime to now (UTC, for past times).
         /// </summary>
         public static double HoursUntilNowUtc(this DateTime time)
         {
@@ -209,7 +207,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets days elapsed from this DateTime to now (for past times)
+        /// Gets days elapsed from this DateTime to now (for past times).
         /// </summary>
         public static double DaysUntilNow(this DateTime time)
         {
@@ -217,7 +215,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets days elapsed from this DateTime to now (UTC, for past times)
+        /// Gets days elapsed from this DateTime to now (UTC, for past times).
         /// </summary>
         public static double DaysUntilNowUtc(this DateTime time)
         {
@@ -233,8 +231,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeFromNow(this DateTime time)
         {
-            var now = DateTimeManager.Instance.Now();
-            return time - now;
+            return time - DateTimeService.Now;
         }
 
         /// <summary>
@@ -242,16 +239,15 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeFromNowUtc(this DateTime time)
         {
-            var now = DateTimeManager.Instance.UtcNow();
-            return time - now;
+            return time - DateTimeService.UtcNow;
         }
 
         /// <summary>
-        /// Gets seconds from now until this DateTime (for future times)
+        /// Gets seconds from now until this DateTime (for future times).
         /// </summary>
         public static double SecondsFromNow(this DateTime time)
         {
-            var now = DateTimeManager.Instance.Now();
+            var now = DateTimeService.Now;
             var diff = (time - now).TotalSeconds;
 
             if (diff < 0)
@@ -264,11 +260,11 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets seconds from now until this DateTime (UTC, for future times)
+        /// Gets seconds from now until this DateTime (UTC, for future times).
         /// </summary>
         public static double SecondsFromNowUtc(this DateTime time)
         {
-            var now = DateTimeManager.Instance.UtcNow();
+            var now = DateTimeService.UtcNow;
             var diff = (time - now).TotalSeconds;
 
             if (diff < 0)
@@ -281,7 +277,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets minutes from now until this DateTime (for future times)
+        /// Gets minutes from now until this DateTime (for future times).
         /// </summary>
         public static double MinutesFromNow(this DateTime time)
         {
@@ -289,7 +285,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets minutes from now until this DateTime (UTC, for future times)
+        /// Gets minutes from now until this DateTime (UTC, for future times).
         /// </summary>
         public static double MinutesFromNowUtc(this DateTime time)
         {
@@ -297,7 +293,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets hours from now until this DateTime (for future times)
+        /// Gets hours from now until this DateTime (for future times).
         /// </summary>
         public static double HoursFromNow(this DateTime time)
         {
@@ -305,7 +301,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets hours from now until this DateTime (UTC, for future times)
+        /// Gets hours from now until this DateTime (UTC, for future times).
         /// </summary>
         public static double HoursFromNowUtc(this DateTime time)
         {
@@ -313,7 +309,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets days from now until this DateTime (for future times)
+        /// Gets days from now until this DateTime (for future times).
         /// </summary>
         public static double DaysFromNow(this DateTime time)
         {
@@ -321,7 +317,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Gets days from now until this DateTime (UTC, for future times)
+        /// Gets days from now until this DateTime (UTC, for future times).
         /// </summary>
         public static double DaysFromNowUtc(this DateTime time)
         {
@@ -332,20 +328,20 @@ namespace NekoLib.Extensions
 
         #region DateTime Raw Time Calculations
         /// <summary>
-        /// Gets absolute difference in seconds between the given DateTime and now
+        /// Gets absolute difference in seconds between the given DateTime and now.
         /// </summary>
         public static double AbsoluteSecondsDifference(this DateTime time)
         {
-            var now = DateTimeManager.Instance.Now();
+            var now = DateTimeService.Now;
             return Math.Abs((now - time).TotalSeconds);
         }
 
         /// <summary>
-        /// Gets absolute difference in seconds between the given DateTime and now (UTC)
+        /// Gets absolute difference in seconds between the given DateTime and now (UTC).
         /// </summary>
         public static double AbsoluteSecondsDifferenceUtc(this DateTime time)
         {
-            var now = DateTimeManager.Instance.UtcNow();
+            var now = DateTimeService.UtcNow;
             return Math.Abs((now - time).TotalSeconds);
         }
 
@@ -354,7 +350,7 @@ namespace NekoLib.Extensions
         #region DateTime Manipulation
 
         /// <summary>
-        /// Creates a new DateTime with modified date components
+        /// Creates a new DateTime with modified date components.
         /// </summary>
         public static DateTime WithDate(this DateTime dt, int? year = null, int? month = null, int? day = null)
         {
@@ -369,7 +365,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Creates a new DateTime with modified time components
+        /// Creates a new DateTime with modified time components.
         /// </summary>
         public static DateTime WithTime(this DateTime dt, int? hour = null, int? minute = null, int? second = null, int? millisecond = null)
         {
@@ -385,7 +381,7 @@ namespace NekoLib.Extensions
         #region DateTime Period Checks
 
         /// <summary>
-        /// Checks if the DateTime is at the start of the day (00:00:00)
+        /// Checks if the DateTime is at the start of the day (00:00:00).
         /// </summary>
         public static bool IsStartOfDay(this DateTime time)
         {
@@ -393,7 +389,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Checks if the DateTime is at the start of the week (Monday 00:00:00)
+        /// Checks if the DateTime is at the start of the week (Monday 00:00:00).
         /// </summary>
         public static bool IsStartOfWeek(this DateTime time)
         {
@@ -401,7 +397,7 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Checks if the DateTime is at the start of the month (1st day 00:00:00)
+        /// Checks if the DateTime is at the start of the month (1st day 00:00:00).
         /// </summary>
         public static bool IsStartOfMonth(this DateTime time)
         {
@@ -409,19 +405,19 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
-        /// Checks if this DateTime represents today
+        /// Checks if this DateTime represents today.
         /// </summary>
         public static bool IsToday(this DateTime time)
         {
-            return time.Date == DateTimeManager.Instance.Today();
+            return time.Date == DateTimeService.Today;
         }
 
         /// <summary>
-        /// Checks if this DateTime represents today (UTC)
+        /// Checks if this DateTime represents today (UTC).
         /// </summary>
         public static bool IsTodayUtc(this DateTime time)
         {
-            return time.Date == DateTimeManager.Instance.TodayUtc();
+            return time.Date == DateTimeService.TodayUtc;
         }
 
         #endregion
@@ -429,7 +425,7 @@ namespace NekoLib.Extensions
         #region DateTime Extensions for Periods
 
         /// <summary>
-        /// Gets the next day from this DateTime
+        /// Gets the next day from this DateTime.
         /// </summary>
         public static DateTime NextDay(this DateTime time)
         {

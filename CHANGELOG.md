@@ -1,3 +1,11 @@
+## [1.8.4] - 2025-09-07
+
+### Network & DateTime Services
+
+- Convert DateTimeManager to DateTimeService with static API for easy access.
+- Convert NetworkManager to NetworkService with static API for easy access.
+- Add more debug logs for both services.
+
 ## [1.8.3] - 2025-09-03
 
 ### Coroutine Extensions

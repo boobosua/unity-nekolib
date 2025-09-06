@@ -4,57 +4,52 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using NekoLib.Extensions;
 using NekoLib.Core;
+using NekoLib.Extensions;
 
 namespace NekoLib.Services
 {
-    public sealed class DateTimeManager : PersistentSingleton<DateTimeManager>
+    public static class DateTimeService
     {
         private const string PrimaryUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
         private const string HeaderUrl = "https://www.google.com";
         private const int TimeoutSeconds = 5;
 
-        private DateTime _syncedUtcTime;
-        private float _syncedAtRealtime;
-        private bool _hasSynced;
-        private bool _suppressWarnings = true;
+        private static DateTime _syncedUtcTime;
+        private static float _syncedAtRealtime;
+        private static bool _hasSynced;
 
         /// <summary>
         /// Fetches the current time from the server.
         /// </summary>
-        public async Task FetchTimeFromServerAsync(CancellationToken token = default)
+        public static async Task FetchTimeFromServerAsync(CancellationToken token = default)
         {
-            var effectiveToken = token == default
-                ? destroyCancellationToken
-                : CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken, token).Token;
-
             _syncedUtcTime = DateTime.UtcNow;
 
-            if (await TryFetchTimeFromTimeApi(effectiveToken))
+            if (await TryFetchTimeFromTimeApi(token))
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from TimeAPI.io: {_syncedUtcTime}".Colorize(Swatch.ME));
+                Debug.Log($"[DateTimeService] Synced from TimeAPI.io: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
                 return;
             }
 
-            if (await TryFetchTimeFromHttpHeader(effectiveToken))
+            if (await TryFetchTimeFromHttpHeader(token))
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeManager] Synced from Google header: {_syncedUtcTime}".Colorize(Swatch.ME));
+                Debug.Log($"[DateTimeService] Synced from Google header: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
                 return;
             }
 
             _hasSynced = false;
-            Debug.LogWarning("[DateTimeManager] Failed to sync from all sources. Using fallback DateTime.UtcNow.".Colorize(Swatch.VR));
+            Debug.LogWarning($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
         }
 
         /// <summary>
         /// Tries to fetch the current time from the TimeAPI.io service.
         /// </summary>
-        private async Task<bool> TryFetchTimeFromTimeApi(CancellationToken token = default)
+        private static async Task<bool> TryFetchTimeFromTimeApi(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
             request.timeout = TimeoutSeconds;
@@ -73,7 +68,7 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeManager] TimeAPI.io error: {request.error}".Colorize(Swatch.VR));
+                    Debug.LogWarning($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
@@ -87,17 +82,17 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io dateTime: {result.dateTime}".Colorize(Swatch.VR));
+                Debug.LogWarning($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeManager] TimeAPI.io request was cancelled".Colorize(Swatch.VR));
+                Debug.LogWarning("[DateTimeService] TimeAPI.io request was cancelled.");
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeManager] Failed to parse TimeAPI.io response: {e.Message}".Colorize(Swatch.VR));
+                Debug.LogWarning($"[DateTimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
         }
@@ -105,7 +100,7 @@ namespace NekoLib.Services
         /// <summary>
         /// Tries to fetch the current time from the HTTP header.
         /// </summary>
-        private async Task<bool> TryFetchTimeFromHttpHeader(CancellationToken token = default)
+        private static async Task<bool> TryFetchTimeFromHttpHeader(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(HeaderUrl);
             request.downloadHandler = new DownloadHandlerBuffer();
@@ -124,14 +119,14 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeManager] Google request error: {request.error}".Colorize(Swatch.VR));
+                    Debug.LogWarning($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
                 var header = request.GetResponseHeader("Date");
                 if (string.IsNullOrEmpty(header))
                 {
-                    Debug.LogWarning("[DateTimeManager] 'Date' header missing from Google response.".Colorize(Swatch.VR));
+                    Debug.LogWarning("[DateTimeService] 'Date' header missing from Google response.");
                     return false;
                 }
 
@@ -142,27 +137,19 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeManager] Failed to parse 'Date' header: {header}".Colorize(Swatch.VR));
+                Debug.LogWarning($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeManager] Google request was cancelled".Colorize(Swatch.VR));
+                Debug.LogWarning("[DateTimeService] Google request was cancelled.");
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeManager] Google request failed: {e.Message}".Colorize(Swatch.VR));
+                Debug.LogWarning($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Suppresses warnings from the DateTimeManager.
-        /// </summary>
-        public void SuppressWarnings(bool suppress)
-        {
-            _suppressWarnings = suppress;
         }
 
         [Serializable]
@@ -174,90 +161,69 @@ namespace NekoLib.Services
         /// <summary>
         /// Gets the current UTC time.
         /// </summary>
-        public DateTime UtcNow()
+        public static DateTime UtcNow
         {
-            if (!_hasSynced)
+            get
             {
-                if (!_suppressWarnings)
-                    Debug.LogWarning("[DateTimeManager] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
+                if (!_hasSynced)
+                {
+                    // Debug.LogWarning("[DateTimeService] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
+                    return DateTime.UtcNow;
+                }
 
-                return DateTime.UtcNow;
+                var drift = Time.realtimeSinceStartup - _syncedAtRealtime;
+                return _syncedUtcTime.AddSeconds(drift);
             }
-
-            var drift = Time.realtimeSinceStartup - _syncedAtRealtime;
-            return _syncedUtcTime.AddSeconds(drift);
         }
 
         /// <summary>
         /// Gets the current server time in local timezone.
         /// </summary>
-        public DateTime Now()
-        {
-            return UtcNow().ToLocalTime();
-        }
+        public static DateTime Now => UtcNow.ToLocalTime();
 
         /// <summary>
         /// Gets today's date (midnight) in server time.
         /// </summary>
-        public DateTime TodayUtc()
-        {
-            return UtcNow().Date;
-        }
+        public static DateTime TodayUtc => UtcNow.Date;
 
         /// <summary>
         /// Gets today's date (midnight) in local timezone.
         /// </summary>
-        public DateTime Today()
-        {
-            return Now().Date;
-        }
+        public static DateTime Today => Now.Date;
 
         /// <summary>
         /// Checks if today (local time) is the start of the week (Monday by default).
         /// </summary>
-        public bool IsTodayStartOfWeek()
-        {
-            return Today().DayOfWeek == DayOfWeek.Monday;
-        }
+        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
 
         /// <summary>
         /// Checks if today (UTC) is the start of the week (Monday by default).
         /// </summary>
-        public bool IsTodayStartOfWeekUtc()
-        {
-            return TodayUtc().DayOfWeek == DayOfWeek.Monday;
-        }
+        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
 
         /// <summary>
         /// Checks if today (local time) is the start of the month (1st day).
         /// </summary>
-        public bool IsTodayStartOfMonth()
-        {
-            return Today().Day == 1;
-        }
+        public static bool IsTodayStartOfMonth => Today.Day == 1;
 
         /// <summary>
         /// Checks if today (UTC) is the start of the month (1st day).
         /// </summary>
-        public bool IsTodayStartOfMonthUtc()
-        {
-            return TodayUtc().Day == 1;
-        }
+        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
 
         /// <summary>
         /// Gets tomorrow (00:00:00) from current local time.
         /// </summary>
-        public DateTime NextDay()
-        {
-            return Today().AddDays(1);
-        }
+        public static DateTime NextDay => Today.AddDays(1);
 
         /// <summary>
         /// Gets tomorrow (00:00:00) from current UTC time.
         /// </summary>
-        public DateTime NextDayUtc()
-        {
-            return TodayUtc().AddDays(1);
-        }
+        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
+
+        /// <summary>
+        /// Gets whether the service has successfully synced with a time server.
+        /// </summary>
+        public static bool HasSynced => _hasSynced;
     }
 }
