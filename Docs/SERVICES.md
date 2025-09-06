@@ -1,53 +1,111 @@
-# SERVICES
+# NekoLib Services
 
 Singleton services for networking and time management.
 
 ## DateTime Services
 
-### DateTimeManager
+### DateTimeService
 
 Server-synchronized time service with fallback to system time.
 
 ```csharp
 // Sync with server
-await DateTimeManager.Instance.FetchTimeFromServerAsync();
+await DateTimeService.FetchTimeFromServerAsync();
 
 // Get current time (server-synced)
-DateTime utcNow = DateTimeManager.Instance.UtcNow();
-DateTime localNow = DateTimeManager.Instance.Now();
+DateTime utcNow = DateTimeService.UtcNow;
+DateTime localNow = DateTimeService.Now;
 
 // Time period checks
-bool isStartOfWeek = DateTimeManager.Instance.IsTodayStartOfWeek();
-bool isStartOfMonth = DateTimeManager.Instance.IsTodayStartOfMonth();
+bool isStartOfWeek = DateTimeService.IsTodayStartOfWeek;
+bool isStartOfMonth = DateTimeService.IsTodayStartOfMonth;
 ```
 
-### TimeSystem
-
-Static wrapper for DateTimeManager.
+#### Usage Example
 
 ```csharp
-// Static access to time methods
-DateTime utcNow = TimeSystem.UtcNow();
-DateTime localNow = TimeSystem.Now();
-bool isStartOfWeek = TimeSystem.IsTodayStartOfWeek();
+async void Start()
+{
+    try
+    {
+        await DateTimeService.FetchTimeFromServerAsync();
+        Debug.Log($"Server time synced: {DateTimeService.Now}");
+    }
+    catch (OperationCanceledException)
+    {
+        Debug.Log("Time sync cancelled");
+    }
+}
+
+void CheckDailyRewards()
+{
+    var lastLogin = DateTime.Parse(PlayerPrefs.GetString("LastLogin"));
+    var now = DateTimeService.Now;
+
+    if (now.Date > lastLogin.Date)
+    {
+        GiveDailyReward();
+        PlayerPrefs.SetString("LastLogin", now.ToString());
+    }
+}
 ```
 
 ## Networking Services
 
-### NetworkManager
+### NetworkService
 
-Internet connection monitoring and detection.
+Centralized network management service with static API for easy access.
 
 ```csharp
-// Check internet connection
-bool hasInternet = await NetworkManager.Instance.CheckInternetConnectionAsync();
+// Check internet connection once
+bool hasInternet = await NetworkService.FetchInternetConnectionAsync();
 
-// Start/stop monitoring
-NetworkManager.Instance.StartMonitoring();
-NetworkManager.Instance.StopMonitoring();
+// Start monitoring internet connection
+NetworkService.StartMonitoring();
 
-// Listen for connection changes
-NetworkManager.AddInternetRefreshListener(isConnected => {
-    Debug.Log($"Internet: {isConnected}");
-});
+// Listen for internet connection changes
+NetworkService.OnConnectionUpdate += OnConnectionChanged;
+
+// Stop monitoring
+NetworkService.StopMonitoring();
+
+// Clean up
+NetworkService.Dispose();
+```
+
+#### Usage Example
+
+```csharp
+async void Start()
+{
+    // Check internet connection once
+    bool isOnline = await NetworkService.FetchInternetConnectionAsync();
+    Debug.Log($"Internet connection: {isOnline}");
+
+    // Start monitoring internet connection
+    NetworkService.StartMonitoring();
+
+    // Listen for internet connection changes
+    NetworkService.OnConnectionUpdate += OnConnectionUpdate;
+}
+
+private void OnConnectionUpdate(bool isOnline)
+{
+    if (isOnline)
+    {
+        Debug.Log("Internet connection restored!");
+        // Handle reconnection logic here
+    }
+    else
+    {
+        Debug.Log("Internet connection lost!");
+        // Handle disconnection logic here
+    }
+}
+
+void OnDestroy()
+{
+    // Clean up
+    NetworkService.Dispose();
+}
 ```

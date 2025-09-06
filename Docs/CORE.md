@@ -2,8 +2,6 @@
 
 Core foundational systems: singletons, timers, and color swatches.
 
-## Singleton Patterns
-
 ### PersistentSingleton
 
 Survives scene changes. Perfect for game managers.
@@ -46,8 +44,6 @@ public class AudioManager : LazySingleton<AudioManager>
 AudioManager.Instance.PlayMusic(backgroundMusic);
 ```
 
-## Timer System
-
 ### Creating Timers
 
 ```csharp
@@ -55,15 +51,17 @@ AudioManager.Instance.PlayMusic(backgroundMusic);
 var countdown = TimerFactory.CreateCountdown(this)
     .SetDuration(10f)
     .SetLoop(3)
+    .SetUpdateWhen(() => !isPaused) // Conditional updates
     .Build();
 
 // Stopwatch timer
 var stopwatch = TimerFactory.CreateStopwatch(this)
     .SetStopCondition(() => gameIsOver)
+    .SetUpdateWhen(() => isActiveState)
     .Build();
 ```
 
-### Using Timers
+### Timer Control
 
 ```csharp
 // Start and handle events
@@ -73,9 +71,17 @@ countdown.Start();
 // Monitor progress
 float progress = countdown.Progress; // 0.0 to 1.0
 string timeLeft = countdown.InverseClockFormat; // "MM:SS"
+
+// Control timers
+countdown.Pause();
+countdown.Resume();
+countdown.Stop();
+
+// Conditional updates - timer only ticks when condition is true
+timer.SetUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
 
-## Color Swatch
+### Color Swatch
 
 Pre-defined color constants for consistent theming.
 
@@ -83,8 +89,14 @@ Pre-defined color constants for consistent theming.
 // Available colors
 Color darkGray = Swatch.DG;
 Color vibrantRed = Swatch.VR;
+Color deepEmerald = Swatch.DE;
+Color vibrantCyan = Swatch.VC;
 
 // Usage in debug messages
 Debug.Log("Success!".Colorize(Swatch.DE));
+Debug.LogError("Error!".Colorize(Swatch.VR));
+
+// UI theming
 button.color = Swatch.VC;
+errorText.color = Swatch.VR;
 ```

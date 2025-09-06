@@ -2,100 +2,166 @@
 
 Static utility classes for common operations.
 
+## Static Utilities
+
 ### TimeUtils
 
-Cached WaitForSeconds to reduce garbage collection.
+#### GetWaitForSeconds()
 
 ```csharp
-// Get cached WaitForSeconds
+// Get cached WaitForSeconds to avoid memory allocation
 yield return Utils.GetWaitForSeconds(1.5f);
+```
 
-// Get cached WaitForSecondsRealtime
+#### GetWaitForSecondsRealtime()
+
+```csharp
+// Get cached WaitForSecondsRealtime for unscaled time
 yield return Utils.GetWaitForSecondsRealtime(2.0f);
 ```
 
 ### TransformUtils
 
-Mathematical utilities for transforms and vectors.
+#### GetAngleFromVector()
 
 ```csharp
-// Angle from Vector3
+// Get angle in degrees from Vector3
 float angle = Utils.GetAngleFromVector(direction);
+```
 
-// Random rotation
+#### GetRandomRotation()
+
+```csharp
+// Get random rotation on specific axes with custom ranges
 Quaternion randomY = Utils.GetRandomRotation(Axis.Y);
-Quaternion randomXZ = Utils.GetRandomRotation(Axis.XZ);
-
-// Custom ranges
-Quaternion custom = Utils.GetRandomRotation(
-    Axis.XY,
-    xRange: new Vector2(0f, 90f),
-    yRange: new Vector2(-45f, 45f)
-);
+Quaternion custom = Utils.GetRandomRotation(Axis.XY, new Vector2(0f, 90f), new Vector2(-45f, 45f));
 ```
 
 ### EnumUtils
 
-Utilities for working with enumerations.
+#### GetRandomEnum()
 
 ```csharp
 // Get random enum value
 MyEnum randomValue = Utils.GetRandomEnum<MyEnum>();
+```
 
+#### GetRandomEnum() with exclusions
+
+```csharp
 // Get random enum excluding specific values
 MyEnum randomExcluding = Utils.GetRandomEnum(MyEnum.Value1, MyEnum.Value2);
+```
 
-// Count enum values
+#### CountEnum()
+
+```csharp
+// Get count of enum values
 int count = Utils.CountEnum<MyEnum>();
+```
 
-// Get all enum values (optionally excluding some)
+#### AllEnum()
+
+```csharp
+// Get all enum values
 MyEnum[] allValues = Utils.AllEnum<MyEnum>();
-MyEnum[] someValues = Utils.AllEnum(MyEnum.Value1);
+```
 
+#### AllEnum() with exclusions
+
+```csharp
+// Get all enum values excluding specific ones
+MyEnum[] someValues = Utils.AllEnum(MyEnum.Value1, MyEnum.Value2);
+```
+
+#### ForEnum()
+
+```csharp
 // Iterate over all enum values
 Utils.ForEnum<MyEnum>(value => Debug.Log(value));
 ```
 
 ### MouseUtils
 
-Mouse input utilities and helper functions.
+#### IsMouseInGameWindow()
 
 ```csharp
-// Check if mouse is in game window
+// Check if mouse cursor is within game window bounds
 bool isInWindow = Utils.IsMouseInGameWindow();
+```
 
-// Get 2D mouse world position (orthographic cameras)
+#### GetMousePosition2D()
+
+```csharp
+// Get 2D mouse world position (for orthographic cameras)
 Vector2 mousePos2D = Utils.GetMousePosition2D();
+```
+
+#### GetMousePosition2D() with camera
+
+```csharp
+// Get 2D mouse world position with specific camera
 Vector2 mousePos2DCustom = Utils.GetMousePosition2D(myCamera);
+```
 
-// Get 3D mouse world position at distance
+#### GetMousePosition3D()
+
+```csharp
+// Get 3D mouse world position at specified distance
 Vector3 mousePos3D = Utils.GetMousePosition3D(10f);
+```
+
+#### GetMousePosition3D() with camera
+
+```csharp
+// Get 3D mouse world position with specific camera and distance
 Vector3 mousePos3DCustom = Utils.GetMousePosition3D(5f, myCamera);
+```
 
-// Get 3D position from raycast
+#### GetMousePosition3DFromRaycast()
+
+```csharp
+// Get 3D position from raycast hit
 Vector3 raycastPos = Utils.GetMousePosition3DFromRaycast();
-Vector3 raycastPosLayer = Utils.GetMousePosition3DFromRaycast(LayerMask.GetMask("Ground"));
+```
 
-// Get mouse ray
+#### GetMousePosition3DFromRaycast() with layer mask
+
+```csharp
+// Get 3D position from raycast with layer filtering
+Vector3 raycastPosFiltered = Utils.GetMousePosition3DFromRaycast(LayerMask.GetMask("Ground"));
+```
+
+#### GetMouseRay()
+
+```csharp
+// Get mouse ray from main camera
 Ray mouseRay = Utils.GetMouseRay();
+```
+
+#### GetMouseRay() with camera
+
+```csharp
+// Get mouse ray from specific camera
 Ray mouseRayCustom = Utils.GetMouseRay(myCamera);
 ```
 
 ### EventUtils
 
-Unity event handling utilities.
+#### FloatEvent
 
 ```csharp
-// FloatEvent class available for Unity Events
+// Use FloatEvent class for Unity Events with float parameter
 [SerializeField] private FloatEvent onValueChanged;
+onValueChanged.Invoke(0.5f);
 ```
 
 ### TaskUtils
 
-Async/await and Task utilities.
+#### YieldTask
 
 ```csharp
-// Use YieldTask to await tasks in coroutines
+// Use YieldTask to await async operations in coroutines
 yield return new YieldTask(myAsyncTask);
 ```
 
@@ -103,70 +169,150 @@ yield return new YieldTask(myAsyncTask);
 
 ### Raycast2DUtils
 
-2D raycasting operations and helpers.
+#### IsPointerOverAny2DObject()
 
 ```csharp
-// Check if mouse is over any 2D object
-bool isOverAny = Utils.IsPointerOverAny2DObject();
-bool isOverAnyLayer = Utils.IsPointerOverAny2DObject(LayerMask.GetMask("Interactive"));
-bool isOverAnyCamera = Utils.IsPointerOverAny2DObject(myCamera);
+// Check if mouse is over any 2D collider
+bool isOverObject = Utils.IsPointerOverAny2DObject();
+```
 
-// Get hit info
-bool hitSomething = Utils.IsPointerOverAny2DObject(out Collider2D hit);
+#### IsPointerOverAny2DObject() with layer mask
 
-// Check specific object
-bool isOverSpecific = Utils.IsPointerOver2DObject(myGameObject);
+```csharp
+// Check if mouse is over any 2D collider with layer filtering
+bool isOverObjectFiltered = Utils.IsPointerOverAny2DObject(LayerMask.GetMask("Interactive"));
+```
 
-// Check for component type
-bool hasComponent = Utils.IsPointerOver2DObject<MyComponent>();
-bool hasComponentOut = Utils.IsPointerOver2DObject<MyComponent>(out MyComponent component);
+#### IsPointerOverAny2DObject() with camera
+
+```csharp
+// Check if mouse is over any 2D collider with specific camera
+bool isOverObjectCustom = Utils.IsPointerOverAny2DObject(myCamera);
+```
+
+#### IsPointerOverAny2DObject() with output
+
+```csharp
+// Check if mouse is over any 2D collider and get the collider
+bool isOver = Utils.IsPointerOverAny2DObject(out Collider2D hit);
+```
+
+#### IsPointerOver2DObject() with GameObject
+
+```csharp
+// Check if mouse is over specific GameObject
+bool isOverTarget = Utils.IsPointerOver2DObject(targetGameObject);
+```
+
+#### IsPointerOver2DObject() with component type
+
+```csharp
+// Check if mouse is over object with specific component
+bool isOverButton = Utils.IsPointerOver2DObject<Button>();
+```
+
+#### IsPointerOver2DObject() with component output
+
+```csharp
+// Check if mouse is over object and get the component
+bool isOver = Utils.IsPointerOver2DObject<Button>(out Button button);
 ```
 
 ### Raycast3DUtils
 
-3D raycasting operations and helpers.
+#### IsPointerOverAny3DObject()
 
 ```csharp
-// Check if mouse is over any 3D object
-bool isOverAny = Utils.IsPointerOverAny3DObject();
-bool isOverAnyDistance = Utils.IsPointerOverAny3DObject(10f);
-bool isOverAnyLayer = Utils.IsPointerOverAny3DObject(LayerMask.GetMask("Interactive"));
+// Check if mouse is over any 3D collider
+bool isOverObject = Utils.IsPointerOverAny3DObject();
+```
 
-// Get hit info
-bool hitSomething = Utils.IsPointerOverAny3DObject(out RaycastHit hit);
-bool hitSomethingCustom = Utils.IsPointerOverAny3DObject(out hit, myCamera, 15f);
+#### IsPointerOverAny3DObject() with layer mask
 
-// Check specific object
-bool isOverSpecific = Utils.IsPointerOver3DObject(myGameObject);
+```csharp
+// Check if mouse is over any 3D collider with layer filtering
+bool isOverObjectFiltered = Utils.IsPointerOverAny3DObject(LayerMask.GetMask("Interactive"));
+```
 
-// Check for component type
-bool hasComponent = Utils.IsPointerOver3DObject<MyComponent>();
-bool hasComponentOut = Utils.IsPointerOver3DObject<MyComponent>(out MyComponent component);
+#### IsPointerOverAny3DObject() with distance
+
+```csharp
+// Check if mouse is over any 3D collider within distance
+bool isOverObjectNear = Utils.IsPointerOverAny3DObject(50f);
+```
+
+#### IsPointerOverAny3DObject() with camera
+
+```csharp
+// Check if mouse is over any 3D collider with specific camera
+bool isOverObjectCustom = Utils.IsPointerOverAny3DObject(myCamera);
+```
+
+#### IsPointerOverAny3DObject() with output
+
+```csharp
+// Check if mouse is over any 3D collider and get raycast info
+bool isOver = Utils.IsPointerOverAny3DObject(out RaycastHit hit);
+```
+
+#### IsPointerOver3DObject() with GameObject
+
+```csharp
+// Check if mouse is over specific GameObject
+bool isOverTarget = Utils.IsPointerOver3DObject(targetGameObject);
+```
+
+#### IsPointerOver3DObject() with component type
+
+```csharp
+// Check if mouse is over object with specific component
+bool isOverInteractable = Utils.IsPointerOver3DObject<Interactable>();
+```
+
+#### IsPointerOver3DObject() with component output
+
+```csharp
+// Check if mouse is over object and get the component
+bool isOver = Utils.IsPointerOver3DObject<Interactable>(out Interactable interactable);
 ```
 
 ### UIElementUtils
 
-UI element manipulation and utilities.
+#### IsPointerOverUI()
 
 ```csharp
-// Check if pointer is over UI element
+// Check if pointer is over UI elements in specific layer
 bool isOverUI = Utils.IsPointerOverUI(LayerMask.GetMask("UI"));
 ```
 
+## Editor Utilities
+
 ### EditorUtils
 
-Editor-specific utilities (only available in editor builds).
+#### FindAllAssets()
 
 ```csharp
-#if UNITY_EDITOR
-// Find all assets of type in directory
+// Find all ScriptableObject assets in directory (Editor only)
 MyScriptableObject[] assets = Utils.FindAllAssets<MyScriptableObject>("Assets/Data/");
+```
 
-// Draw gizmos in Scene view
-Utils.DrawCircleGizmo(transform.position, 5f, Vector3.up, Color.red);
-Utils.DrawAnnulusGizmo(transform.position, 3f, 8f, Vector3.up, Color.blue, 64);
+#### DrawAnnulusGizmo()
 
-// Check reload domain setting
-bool isDisabled = Utils.IsReloadDomainDisabled();
-#endif
+```csharp
+// Draw ring gizmo in Scene view (Editor only)
+Utils.DrawAnnulusGizmo(transform.position, 2f, 5f, Vector3.up, Color.red);
+```
+
+#### DrawCircleGizmo()
+
+```csharp
+// Draw circle gizmo in Scene view (Editor only)
+Utils.DrawCircleGizmo(transform.position, 3f, Vector3.up, Color.blue);
+```
+
+#### IsReloadDomainDisabled()
+
+```csharp
+// Check if domain reload is disabled in Editor settings
+bool isDomainReloadDisabled = Utils.IsReloadDomainDisabled();
 ```
