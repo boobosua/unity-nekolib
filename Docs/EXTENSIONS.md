@@ -223,6 +223,20 @@ Coroutine conditional = this.StartCoroutineWhen(myCoroutine, () => isReady);
 
 // Parallel execution
 Coroutine parallel = this.StartCoroutineParallel(coroutineA, coroutineB, coroutineC);
+
+// Convert Coroutine to Task for async/await support
+Task task = StartCoroutine(myCoroutine).AsTask(this);
+await task;
+
+// Convert IEnumerator to Task
+Task enumTask = myEnumerator.AsTask(this);
+await enumTask;
+
+// Run multiple coroutines concurrently and wait for all
+await this.WhenAll(coroutineA, coroutineB, coroutineC);
+
+// Run multiple coroutines and wait for any one to complete
+Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutineC);
 ```
 
 ### TimerExtensions
@@ -250,6 +264,18 @@ MyObject restored = json.Deserialize<MyObject>();
 // Fire-and-forget tasks
 myAsyncTask.Forget();
 myAsyncTask.Forget(ex => Debug.LogError($"Task failed: {ex}"));
+
+// Convert Task to Coroutine using YieldTask
+IEnumerator WebRequestExample()
+{
+    // Use Task in coroutine
+    Task<string> webTask = FetchDataAsync();
+    yield return new YieldTask(webTask);
+    Debug.Log($"Got data: {webTask.Result}");
+
+    // Or use AsCoroutine extension
+    yield return AnotherAsyncOperation().AsCoroutine();
+}
 ```
 
 ### TextColorizeExtensions

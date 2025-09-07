@@ -1,3 +1,10 @@
+## [1.8.5] - 2025-09-07
+
+### Update Coroutine and Task Extensions
+
+- Add more coroutine extensions.
+- Add more task extensions.
+
 ## [1.8.4] - 2025-09-07
 
 ### Network & DateTime Services
