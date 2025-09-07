@@ -9,7 +9,7 @@ namespace NekoLib.Core
 {
     public class TimerTrackerWindow : EditorWindow
     {
-        [MenuItem("Tools/Neko Indie/Timer Tracker")]
+        [MenuItem("Window/Neko Indie/Timer Tracker")]
         public static void ShowWindow()
         {
             GetWindow<TimerTrackerWindow>("Timer Tracker");
