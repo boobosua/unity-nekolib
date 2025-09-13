@@ -7,13 +7,24 @@ Extension methods for Unity and C# types.
 ```csharp
 // Get or add component
 AudioSource audio = gameObject.GetOrAdd<AudioSource>();
+Rigidbody rb = monoBehaviour.GetOrAdd<Rigidbody>();
+
+// Active state management
+monoBehaviour.SetActive();   // Set active to true
+monoBehaviour.SetInactive(); // Set active to false
 
 // Layer management
 bool inLayer = gameObject.IsInLayer(LayerMask.GetMask("Enemy"));
-gameObject.SetLayer("Player");
+gameObject.SetLayer("Player");           // By name
+gameObject.SetLayer(8);                  // By layer number
+gameObject.SetLayer(LayerMask.GetMask("UI")); // By LayerMask
 
 // Child management
 gameObject.ClearChildTransforms();
+
+// Get children in specific layers
+GameObject[] enemyChildren = gameObject.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
+GameObject[] allEnemies = gameObject.GetChildrenInLayerRecursive(LayerMask.GetMask("Enemy"));
 ```
 
 ### TransformExtensions
@@ -21,16 +32,58 @@ gameObject.ClearChildTransforms();
 ```csharp
 // Child management
 transform.Clear(); // Destroy all children
+Transform[] children = transform.GetChildren(includeInactive: false);
 
-// Orbital positioning
+// Orbital positioning (static)
 transform.SetOrbitRotation(target, horizontalAngle: 45f, verticalAngle: 30f, distance: 5f);
+transform.SetOrbitRotationClamped(target, 45f, 30f, 5f, -80f, 80f);
+
+// Orbital movement (dynamic - call in Update)
+float currentAngle = 0f;
+transform.OrbitAround(target, Orientation.Horizontal, speed: 30f, staticAngle: 0f, distance: 5f, ref currentAngle);
+
+// Rotation around point
+transform.RotateAround(center, Vector3.up, 90f);
 
 // 2D look-at
 transform.LookAt2D(targetPosition);
+transform.LookAt2D(targetTransform, angleOffset: 90f);
 
-// Distance utilities
+// Distance and direction utilities
 float distance = transform.DistanceTo(otherTransform);
+Vector3 direction = transform.DirectionTo(otherTransform);
 bool inRange = transform.InRangeOf(otherTransform, 5f);
+
+// Transform resets
+transform.ResetTransform();      // Reset world transform
+transform.ResetLocalTransform(); // Reset local transform
+
+// Layer filtering for children
+GameObject[] enemyChildren = transform.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
+GameObject[] allEnemies = transform.GetChildrenInLayerRecursive(LayerMask.GetMask("Enemy"));
+```
+
+### AnimatorExtensions
+
+```csharp
+// Animation length queries
+float clipLength = animator.GetAnimationLength("JumpAnimation");
+float hashLength = animator.GetAnimationLength(Animator.StringToHash("JumpAnimation"));
+
+// Animation progress tracking
+float progress = animator.GetCurrentAnimationProgress(layerIndex: 0);
+float remainingTime = animator.GetCurrentAnimationRemainingTime(layerIndex: 0);
+
+// Animation state checks
+bool isJumping = animator.IsPlayingAnimation("JumpAnimation");
+bool isPlaying = animator.IsPlayingAnimation(jumpAnimHash);
+
+// Play and wait for completion (coroutines)
+yield return animator.PlayAndWait("AttackAnimation");
+yield return animator.CrossFadeAndWait("IdleAnimation", transitionDuration: 0.2f);
+
+// Wait for specific animation to complete
+yield return AnimatorExtensions.WaitForAnimation(animator, "DeathAnimation");
 ```
 
 ### CameraExtensions

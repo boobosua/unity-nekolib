@@ -1,4 +1,5 @@
 using System;
+using NekoLib.Core;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -97,8 +98,40 @@ namespace NekoLib.Extensions
             }
             else
             {
-                Debug.LogWarning($"Layer '{layerName}' not found!");
+                Debug.LogWarning($"Layer '{layerName.Colorize(Swatch.GA)}' not found!");
             }
+        }
+
+        /// <summary>
+        /// Get all child GameObjects in a specific layer.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayer(this MonoBehaviour monoBehaviour, LayerMask layer, bool includeInactive = false)
+        {
+            return monoBehaviour.gameObject.GetChildrenInLayer(layer, includeInactive);
+        }
+
+        /// <summary>
+        /// Get all child GameObjects in a specific layer, including nested children.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayerRecursive(this MonoBehaviour monoBehaviour, LayerMask layer, bool includeInactive = false)
+        {
+            return monoBehaviour.gameObject.GetChildrenInLayerRecursive(layer, includeInactive);
+        }
+
+        /// <summary>
+        /// Get all child GameObjects in a specific layer.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayer(this GameObject gameObject, LayerMask layer, bool includeInactive = false)
+        {
+            return gameObject.transform.GetChildrenInLayer(layer, includeInactive);
+        }
+
+        /// <summary>
+        /// Get all child GameObjects in a specific layer, including nested children.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayerRecursive(this GameObject gameObject, LayerMask layer, bool includeInactive = false)
+        {
+            return gameObject.transform.GetChildrenInLayerRecursive(layer, includeInactive);
         }
     }
 }

@@ -263,6 +263,55 @@ namespace NekoLib.Extensions
             transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             transform.localScale = Vector3.one;
         }
+
+        /// <summary>
+        /// Gets all child GameObjects that are in the specified layer mask.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayer(this Transform transform, LayerMask layerMask, bool includeInactive = false)
+        {
+            var results = new List<GameObject>();
+            var childCount = transform.childCount;
+
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if ((includeInactive || child.gameObject.activeInHierarchy) && child.gameObject.IsInLayer(layerMask))
+                {
+                    results.Add(child.gameObject);
+                }
+            }
+
+            return results.ToArray();
+        }
+
+        /// <summary>
+        /// Gets all child GameObjects in the specified layer mask, including nested children.
+        /// </summary>
+        public static GameObject[] GetChildrenInLayerRecursive(this Transform transform, LayerMask layerMask, bool includeInactive = false)
+        {
+            var results = new List<GameObject>();
+            GetChildrenInLayerRecursiveInternal(transform, layerMask, includeInactive, results);
+            return results.ToArray();
+        }
+
+        /// <summary>
+        /// Gets all child GameObjects in the specified layer mask, including nested children.
+        /// </summary>  
+        private static void GetChildrenInLayerRecursiveInternal(Transform transform, LayerMask layerMask, bool includeInactive, List<GameObject> results)
+        {
+            int childCount = transform.childCount;
+
+            for (int i = 0; i < childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if ((includeInactive || child.gameObject.activeInHierarchy) && child.gameObject.IsInLayer(layerMask))
+                {
+                    results.Add(child.gameObject);
+                }
+                // Recursively check this child's children.
+                GetChildrenInLayerRecursiveInternal(child, layerMask, includeInactive, results);
+            }
+        }
     }
 }
 

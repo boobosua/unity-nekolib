@@ -1,3 +1,11 @@
+## [1.8.6] - 2025-09-14
+
+### New Animator, Transform, and GameObject Extensions
+
+- Add new extensions for animator to query animation state and progress.
+- Add coroutine support for waiting on animation events.
+- Add new extensions for transform and game object to query for child objects in specific layer masks.
+
 ## [1.8.5] - 2025-09-07
 
 ### Update Coroutine and Task Extensions
