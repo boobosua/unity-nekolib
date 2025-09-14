@@ -15,7 +15,7 @@ namespace NekoLib.Core
         protected float _elapsedTime;
         private readonly GameObject _owner;
         private readonly MonoBehaviour _ownerComponent;
-        public float ElapsedTime => _elapsedTime;
+        public float RemainTime => _elapsedTime;
         public GameObject Owner => _owner;
         public MonoBehaviour OwnerComponent => _ownerComponent;
 
@@ -103,7 +103,7 @@ namespace NekoLib.Core
             IsRunning = false;
             _updateCondition = null;
 
-            TimerManager.Instance.RegisterTimer(this);
+            ownerComponent.GetOrAdd<TimerRegistry>().RegisterTimer(this);
         }
 
         /// <summary>
@@ -143,14 +143,12 @@ namespace NekoLib.Core
         }
 
         /// <summary>
-        /// Stops the timer and removes it from the TimerManager.
+        /// Stops the timer and removes it from the TimerRegistry.
         /// </summary>
         public void StopAndDestroy()
         {
             Stop();
-
-            if (TimerManager.HasInstance)
-                TimerManager.Instance.UnregisterTimer(this);
+            _ownerComponent.GetOrAdd<TimerRegistry>().UnregisterTimer(this);
         }
 
         protected void InvokeStart()

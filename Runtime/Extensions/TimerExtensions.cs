@@ -67,8 +67,12 @@ namespace NekoLib.Extensions
         /// </summary>
         public static void CleanupTimers(this MonoBehaviour monoBehaviour)
         {
-            if (monoBehaviour == null || TimerManager.HasInstance == false) return;
-            TimerManager.Instance.CleanupTimersForObject(monoBehaviour.gameObject);
+            if (monoBehaviour == null) return;
+
+            if (monoBehaviour.TryGetComponent<TimerRegistry>(out var timerRegistry))
+            {
+                timerRegistry.CleanUpForObject(monoBehaviour.gameObject);
+            }
         }
 
         /// <summary>
@@ -76,8 +80,12 @@ namespace NekoLib.Extensions
         /// </summary>
         public static void CleanupComponentTimers(this MonoBehaviour monoBehaviour)
         {
-            if (monoBehaviour == null || TimerManager.HasInstance == false) return;
-            TimerManager.Instance.CleanupTimersForComponent(monoBehaviour);
+            if (monoBehaviour == null) return;
+
+            if (monoBehaviour.TryGetComponent<TimerRegistry>(out var timerRegistry))
+            {
+                timerRegistry.CleanUpForComponent(monoBehaviour);
+            }
         }
     }
 }

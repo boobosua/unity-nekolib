@@ -58,13 +58,6 @@ namespace NekoLib.Core
         {
             try
             {
-                if (!TimerManager.HasInstance)
-                {
-                    EditorGUILayout.HelpBox("TimerManager not found in the scene.", MessageType.Warning);
-                    return;
-                }
-
-                var timerManager = TimerManager.Instance;
 
                 // Check if we just exited play mode and cleanup
                 if (_wasPlaying && !Application.isPlaying)
@@ -85,8 +78,8 @@ namespace NekoLib.Core
 
                 EditorGUILayout.Space(15);
 
-                // Get timer data
-                var allTimers = GetAllTimers(timerManager);
+                // Get timer data from all TimerRegistry components in the scene
+                var allTimers = GetAllTimers();
                 var countdowns = allTimers.OfType<Countdown>().ToList();
                 var stopwatches = allTimers.OfType<Stopwatch>().ToList();
 
@@ -152,19 +145,21 @@ namespace NekoLib.Core
             }
         }
 
-        private List<TimerBase> GetAllTimers(TimerManager timerManager)
+        private List<TimerBase> GetAllTimers()
         {
             var timers = new List<TimerBase>();
 
-            // Use reflection to access private _activeTimers field
-            var field = typeof(TimerManager).GetField("_activeTimers",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (!Application.isPlaying)
+                return timers;
 
-            if (field != null)
+            // Find all TimerRegistry components in the scene
+            var timerRegistries = Object.FindObjectsByType<TimerRegistry>(FindObjectsSortMode.None);
+
+            foreach (var registry in timerRegistries)
             {
-                var activeTimers = field.GetValue(timerManager) as List<TimerBase>;
-                if (activeTimers != null)
+                if (registry != null)
                 {
+                    var activeTimers = registry.GetActiveTimers();
                     timers.AddRange(activeTimers);
                 }
             }
@@ -370,7 +365,7 @@ namespace NekoLib.Core
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Remaining Time column
-                float remainingTime = countdown.ElapsedTime;
+                float remainingTime = countdown.RemainTime;
                 DrawCenteredText(new Rect(x, rowRect.y, currentTimeWidth, rowRect.height),
                     FormatTime(remainingTime), dimmedTextColor, 12);
                 x += currentTimeWidth;
@@ -438,7 +433,7 @@ namespace NekoLib.Core
 
                 // Elapsed Time column
                 DrawCenteredText(new Rect(x, rowRect.y, elapsedTimeWidth, rowRect.height),
-                    FormatTime(stopwatch.ElapsedTime), dimmedTextColor, 13);
+                    FormatTime(stopwatch.RemainTime), dimmedTextColor, 13);
                 x += elapsedTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 

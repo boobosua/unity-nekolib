@@ -1,3 +1,10 @@
+## [1.9.0] - 2025-09-15
+
+### Rework Timer System
+
+- Remove TimerManager singleton.
+- Add TimerRegistry component to manage all timers in a single game object.
+
 ## [1.8.6] - 2025-09-14
 
 ### New Animator, Transform, and GameObject Extensions
