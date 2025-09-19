@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using NekoLib.Extensions;
 using UnityEditor;
 using UnityEngine;
 
@@ -150,13 +151,7 @@ namespace NekoLib.Core
 
         private string FormatTime(float timeInSeconds)
         {
-            int minutes = Mathf.FloorToInt(timeInSeconds / 60f);
-            int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
-
-            if (minutes > 0)
-                return $"{minutes}m{seconds:00}s";
-            else
-                return $"{seconds}s";
+            return timeInSeconds.ToReadableFormat();
         }
     }
 }

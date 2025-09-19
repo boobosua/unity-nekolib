@@ -19,7 +19,6 @@ namespace NekoLib.Core
     {
         public event Action OnLoop;
 
-        private readonly float _originalTotalTime; // Total time for countdown
         private float _totalTime;
         private LoopType _loopType = LoopType.None;
         private int _loopCount = 0;
@@ -64,11 +63,6 @@ namespace NekoLib.Core
         public LoopType CurrentLoopType => _loopType;
 
         /// <summary>
-        /// The original total time when the countdown was first created.
-        /// </summary>
-        public float OriginalTotalTime => _originalTotalTime;
-
-        /// <summary>
         /// The current total time for the countdown (may be modified from original).
         /// </summary>
         public float TotalTime => _totalTime;
@@ -83,7 +77,7 @@ namespace NekoLib.Core
 
         public Countdown(MonoBehaviour ownerComponent, float totalTime = 1f) : base(ownerComponent)
         {
-            _totalTime = _originalTotalTime = totalTime.AtLeast(0f);
+            _totalTime = totalTime.AtLeast(0f);
             _loopType = LoopType.None;
             _loopCount = 0;
             _currentLoopIteration = 0;
@@ -147,12 +141,15 @@ namespace NekoLib.Core
             }
 
             _totalTime += additionalTime;
+
+            if (!IsRunning) return;
+            _elapsedTime = (_elapsedTime + additionalTime).AtMost(_totalTime);
         }
 
         /// <summary>
-        /// Reduces the countdown by subtracting time from the total duration.
+        /// Shortens the countdown by subtracting time from the total duration.
         /// </summary>
-        public void ReduceTime(float timeToReduce)
+        public void ShortenTime(float timeToReduce)
         {
             if (timeToReduce < 0f)
             {
@@ -161,7 +158,9 @@ namespace NekoLib.Core
             }
 
             _totalTime = (_totalTime - timeToReduce).AtLeast(0f);
-            _elapsedTime = _elapsedTime.AtMost(_totalTime);
+
+            if (!IsRunning) return;
+            _elapsedTime = (_elapsedTime - timeToReduce).AtLeast(0f);
         }
 
         /// <summary>
@@ -171,14 +170,6 @@ namespace NekoLib.Core
         {
             _totalTime = newTotalTime.AtLeast(0f);
             _elapsedTime = _elapsedTime.AtMost(_totalTime);
-        }
-
-        /// <summary>
-        /// Resets the total time back to the original value when the countdown was created.
-        /// </summary>
-        public void ResetToOriginalTime()
-        {
-            _totalTime = _originalTotalTime;
         }
 
         public override void Tick(float deltaTime)

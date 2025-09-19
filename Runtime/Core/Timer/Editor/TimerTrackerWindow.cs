@@ -743,16 +743,7 @@ namespace NekoLib.Core
 
         private string FormatTime(float timeInSeconds)
         {
-            int hours = Mathf.FloorToInt(timeInSeconds / 3600f);
-            int minutes = Mathf.FloorToInt((timeInSeconds % 3600f) / 60f);
-            int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
-
-            if (hours > 0)
-                return $"{hours}h{minutes:00}m{seconds:00}s";
-            else if (minutes > 0)
-                return $"{minutes}m{seconds:00}s";
-            else
-                return $"{seconds}s";
+            return timeInSeconds.ToReadableFormat();
         }
 
         private struct TimerStatistics
