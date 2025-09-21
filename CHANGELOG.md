@@ -1,3 +1,10 @@
+## [1.9.2] - 2025-09-21
+
+### Scene Switcher Tool
+
+- Fix some UI text capitalization for better readability.
+- Add support for Unity 2020.1 and newer for UIElements in the SceneSwitcherTool and StartupSceneLoaderTool.
+
 ## [1.9.0] - 2025-09-15
 
 ### Rework Timer System
