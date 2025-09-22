@@ -43,6 +43,7 @@ namespace NekoLib
         private const string SessionPlaySwitchedKey = "NekoLib:PlaySwitchedFlag";
 
         private const string PrefKey = "NekoLib:SceneSwitcherEnabled"; // mirror key used in preferences
+        private const string PrefActivateLoadedAdditive = "NekoLib:ActivateLoadedAdditiveOnSelect"; // new preference
         #endregion
 
         private static bool IsEnabledPreference()
@@ -331,10 +332,40 @@ namespace NekoLib
             if (index < 0 || index >= scenePaths.Length) return;
             string path = scenePaths[index];
             if (string.IsNullOrEmpty(path)) return;
+            // Optional behavior: if target scene already loaded additively, just set active instead of reopening.
+            bool activateLoadedAdditive = EditorPrefs.GetBool(PrefActivateLoadedAdditive, false);
+            if (activateLoadedAdditive)
+            {
+                for (int i = 0; i < SceneManager.sceneCount; i++)
+                {
+                    var s = SceneManager.GetSceneAt(i);
+                    if (string.Equals(s.path, path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (s != SceneManager.GetActiveScene())
+                        {
+                            if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                            {
+                                SceneManager.SetActiveScene(s);
+                                UpdateSelectionVisual();
+                            }
+                        }
+                        else
+                        {
+                            UpdateSelectionVisual();
+                        }
+                        return; // done
+                    }
+                }
+            }
+
             if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
                 EditorSceneManager.OpenScene(path);
+            }
             else
+            {
                 UpdateSelectionVisual();
+            }
         }
 
         private static VisualElement GetToolbarRoot()
