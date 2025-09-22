@@ -9,6 +9,7 @@ namespace NekoLib
         private const string Root = "NekoLib";
         private const string KeySceneSwitcher = Root + ":SceneSwitcherEnabled";
         private const string KeyActivateLoadedAdditive = Root + ":ActivateLoadedAdditiveOnSelect";
+        private const string KeyTimeScaleTool = Root + ":TimeScaleToolEnabled";
         internal static bool SceneSwitcherEnabled
         {
             get => EditorPrefs.GetBool(KeySceneSwitcher, true);
@@ -24,6 +25,17 @@ namespace NekoLib
         {
             get => EditorPrefs.GetBool(KeyActivateLoadedAdditive, false);
             set => EditorPrefs.SetBool(KeyActivateLoadedAdditive, value);
+        }
+
+        internal static bool TimeScaleToolEnabled
+        {
+            get => EditorPrefs.GetBool(KeyTimeScaleTool, true);
+            set
+            {
+                if (value == TimeScaleToolEnabled) return;
+                EditorPrefs.SetBool(KeyTimeScaleTool, value);
+                TimeScaleTool.ApplyPreferenceChange(value);
+            }
         }
 
 
@@ -50,8 +62,13 @@ namespace NekoLib
                     bool act = EditorGUILayout.Toggle(toggleActivateAdditive, ActivateLoadedAdditiveOnSelect);
                     if (EditorGUI.EndChangeCheck()) ActivateLoadedAdditiveOnSelect = act;
 
+                    EditorGUI.BeginChangeCheck();
+                    var toggleTimeScale = new GUIContent("Enable Time Scale Toolbar", "Show the time scale slider + reset control in the main toolbar.");
+                    bool ts = EditorGUILayout.Toggle(toggleTimeScale, TimeScaleToolEnabled);
+                    if (EditorGUI.EndChangeCheck()) TimeScaleToolEnabled = ts;
+
                     GUILayout.Space(6);
-                    EditorGUILayout.HelpBox("Enable Scene Switcher: Shows/hides toolbar dropdown.\nPrefer Activating Loaded Additives: Selecting a scene already loaded additively will just set it active.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Enable Scene Switcher: Shows/hides scene dropdown.\nPrefer Activating Loaded Additives: Selecting a loaded additive scene just activates it.\nEnable Time Scale Toolbar: Shows/hides time scale slider.", MessageType.Info);
                     EditorGUILayout.EndVertical();
 
                     EditorGUIUtility.labelWidth = oldLabelWidth; // restore
