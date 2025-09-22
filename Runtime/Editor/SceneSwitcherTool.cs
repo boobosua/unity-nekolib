@@ -120,6 +120,20 @@ namespace NekoLib
             }
             container.RegisterCallback<GeometryChangedEvent>(_ => MatchControlHeightToContainer(container, toolbarMenu));
             toolbarMenu.RegisterCallback<GeometryChangedEvent>(_ => { if (string.IsNullOrEmpty(toolbarMenu.text)) InstallFallbackDropdown(container); });
+
+            // Dynamic reposition registration (preserves original absolute layout logic)
+            // Register dynamic reposition with watcher if present (reflection to avoid hard assembly dependency)
+#if UNITY_EDITOR
+            TryRegisterSceneSwitcherWatcher();
+#endif
+            /*ToolbarLayoutWatcher.Register(() =>
+            {
+                var rootLatest = GetToolbarRoot();
+                if (rootLatest != null && containerRef != null)
+                {
+                    PositionContainer(rootLatest, containerRef);
+                }
+            });*/
 #else
             InstallFallbackDropdown(container);
             root.Add(container);
@@ -191,6 +205,17 @@ namespace NekoLib
                 fallbackDropdown.value = current;
             }
             container.RegisterCallback<GeometryChangedEvent>(_ => MatchControlHeightToContainer(container, fallbackDropdown));
+
+            // Dynamic reposition for fallback variant too
+            TryRegisterSceneSwitcherWatcher();
+            /*ToolbarLayoutWatcher.Register(() =>
+            {
+                var rootLatest = GetToolbarRoot();
+                if (rootLatest != null && containerRef != null)
+                {
+                    PositionContainer(rootLatest, containerRef);
+                }
+            });*/
             #endregion
         }
 
@@ -459,6 +484,27 @@ namespace NekoLib
         {
             ve.style.minWidth = 110;
             ve.style.maxWidth = 160;
+        }
+
+        private static void TryRegisterSceneSwitcherWatcher()
+        {
+            try
+            {
+                var watcherType = Type.GetType("NekoLib.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ?? Type.GetType("NekoLib.ToolbarLayoutWatcher");
+                if (watcherType == null) return;
+                var register = watcherType.GetMethod("Register", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                if (register == null) return;
+                Action cb = () =>
+                {
+                    var root = GetToolbarRoot();
+                    if (root != null && containerRef != null)
+                    {
+                        PositionContainer(root, containerRef);
+                    }
+                };
+                register.Invoke(null, new object[] { cb });
+            }
+            catch { }
         }
 
         // Truncate while preserving a trailing star indicator (space + star) if present

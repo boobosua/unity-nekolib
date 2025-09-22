@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Reflection;
+using System; // for Action used in watcher registration
 using UnityEditor;
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements; // ToolbarButton
@@ -87,8 +88,8 @@ namespace NekoLib
                 name = "NekoLibTimeScaleSlider",
                 showInputField = false
             };
-            timeSlider.style.minWidth = 130;
-            timeSlider.style.maxWidth = 130;
+            timeSlider.style.minWidth = 88;
+            timeSlider.style.maxWidth = 88;
             timeSlider.style.marginLeft = 1;
             timeSlider.style.marginRight = 2;
             timeSlider.lowValue = MinTimeScale;
@@ -186,6 +187,34 @@ namespace NekoLib
 #endif
                 }
             });
+
+            // Register dynamic reposition with central watcher (no styling changes)
+            // Register with ToolbarLayoutWatcher if available
+#if UNITY_EDITOR
+            var watcherType = Type.GetType("NekoLib.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ?? Type.GetType("NekoLib.ToolbarLayoutWatcher");
+            if (watcherType != null)
+            {
+                var register = watcherType.GetMethod("Register", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                if (register != null)
+                {
+                    Action cb = () =>
+                    {
+                        var rootLatest = GetToolbarRoot();
+                        if (rootLatest != null && rootContainer != null) PositionContainer(rootLatest, rootContainer);
+                    };
+                    register.Invoke(null, new object[] { cb });
+                }
+            }
+#endif
+            /* original direct call:
+            ToolbarLayoutWatcher.Register(() =>
+            {
+                var root = GetToolbarRoot();
+                if (root != null && rootContainer != null)
+                {
+                    PositionContainer(root, rootContainer);
+                }
+            });*/
         }
 
         private static void OnSliderChanged(float v)
