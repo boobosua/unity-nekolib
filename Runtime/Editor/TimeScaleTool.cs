@@ -1,6 +1,4 @@
 #if UNITY_EDITOR
-using System.Reflection;
-using System; // for Action used in watcher registration
 using UnityEditor;
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements; // ToolbarButton
@@ -45,7 +43,7 @@ namespace NekoLib
         private static void EnsureInstall()
         {
             if (!Enabled || installed) return;
-            var toolbarRoot = GetToolbarRoot();
+            var toolbarRoot = ToolbarUtils.GetToolbarRoot();
             if (toolbarRoot == null)
             {
                 EditorApplication.delayCall += EnsureInstall; // try again next tick
@@ -80,7 +78,7 @@ namespace NekoLib
             rootContainer.style.paddingRight = 4;
             rootContainer.style.height = 20;
             rootContainer.style.backgroundColor = new Color(0f, 0f, 0f, 0.08f);
-            ApplyRoundedStyling(rootContainer);
+            ToolbarUtils.ApplyRoundedStyling(rootContainer);
 
             timeSlider = new Slider(MinTimeScale, MaxTimeScale)
             {
@@ -91,11 +89,17 @@ namespace NekoLib
             timeSlider.style.minWidth = 88;
             timeSlider.style.maxWidth = 88;
             timeSlider.style.marginLeft = 1;
-            timeSlider.style.marginRight = 2;
+            timeSlider.style.marginRight = 1; // slightly reduce gap to value label
             timeSlider.lowValue = MinTimeScale;
             timeSlider.highValue = MaxTimeScale;
             timeSlider.RegisterValueChangedCallback(e => OnSliderChanged(e.newValue));
-            // Remove persistent focus ring / blue outline on knob after interaction
+
+            // FIX: align slider vertically with others
+            timeSlider.style.height = Length.Percent(100);
+            timeSlider.style.alignSelf = Align.Center;
+            timeSlider.style.marginTop = 0;
+            timeSlider.style.marginBottom = 0;
+
 #if UNITY_2020_1_OR_NEWER
             timeSlider.focusable = false;
             timeSlider.RegisterCallback<FocusInEvent>(_ => timeSlider.Blur());
@@ -110,10 +114,17 @@ namespace NekoLib
 
             valueLabel = new Label(FormatValue(lastAppliedTimeScale)) { name = "NekoLibTimeScaleValue" };
             valueLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            valueLabel.style.minWidth = 44;
-            valueLabel.style.maxWidth = 44;
+            valueLabel.style.minWidth = 40; // tighten width slightly
+            valueLabel.style.maxWidth = 40;
             valueLabel.style.fontSize = 12;
-            valueLabel.style.marginRight = 1;
+            valueLabel.style.marginLeft = 0; // bring closer to slider
+            valueLabel.style.marginRight = 0;
+
+            // FIX: align label vertically with others
+            valueLabel.style.height = Length.Percent(100);
+            valueLabel.style.alignSelf = Align.Center;
+            valueLabel.style.marginTop = 0;
+            valueLabel.style.marginBottom = 0;
 
 #if UNITY_2020_1_OR_NEWER
             resetButton = new ToolbarButton(ResetTimeScale)
@@ -141,6 +152,13 @@ namespace NekoLib
             resetButton.style.fontSize = 11;
             resetButton.style.backgroundColor = StyleKeyword.Null;
             resetButton.focusable = false;
+
+            // FIX: align button vertically with others
+            resetButton.style.height = Length.Percent(100);
+            resetButton.style.alignSelf = Align.Center;
+            resetButton.style.marginTop = 0;
+            resetButton.style.marginBottom = 0;
+
 #if UNITY_2020_1_OR_NEWER
             resetButton.RegisterCallback<FocusInEvent>(_ => resetButton.Blur());
 #endif
@@ -151,7 +169,7 @@ namespace NekoLib
             titleLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
             titleLabel.style.fontSize = 12;
             titleLabel.style.marginLeft = 1;
-            titleLabel.style.marginRight = 3;
+            titleLabel.style.marginRight = 2; // slightly closer to slider
             titleLabel.style.minWidth = 72;
             titleLabel.style.maxWidth = 100;
 
@@ -190,31 +208,11 @@ namespace NekoLib
 
             // Register dynamic reposition with central watcher (no styling changes)
             // Register with ToolbarLayoutWatcher if available
-#if UNITY_EDITOR
-            var watcherType = Type.GetType("NekoLib.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ?? Type.GetType("NekoLib.ToolbarLayoutWatcher");
-            if (watcherType != null)
+            ToolbarUtils.TryRegisterLayoutWatcher(() =>
             {
-                var register = watcherType.GetMethod("Register", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                if (register != null)
-                {
-                    Action cb = () =>
-                    {
-                        var rootLatest = GetToolbarRoot();
-                        if (rootLatest != null && rootContainer != null) PositionContainer(rootLatest, rootContainer);
-                    };
-                    register.Invoke(null, new object[] { cb });
-                }
-            }
-#endif
-            /* original direct call:
-            ToolbarLayoutWatcher.Register(() =>
-            {
-                var root = GetToolbarRoot();
-                if (root != null && rootContainer != null)
-                {
-                    PositionContainer(root, rootContainer);
-                }
-            });*/
+                var rootLatest = ToolbarUtils.GetToolbarRoot();
+                if (rootLatest != null && rootContainer != null) PositionContainer(rootLatest, rootContainer);
+            });
         }
 
         private static void OnSliderChanged(float v)
@@ -290,23 +288,14 @@ namespace NekoLib
             }
         }
 
-        private static VisualElement GetToolbarRoot()
-        {
-            var toolbarType = typeof(Editor).Assembly.GetType("UnityEditor.Toolbar");
-            if (toolbarType == null) return null;
-            var instances = Resources.FindObjectsOfTypeAll(toolbarType);
-            if (instances == null || instances.Length == 0) return null;
-            object toolbarInstance = instances[0];
-            var rootField = toolbarType.GetField("m_Root", BindingFlags.NonPublic | BindingFlags.Instance) ?? toolbarType.GetField("m_RootVisualElement", BindingFlags.NonPublic | BindingFlags.Instance);
-            return rootField?.GetValue(toolbarInstance) as VisualElement;
-        }
+        // GetToolbarRoot moved to ToolbarUtils
 
         private static VisualElement FindPlayControlsCluster(VisualElement root) => FindCandidateRecursive(root, 0);
         private static VisualElement FindCandidateRecursive(VisualElement ve, int depth)
         {
             if (depth > 6) return null;
             int buttons = 0;
-            for (int i = 0; i < ve.childCount; i++) if (LooksLikeToolbarButton(ve[i])) buttons++;
+            for (int i = 0; i < ve.childCount; i++) if (ToolbarUtils.LooksLikeToolbarButton(ve[i])) buttons++;
             if (buttons >= 3) return ve.childCount > 0 ? ve[0] : ve; // left-most in cluster
             for (int i = 0; i < ve.childCount; i++)
             {
@@ -315,24 +304,7 @@ namespace NekoLib
             }
             return null;
         }
-        private static bool LooksLikeToolbarButton(VisualElement ve)
-        {
-            var r = ve.layout;
-            return r.width >= 14 && r.width <= 55 && r.height >= 14 && r.height <= 40;
-        }
-
-        private static float GetWorldX(VisualElement target, VisualElement root)
-        {
-            float x = 0f; var c = target;
-            while (c != null && c != root) { x += c.layout.x; c = c.parent; }
-            return x;
-        }
-        private static float GetWorldY(VisualElement target, VisualElement root)
-        {
-            float y = 0f; var c = target;
-            while (c != null && c != root) { y += c.layout.y; c = c.parent; }
-            return y;
-        }
+        // World position helpers moved to ToolbarUtils
 
         private static void PositionContainer(VisualElement toolbarRoot, VisualElement container)
         {
@@ -341,11 +313,11 @@ namespace NekoLib
             float top = 0f; float height = 18f; float left;
             if (playCluster != null)
             {
-                float playX = GetWorldX(playCluster, toolbarRoot);
+                float playX = ToolbarUtils.GetWorldX(playCluster, toolbarRoot);
                 left = playX - 20f - containerWidth;
                 if (left < 4) left = 4;
                 height = playCluster.layout.height > 0 ? playCluster.layout.height : 22f;
-                top = GetWorldY(playCluster, toolbarRoot) + (height - container.resolvedStyle.height) * 0.5f;
+                top = ToolbarUtils.GetWorldY(playCluster, toolbarRoot) + (height - container.resolvedStyle.height) * 0.5f;
             }
             else
             {
@@ -376,22 +348,6 @@ namespace NekoLib
                 titleLabel = null;
                 timeManagerSO = null; timeScaleProp = null;
             }
-        }
-
-        private static void ApplyRoundedStyling(VisualElement ve)
-        {
-#if UNITY_2022_1_OR_NEWER
-            int r = 6;
-            ve.style.borderTopLeftRadius = r;
-            ve.style.borderTopRightRadius = r;
-            ve.style.borderBottomLeftRadius = r;
-            ve.style.borderBottomRightRadius = r;
-            ve.style.paddingLeft = 4;
-            ve.style.paddingRight = 4;
-#else
-            ve.style.paddingLeft = 3;
-            ve.style.paddingRight = 3;
-#endif
         }
     }
 }

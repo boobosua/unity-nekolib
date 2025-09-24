@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 #if UNITY_2020_1_OR_NEWER
@@ -85,7 +84,7 @@ namespace NekoLib
         {
             if (!IsEnabledPreference()) return; // preference disabled
             if (initialized) return;
-            var root = GetToolbarRoot();
+            var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
             initialized = true;
             EditorApplication.update -= TryInstall;
@@ -128,7 +127,7 @@ namespace NekoLib
 #endif
             /*ToolbarLayoutWatcher.Register(() =>
             {
-                var rootLatest = GetToolbarRoot();
+                var rootLatest = ToolbarUtils.GetToolbarRoot();
                 if (rootLatest != null && containerRef != null)
                 {
                     PositionContainer(rootLatest, containerRef);
@@ -393,17 +392,7 @@ namespace NekoLib
             }
         }
 
-        private static VisualElement GetToolbarRoot()
-        {
-            var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Toolbar");
-            if (toolbarType == null) return null;
-            var toolbars = Resources.FindObjectsOfTypeAll(toolbarType);
-            if (toolbars == null || toolbars.Length == 0) return null;
-            object toolbarInstance = toolbars[0];
-            var rootField = toolbarType.GetField("m_Root", BindingFlags.NonPublic | BindingFlags.Instance) ?? toolbarType.GetField("m_RootVisualElement", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (rootField == null) return null;
-            return rootField.GetValue(toolbarInstance) as VisualElement;
-        }
+        // GetToolbarRoot moved to ToolbarUtils
 
         private static VisualElement FindPlayControlsRightMost(VisualElement root) => FindCandidateRecursive(root, 0);
 
@@ -411,7 +400,7 @@ namespace NekoLib
         {
             if (depth > 6) return null;
             int buttons = 0;
-            for (int i = 0; i < ve.childCount; i++) if (LooksLikeToolbarButton(ve[i])) buttons++;
+            for (int i = 0; i < ve.childCount; i++) if (ToolbarUtils.LooksLikeToolbarButton(ve[i])) buttons++;
             if (buttons >= 3) return ve.childCount > 0 ? ve[ve.childCount - 1] : ve;
             for (int i = 0; i < ve.childCount; i++)
             {
@@ -421,27 +410,7 @@ namespace NekoLib
             return null;
         }
 
-        private static bool LooksLikeToolbarButton(VisualElement ve)
-        {
-            var r = ve.layout;
-            return r.width >= 14 && r.width <= 55 && r.height >= 14 && r.height <= 40;
-        }
-
-        private static float GetWorldXWithinToolbar(VisualElement target, VisualElement toolbarRoot)
-        {
-            float x = 0f;
-            var current = target;
-            while (current != null && current != toolbarRoot) { x += current.layout.x; current = current.parent; }
-            return x;
-        }
-
-        private static float GetWorldYWithinToolbar(VisualElement target, VisualElement toolbarRoot)
-        {
-            float y = 0f;
-            var current = target;
-            while (current != null && current != toolbarRoot) { y += current.layout.y; current = current.parent; }
-            return y;
-        }
+        // Helpers moved to ToolbarUtils
 
         private static void PositionContainer(VisualElement toolbarRoot, VisualElement container)
         {
@@ -449,8 +418,8 @@ namespace NekoLib
             float left = 220f, top = 0f, height = 0f;
             if (anchor != null)
             {
-                left = GetWorldXWithinToolbar(anchor, toolbarRoot) + anchor.layout.width + 18f;
-                top = GetWorldYWithinToolbar(anchor, toolbarRoot);
+                left = ToolbarUtils.GetWorldX(anchor, toolbarRoot) + anchor.layout.width + 18f;
+                top = ToolbarUtils.GetWorldY(anchor, toolbarRoot);
                 height = anchor.layout.height;
             }
             container.style.left = left;
@@ -464,21 +433,7 @@ namespace NekoLib
             if (h > 0) { control.style.height = h; control.style.unityTextAlign = TextAnchor.MiddleLeft; }
         }
 
-        private static void ApplyRoundedStyling(VisualElement ve)
-        {
-#if UNITY_2022_1_OR_NEWER
-            var radius = 6;
-            ve.style.borderTopLeftRadius = radius;
-            ve.style.borderTopRightRadius = radius;
-            ve.style.borderBottomLeftRadius = radius;
-            ve.style.borderBottomRightRadius = radius;
-            ve.style.paddingLeft = 4;
-            ve.style.paddingRight = 4;
-#else
-            ve.style.paddingLeft = 3;
-            ve.style.paddingRight = 3;
-#endif
-        }
+        private static void ApplyRoundedStyling(VisualElement ve) => ToolbarUtils.ApplyRoundedStyling(ve);
 
         private static void ApplyControlSizing(VisualElement ve)
         {
@@ -488,23 +443,14 @@ namespace NekoLib
 
         private static void TryRegisterSceneSwitcherWatcher()
         {
-            try
+            ToolbarUtils.TryRegisterLayoutWatcher(() =>
             {
-                var watcherType = Type.GetType("NekoLib.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ?? Type.GetType("NekoLib.ToolbarLayoutWatcher");
-                if (watcherType == null) return;
-                var register = watcherType.GetMethod("Register", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                if (register == null) return;
-                Action cb = () =>
+                var root = ToolbarUtils.GetToolbarRoot();
+                if (root != null && containerRef != null)
                 {
-                    var root = GetToolbarRoot();
-                    if (root != null && containerRef != null)
-                    {
-                        PositionContainer(root, containerRef);
-                    }
-                };
-                register.Invoke(null, new object[] { cb });
-            }
-            catch { }
+                    PositionContainer(root, containerRef);
+                }
+            });
         }
 
         // Truncate while preserving a trailing star indicator (space + star) if present
