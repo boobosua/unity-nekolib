@@ -3,7 +3,6 @@ using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEditorInternal;
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements;
 #endif
@@ -16,6 +15,7 @@ namespace NekoLib
         private const string ContainerName = "NekoLibClearPrefsContainer";
         private const string ResumePlayKey = "NekoLib:CPP:ResumePlay";
         private const string PendingClearKey = "NekoLib:CPP:PendingClear";
+        private const string RequestedFromPlayKey = "NekoLib:CPP:RequestedFromPlay";
 
         private static bool installed;
         private static VisualElement container;
@@ -222,15 +222,33 @@ namespace NekoLib
                 "Cancel");
             if (!confirmed) return;
 
+            bool domainReloadDisabled = NekoLib.Utilities.Utils.IsReloadDomainDisabled();
+            bool autoReenter = NekoLibPreferences.AutoReenterPlayAfterClear;
+
             if (!EditorApplication.isPlaying)
             {
                 PerformClear();
-                RequestReload();
+                bool willReenter = NekoLibPreferences.AutoReenterPlayAfterClear && SessionState.GetBool(RequestedFromPlayKey, false);
+                if (domainReloadDisabled)
+                {
+                    // Domain reload disabled: explicitly request a reload now per spec
+                    // But skip if we will immediately enter play, to avoid redundant reload.
+                    if (!willReenter) RequestReload();
+                }
+                else
+                {
+                    // Domain reload enabled: no extra reload necessary here unless we won't re-enter play soon.
+                    // (Play transition causes reload; staying in edit mode may be fine without reload.)
+                }
+                // Not playing: only re-enter if preference asks us to and caller wants it (we only re-enter on explicit request via flag)
+                SessionState.SetBool(ResumePlayKey, autoReenter && SessionState.GetBool(RequestedFromPlayKey, false));
             }
             else
             {
+                // We came from play mode
+                SessionState.SetBool(RequestedFromPlayKey, true);
                 SessionState.SetBool(PendingClearKey, true);
-                SessionState.SetBool(ResumePlayKey, true);
+                SessionState.SetBool(ResumePlayKey, autoReenter);
                 EditorApplication.isPlaying = false;
             }
         }
@@ -243,13 +261,22 @@ namespace NekoLib
                 {
                     PerformClear();
                     SessionState.SetBool(PendingClearKey, false);
-                    RequestReload();
+
+                    bool domainReloadDisabled = NekoLib.Utilities.Utils.IsReloadDomainDisabled();
+                    bool willReenter = SessionState.GetBool(ResumePlayKey, false);
+                    if ((domainReloadDisabled && willReenter) || (!domainReloadDisabled && !willReenter))
+                    {
+                        // Disabled + Will re-enter: reload once before re-entering Play.
+                        // Enabled + Won't re-enter: reload once to apply changes in Edit Mode.
+                        RequestReload();
+                    }
                 }
             }
             else if (state == PlayModeStateChange.EnteredPlayMode)
             {
                 SessionState.SetBool(PendingClearKey, false);
                 SessionState.SetBool(ResumePlayKey, false);
+                SessionState.SetBool(RequestedFromPlayKey, false);
             }
         }
 
@@ -270,6 +297,8 @@ namespace NekoLib
                     SessionState.SetBool(ResumePlayKey, false);
                     EditorApplication.isPlaying = true;
                 }
+                // Clear transient request flag when we're safely in edit mode
+                if (!EditorApplication.isPlaying) SessionState.SetBool(RequestedFromPlayKey, false);
             }
         }
 

@@ -18,6 +18,7 @@ namespace NekoLib
             public const string SceneSwitcherEnabled = PreferencesRoot + ":SceneSwitcherEnabled";
             public const string ActivateLoadedAdditive = PreferencesRoot + ":ActivateLoadedAdditiveOnSelect";
             public const string TimeScaleToolEnabled = PreferencesRoot + ":TimeScaleToolEnabled";
+            public const string AutoReenterPlayAfterClear = PreferencesRoot + ":AutoReenterPlayAfterClear";
         }
 
         public static VisualElement FindByName(VisualElement root, string name)

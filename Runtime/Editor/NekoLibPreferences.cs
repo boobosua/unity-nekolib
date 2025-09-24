@@ -10,6 +10,7 @@ namespace NekoLib
         private const string KeySceneSwitcher = ToolbarUtils.PrefKeys.SceneSwitcherEnabled;
         private const string KeyActivateLoadedAdditive = ToolbarUtils.PrefKeys.ActivateLoadedAdditive;
         private const string KeyTimeScaleTool = ToolbarUtils.PrefKeys.TimeScaleToolEnabled;
+        private const string KeyAutoReenterPlayAfterClear = ToolbarUtils.PrefKeys.AutoReenterPlayAfterClear;
         internal static bool SceneSwitcherEnabled
         {
             get => EditorPrefs.GetBool(KeySceneSwitcher, true);
@@ -38,6 +39,12 @@ namespace NekoLib
             }
         }
 
+        internal static bool AutoReenterPlayAfterClear
+        {
+            get => EditorPrefs.GetBool(KeyAutoReenterPlayAfterClear, true);
+            set => EditorPrefs.SetBool(KeyAutoReenterPlayAfterClear, value);
+        }
+
 
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
@@ -47,7 +54,7 @@ namespace NekoLib
                 label = "NekoLib",
                 guiHandler = ctx =>
                 {
-                    const float desiredLabelWidth = 210f; // wide enough for full text
+                    const float desiredLabelWidth = 300f; // wide enough for full text
                     float oldLabelWidth = EditorGUIUtility.labelWidth;
                     EditorGUIUtility.labelWidth = desiredLabelWidth;
 
@@ -67,8 +74,13 @@ namespace NekoLib
                     bool ts = EditorGUILayout.Toggle(toggleTimeScale, TimeScaleToolEnabled);
                     if (EditorGUI.EndChangeCheck()) TimeScaleToolEnabled = ts;
 
+                    EditorGUI.BeginChangeCheck();
+                    var toggleAutoReenter = new GUIContent("Auto re-enter Play Mode after clearing prefs", "After clearing PlayerPrefs, automatically enter Play Mode if you were previously playing or if you requested play.");
+                    bool ar = EditorGUILayout.Toggle(toggleAutoReenter, AutoReenterPlayAfterClear);
+                    if (EditorGUI.EndChangeCheck()) AutoReenterPlayAfterClear = ar;
+
                     GUILayout.Space(6);
-                    EditorGUILayout.HelpBox("Enable Scene Switcher: Shows/hides scene dropdown.\nPrefer Activating Loaded Additives: Selecting a loaded additive scene just activates it.\nEnable Time Scale Toolbar: Shows/hides time scale slider.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Enable Scene Switcher: Shows/hides scene dropdown.\nPrefer Activating Loaded Additives: Selecting a loaded additive scene just activates it.\nEnable Time Scale Toolbar: Shows/hides time scale slider.\nAuto re-enter Play Mode: After clearing PlayerPrefs, automatically re-enter Play Mode (default on).", MessageType.Info);
                     EditorGUILayout.EndVertical();
 
                     EditorGUIUtility.labelWidth = oldLabelWidth; // restore

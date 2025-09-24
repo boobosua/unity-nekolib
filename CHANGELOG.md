@@ -1,3 +1,11 @@
+## [1.9.3] - 2025-09-24
+
+### Toolbar Features
+
+- Add a scene switcher dropdown to the toolbar for quick scene switching.
+- Add a button to clear player prefs directly from the toolbar.
+- Add a time scale progress bar to visualize the current time scale.
+
 ## [1.9.2] - 2025-09-21
 
 ### Scene Switcher Tool
