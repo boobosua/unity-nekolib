@@ -22,6 +22,7 @@ namespace NekoLib
         private static VisualElement rootContainer;
         private static Slider timeSlider;
         private static Button resetButton;
+        private static Image resetIcon;
         private static Label valueLabel;
         private static Label titleLabel;
         private static float lastAppliedTimeScale = 1f;
@@ -129,7 +130,7 @@ namespace NekoLib
 #if UNITY_2020_1_OR_NEWER
             resetButton = new ToolbarButton(ResetTimeScale)
             {
-                text = "↺",
+                text = string.Empty,
                 tooltip = "Reset Time Scale (1.0)",
                 name = "NekoLibTimeScaleReset"
             };
@@ -137,7 +138,7 @@ namespace NekoLib
 #else
             resetButton = new Button(ResetTimeScale)
             {
-                text = "↺",
+                text = string.Empty,
                 tooltip = "Reset Time Scale (1.0)",
                 name = "NekoLibTimeScaleReset"
             };
@@ -147,11 +148,27 @@ namespace NekoLib
             resetButton.style.unityTextAlign = TextAnchor.MiddleCenter;
             resetButton.style.paddingLeft = 0;
             resetButton.style.paddingRight = 0;
+            resetButton.style.paddingTop = 0;
+            resetButton.style.paddingBottom = 0;
             resetButton.style.marginLeft = 0;
             resetButton.style.marginRight = 1;
             resetButton.style.fontSize = 11;
             resetButton.style.backgroundColor = StyleKeyword.Null;
             resetButton.focusable = false;
+            resetButton.style.justifyContent = Justify.Center;
+            resetButton.style.alignItems = Align.Center;
+            // icon (pick clearest built-in)
+            var refreshTex = ToolbarUtils.GetBestIcon(
+                "d_Refresh",
+                "Refresh",
+                "TreeEditor.Refresh",
+                "d_RotateTool",
+                "RotateTool"
+            );
+            resetIcon = new Image { image = refreshTex, scaleMode = ScaleMode.ScaleToFit };
+            resetIcon.style.alignSelf = Align.Center;
+            resetIcon.style.marginLeft = 0; resetIcon.style.marginRight = 0; resetIcon.style.marginTop = 0; resetIcon.style.marginBottom = 0;
+            resetButton.Add(resetIcon);
 
             // FIX: align button vertically with others
             resetButton.style.height = Length.Percent(100);
@@ -193,9 +210,21 @@ namespace NekoLib
                     resetButton.style.minHeight = buttonH;
                     resetButton.style.height = buttonH;
                     resetButton.style.maxHeight = buttonH;
-                    resetButton.style.minWidth = buttonH * 2 - 5;
-                    resetButton.style.width = buttonH * 2 - 5;
+                    resetButton.style.minWidth = buttonH * 2 - 8; // reduce width by ~3px
+                    resetButton.style.width = buttonH * 2 - 8;
                     resetButton.style.maxWidth = buttonH * 3;
+                    if (resetIcon != null)
+                    {
+                        var tex = resetIcon.image as Texture2D;
+                        int icon = ToolbarUtils.ComputeCrispIconSize(buttonH, tex, 4f);
+                        resetIcon.style.width = icon;
+                        resetIcon.style.height = icon;
+                        resetIcon.style.left = StyleKeyword.Null;
+                        resetIcon.style.right = StyleKeyword.Null;
+                        resetIcon.style.top = StyleKeyword.Null;
+                        resetIcon.style.bottom = StyleKeyword.Null;
+                        resetIcon.scaleMode = ScaleMode.ScaleToFit;
+                    }
 #if UNITY_2022_1_OR_NEWER
                     int br = 5;
                     resetButton.style.borderTopLeftRadius = br;
@@ -314,7 +343,7 @@ namespace NekoLib
             if (playCluster != null)
             {
                 float playX = ToolbarUtils.GetWorldX(playCluster, toolbarRoot);
-                left = playX - 20f - containerWidth;
+                left = playX - ToolbarUtils.AfterControlSpacing - containerWidth;
                 if (left < 4) left = 4;
                 height = playCluster.layout.height > 0 ? playCluster.layout.height : 22f;
                 top = ToolbarUtils.GetWorldY(playCluster, toolbarRoot) + (height - container.resolvedStyle.height) * 0.5f;

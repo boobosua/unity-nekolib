@@ -9,6 +9,29 @@ namespace NekoLib
 {
     internal static class ToolbarUtils
     {
+        // Standard horizontal spacing between adjacent toolbar controls
+        public const float AfterControlSpacing = 15f;
+
+        public static class PrefKeys
+        {
+            public const string PreferencesRoot = "NekoLib";
+            public const string SceneSwitcherEnabled = PreferencesRoot + ":SceneSwitcherEnabled";
+            public const string ActivateLoadedAdditive = PreferencesRoot + ":ActivateLoadedAdditiveOnSelect";
+            public const string TimeScaleToolEnabled = PreferencesRoot + ":TimeScaleToolEnabled";
+        }
+
+        public static VisualElement FindByName(VisualElement root, string name)
+        {
+            if (root == null) return null;
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var found = FindByName(root[i], name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
         public static VisualElement GetToolbarRoot()
         {
             var toolbarType = typeof(Editor).Assembly.GetType("UnityEditor.Toolbar");
@@ -69,6 +92,55 @@ namespace NekoLib
                 register.Invoke(null, new object[] { cb });
             }
             catch { }
+        }
+
+        public static VisualElement FindPlayControlsLeftMost(VisualElement root) => FindPlayControlsRecursive(root, 0, true);
+        public static VisualElement FindPlayControlsRightMost(VisualElement root) => FindPlayControlsRecursive(root, 0, false);
+
+        private static VisualElement FindPlayControlsRecursive(VisualElement ve, int depth, bool leftMost)
+        {
+            if (ve == null || depth > 6) return null;
+            int buttons = 0;
+            for (int i = 0; i < ve.childCount; i++) if (LooksLikeToolbarButton(ve[i])) buttons++;
+            if (buttons >= 3)
+            {
+                if (ve.childCount == 0) return ve;
+                return leftMost ? ve[0] : ve[ve.childCount - 1];
+            }
+            for (int i = 0; i < ve.childCount; i++)
+            {
+                var found = FindPlayControlsRecursive(ve[i], depth + 1, leftMost);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        // Icon helpers
+        public static Texture2D GetBestIcon(params string[] names)
+        {
+            Texture2D best = null;
+            int bestArea = 0;
+            foreach (var n in names)
+            {
+                if (string.IsNullOrEmpty(n)) continue;
+                var tex = EditorGUIUtility.IconContent(n).image as Texture2D;
+                if (tex == null) continue;
+                int area = tex.width * tex.height;
+                if (area > bestArea)
+                {
+                    best = tex; bestArea = area;
+                }
+            }
+            return best;
+        }
+
+        public static int ComputeCrispIconSize(float buttonHeight, Texture2D tex, float padding = 4f)
+        {
+            float fallback = Mathf.Max(12f, buttonHeight - padding);
+            if (tex == null) return Mathf.RoundToInt(fallback);
+            int native = Mathf.Max(tex.width, tex.height);
+            float target = Mathf.Min(buttonHeight - padding, native);
+            return Mathf.RoundToInt(target);
         }
     }
 }

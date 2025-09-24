@@ -6,10 +6,10 @@ namespace NekoLib
 {
     internal static class NekoLibPreferences
     {
-        private const string Root = "NekoLib";
-        private const string KeySceneSwitcher = Root + ":SceneSwitcherEnabled";
-        private const string KeyActivateLoadedAdditive = Root + ":ActivateLoadedAdditiveOnSelect";
-        private const string KeyTimeScaleTool = Root + ":TimeScaleToolEnabled";
+        private const string Root = ToolbarUtils.PrefKeys.PreferencesRoot;
+        private const string KeySceneSwitcher = ToolbarUtils.PrefKeys.SceneSwitcherEnabled;
+        private const string KeyActivateLoadedAdditive = ToolbarUtils.PrefKeys.ActivateLoadedAdditive;
+        private const string KeyTimeScaleTool = ToolbarUtils.PrefKeys.TimeScaleToolEnabled;
         internal static bool SceneSwitcherEnabled
         {
             get => EditorPrefs.GetBool(KeySceneSwitcher, true);
