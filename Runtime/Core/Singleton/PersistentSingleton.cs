@@ -110,12 +110,6 @@ namespace NekoLib.Core
         }
 #endif
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        protected static void OnBeforeSceneLoad()
-        {
-            s_applicationIsQuitting = false;
-        }
-
         protected virtual void OnApplicationQuit()
         {
             // Prevent others from referencing this instance when the application is quitting.

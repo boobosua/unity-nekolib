@@ -16,20 +16,6 @@ public class GameManager : PersistentSingleton<GameManager>
 GameManager.Instance.Score += 100;
 ```
 
-### SceneSingleton
-
-Recreated each scene. Perfect for UI managers.
-
-```csharp
-public class UIManager : SceneSingleton<UIManager>
-{
-    public void ShowPauseMenu() => pauseMenu.SetActive(true);
-}
-
-// Usage
-UIManager.Instance.ShowPauseMenu();
-```
-
 ### LazySingleton
 
 Auto-created on first access. Perfect for utilities.
@@ -89,8 +75,6 @@ Pre-defined color constants for consistent theming.
 // Available colors
 Color darkGray = Swatch.DG;
 Color vibrantRed = Swatch.VR;
-Color deepEmerald = Swatch.DE;
-Color vibrantCyan = Swatch.VC;
 
 // Usage in debug messages
 Debug.Log("Success!".Colorize(Swatch.DE));

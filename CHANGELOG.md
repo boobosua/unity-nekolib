@@ -1,3 +1,10 @@
+## [1.9.4] - 2025-09-25
+
+### Overhaul Singleton Pattern
+
+- Remove SceneSingleton due to its limited use cases and potential issues with scene management.
+- Refactor PersistentSingleton to remove OnBeforeSceneLoad.
+
 ## [1.9.3] - 2025-09-24
 
 ### Toolbar Features
