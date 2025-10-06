@@ -146,12 +146,56 @@ namespace NekoLib
             }
         }
 
+        private string _pkgNameInput = string.Empty;
+        private string _pkgGitInput = string.Empty;
+
         private void DrawPackagesTab()
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
-                GUILayout.Label("Setup Packages", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("Packages setup will be added here. For now, this section is empty.", MessageType.Info);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Add by Name", GUILayout.Width(90));
+                    _pkgNameInput = EditorGUILayout.TextField(_pkgNameInput);
+                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(110)))
+                    {
+                        if (GUILayout.Button("Add Package", GUILayout.Height(22)))
+                        {
+                            if (SetupPackagesTool.ValidatePackageIdentifier(_pkgNameInput, out bool isGit, out string err) && !isGit)
+                            {
+                                var req = SetupPackagesTool.AddPackage(_pkgNameInput);
+                                if (req != null) Debug.Log($"Adding package: {_pkgNameInput}");
+                            }
+                            else
+                            {
+                                Debug.LogError(string.IsNullOrEmpty(err) ? "Input doesn't look like a package name." : err);
+                            }
+                        }
+                    }
+                }
+
+                GUILayout.Space(4);
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Add by Git URL", GUILayout.Width(90));
+                    _pkgGitInput = EditorGUILayout.TextField(_pkgGitInput);
+                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(110)))
+                    {
+                        if (GUILayout.Button("Add Git URL", GUILayout.Height(22)))
+                        {
+                            if (SetupPackagesTool.ValidatePackageIdentifier(_pkgGitInput, out bool isGit, out string err) && isGit)
+                            {
+                                var req = SetupPackagesTool.AddPackage(_pkgGitInput);
+                                if (req != null) Debug.Log($"Adding package from Git: {_pkgGitInput}");
+                            }
+                            else
+                            {
+                                Debug.LogError(string.IsNullOrEmpty(err) ? "Input doesn't look like a Git URL." : err);
+                            }
+                        }
+                    }
+                }
             }
         }
 
