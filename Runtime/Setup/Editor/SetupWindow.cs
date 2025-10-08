@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 namespace NekoLib
@@ -33,6 +35,8 @@ namespace NekoLib
         {
             _settings = SetupFoldersSettings.LoadOrCreate();
             EnsureSessionSelectionFromSettings();
+            _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            BeginRefreshUpmGitCache();
             Repaint();
         }
 
@@ -45,6 +49,7 @@ namespace NekoLib
         // Also refresh when the window gains focus
         private void OnFocus()
         {
+            BeginRefreshUpmGitCache();
             Repaint();
         }
 
@@ -146,56 +151,116 @@ namespace NekoLib
             }
         }
 
-        private string _pkgNameInput = string.Empty;
-        private string _pkgGitInput = string.Empty;
+        private SetupPackagesSettings _pkgSettings;
+        private Vector2 _pkgScroll;
+        private Dictionary<string, string> _gitInstalledMap; // normalized git url -> package name
+        private ListRequest _gitListRequest;
+        private bool _gitListPending;
+
+        private void BeginRefreshUpmGitCache()
+        {
+            if (_gitListPending) return;
+            _gitListPending = true;
+            _gitInstalledMap = null;
+            _gitListRequest = Client.List(true, true);
+            EditorApplication.update += PollUpmGitCache;
+        }
+
+        private void PollUpmGitCache()
+        {
+            if (_gitListRequest == null) { EditorApplication.update -= PollUpmGitCache; _gitListPending = false; return; }
+            if (!_gitListRequest.IsCompleted) return;
+            EditorApplication.update -= PollUpmGitCache;
+            _gitListPending = false;
+            var map = new Dictionary<string, string>();
+            if (_gitListRequest.Status == StatusCode.Success && _gitListRequest.Result != null)
+            {
+                foreach (var p in _gitListRequest.Result)
+                {
+                    if (p == null || p.source != PackageSource.Git) continue;
+                    var url = SetupPackagesTool.ExtractGitUrlFromPackageId(p.packageId);
+                    if (string.IsNullOrEmpty(url)) continue;
+                    map[SetupPackagesTool.NormalizeGitUrl(url)] = p.name;
+                }
+            }
+            _gitInstalledMap = map;
+            _gitListRequest = null;
+            Repaint();
+        }
 
         private void DrawPackagesTab()
         {
+            if (_pkgSettings == null) _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            if (_gitInstalledMap == null && !_gitListPending) BeginRefreshUpmGitCache();
+
             using (new EditorGUILayout.VerticalScope())
             {
-                using (new EditorGUILayout.HorizontalScope())
+                EditorGUILayout.LabelField("Git Packages", EditorStyles.boldLabel);
+                _pkgScroll = EditorGUILayout.BeginScrollView(_pkgScroll, GUILayout.ExpandHeight(true));
+                if (_pkgSettings.Packages.Count == 0)
                 {
-                    GUILayout.Label("Add by Name", GUILayout.Width(90));
-                    _pkgNameInput = EditorGUILayout.TextField(_pkgNameInput);
-                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(110)))
+                    EditorGUILayout.HelpBox("No Git packages configured.", MessageType.Info);
+                }
+                else
+                {
+                    foreach (var pkg in _pkgSettings.Packages)
                     {
-                        if (GUILayout.Button("Add Package", GUILayout.Height(22)))
+                        if (pkg == null) continue;
+                        using (new EditorGUILayout.HorizontalScope())
                         {
-                            if (SetupPackagesTool.ValidatePackageIdentifier(_pkgNameInput, out bool isGit, out string err) && !isGit)
+                            // Determine installed state from cached list FIRST
+                            string normalized = SetupPackagesTool.NormalizeGitUrl(pkg.url);
+                            string installedName = null;
+                            if (_gitInstalledMap != null)
+                                _gitInstalledMap.TryGetValue(normalized, out installedName);
+                            bool installed = !string.IsNullOrEmpty(installedName);
+
+                            // Tint URL like folders tab when installed
+                            var oldContent = GUI.contentColor;
+                            if (installed) GUI.contentColor = new Color(0.45f, 0.95f, 0.45f);
+                            EditorGUI.BeginDisabledGroup(true);
+                            EditorGUILayout.TextField(pkg.url);
+                            EditorGUI.EndDisabledGroup();
+                            GUI.contentColor = oldContent;
+
+                            using (new EditorGUI.DisabledScope(_gitInstalledMap == null && _gitListPending))
                             {
-                                var req = SetupPackagesTool.AddPackage(_pkgNameInput);
-                                if (req != null) Debug.Log($"Adding package: {_pkgNameInput}");
-                            }
-                            else
-                            {
-                                Debug.LogError(string.IsNullOrEmpty(err) ? "Input doesn't look like a package name." : err);
+                                var btnLabel = installed ? "Uninstall" : "Install";
+                                var oldBg = GUI.backgroundColor;
+                                if (installed)
+                                {
+                                    // Odin-like red (#E74C3C)
+                                    GUI.backgroundColor = new Color32(231, 76, 60, 255);
+                                }
+                                if (GUILayout.Button(btnLabel, GUILayout.Width(90)))
+                                {
+                                    if (installed)
+                                    {
+                                        var rem = SetupPackagesTool.RemovePackage(installedName);
+                                        if (rem != null) Debug.Log($"Uninstall requested: {installedName}");
+                                    }
+                                    else
+                                    {
+                                        if (SetupPackagesTool.ValidatePackageIdentifier(pkg.url, out bool isGit, out string err) && isGit)
+                                        {
+                                            var add = SetupPackagesTool.AddPackage(pkg.url);
+                                            if (add != null) Debug.Log($"Install requested: {pkg.url}");
+                                        }
+                                        else
+                                        {
+                                            Debug.LogError(string.IsNullOrEmpty(err) ? "Configured URL is not a valid Git URL." : err);
+                                        }
+                                    }
+                                    // Refresh the cache shortly after request
+                                    EditorApplication.delayCall += () => BeginRefreshUpmGitCache();
+                                    EditorApplication.delayCall += Repaint;
+                                }
+                                GUI.backgroundColor = oldBg;
                             }
                         }
                     }
                 }
-
-                GUILayout.Space(4);
-
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    GUILayout.Label("Add by Git URL", GUILayout.Width(90));
-                    _pkgGitInput = EditorGUILayout.TextField(_pkgGitInput);
-                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(110)))
-                    {
-                        if (GUILayout.Button("Add Git URL", GUILayout.Height(22)))
-                        {
-                            if (SetupPackagesTool.ValidatePackageIdentifier(_pkgGitInput, out bool isGit, out string err) && isGit)
-                            {
-                                var req = SetupPackagesTool.AddPackage(_pkgGitInput);
-                                if (req != null) Debug.Log($"Adding package from Git: {_pkgGitInput}");
-                            }
-                            else
-                            {
-                                Debug.LogError(string.IsNullOrEmpty(err) ? "Input doesn't look like a Git URL." : err);
-                            }
-                        }
-                    }
-                }
+                EditorGUILayout.EndScrollView();
             }
         }
 
@@ -234,7 +299,7 @@ namespace NekoLib
 
                 bool listChangedByButtons = false;
                 EditorGUI.BeginChangeCheck();
-                // Draw list items
+                // Draw folder list items
                 for (int i = 0; i < _settings.Folders.Count; i++)
                 {
                     var f = _settings.Folders[i];
@@ -281,6 +346,7 @@ namespace NekoLib
                         listChangedByButtons = true;
                     }
                 }
+
                 EditorGUILayout.EndScrollView();
 
                 if (EditorGUI.EndChangeCheck() || listChangedByButtons)

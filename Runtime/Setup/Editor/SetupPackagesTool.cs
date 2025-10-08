@@ -10,6 +10,46 @@ namespace NekoLib
     public static class SetupPackagesTool
     {
         /// <summary>
+        /// Normalize a Git URL to a comparable form (lowercase host/path, strip scheme and .git, unify separators).
+        /// </summary>
+        public static string NormalizeGitUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+            url = url.Trim();
+            // Remove trailing .git and normalize scheme/host case
+            if (url.EndsWith(".git", StringComparison.OrdinalIgnoreCase))
+                url = url.Substring(0, url.Length - 4);
+            url = url.Replace("ssh://", "")
+                     .Replace("git@", "")
+                     .Replace("https://", "")
+                     .Replace("http://", "");
+            // Replace ':' after host with '/'
+            int idx = url.IndexOf(':');
+            if (idx > -1 && url.IndexOf('/') == -1)
+            {
+                url = url.Substring(0, idx) + "/" + url.Substring(idx + 1);
+            }
+            return url.TrimEnd('/').ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Extract the plain Git URL part from a packageId like 'name@git+https://host/repo.git#hash'.
+        /// Returns null if not a git packageId.
+        /// </summary>
+        public static string ExtractGitUrlFromPackageId(string packageId)
+        {
+            if (string.IsNullOrEmpty(packageId)) return null;
+            int atIdx = packageId.IndexOf('@');
+            if (atIdx < 0 || atIdx + 1 >= packageId.Length) return null;
+            string afterAt = packageId.Substring(atIdx + 1);
+            if (!afterAt.StartsWith("git+", StringComparison.OrdinalIgnoreCase)) return null;
+            afterAt = afterAt.Substring(4);
+            int hashIdx = afterAt.IndexOf('#');
+            if (hashIdx > -1) afterAt = afterAt.Substring(0, hashIdx);
+            return afterAt;
+        }
+
+        /// <summary>
         /// Add a package by identifier. Accepts either a package name (optionally with @version)
         /// or a Git URL. Returns the AddRequest or null if validation fails.
         /// </summary>
@@ -26,6 +66,63 @@ namespace NekoLib
                 : $"Adding package by name: {trimmed}");
             return Client.Add(trimmed);
         }
+
+        /// <summary>
+        /// Remove a package by its name (e.g., com.company.package). For Git packages, Unity maps to the package name declared in its package.json.
+        /// Returns the RemoveRequest or null if name invalid.
+        /// </summary>
+        public static RemoveRequest RemovePackage(string packageName)
+        {
+            if (string.IsNullOrWhiteSpace(packageName))
+            {
+                Debug.LogError("RemovePackage: package name is empty.");
+                return null;
+            }
+            Debug.Log($"Removing package: {packageName}");
+            return Client.Remove(packageName.Trim());
+        }
+
+        /// <summary>
+        /// Get the installed package name for a given Git URL if present, otherwise null.
+        /// This uses Client.List to sync with UPM.
+        /// </summary>
+        public static string GetInstalledPackageNameForGit(string gitUrl)
+        {
+            if (string.IsNullOrWhiteSpace(gitUrl)) return null;
+            try
+            {
+                var listReq = Client.List(true, true);
+                while (!listReq.IsCompleted) { }
+                if (listReq.Status == StatusCode.Success && listReq.Result != null)
+                {
+                    // Match by package.source == Git or match repository URL when available
+                    foreach (var p in listReq.Result)
+                    {
+                        if (p == null) continue;
+                        if (p.source == PackageSource.Git)
+                        {
+                            // Extract the URL portion from packageId (format: name@git+https://host/repo.git#hash)
+                            string afterAt = ExtractGitUrlFromPackageId(p.packageId);
+                            if (!string.IsNullOrEmpty(afterAt))
+                            {
+                                if (NormalizeGitUrl(afterAt) == NormalizeGitUrl(gitUrl))
+                                    return p.name; // canonical package name
+                            }
+                        }
+                    }
+                }
+                else if (listReq.Status >= StatusCode.Failure)
+                {
+                    Debug.LogError($"UPM List failed: {listReq.Error?.message}");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            return null;
+        }
+
 
         /// <summary>
         /// Validate a package identifier. Determines if it's a Git URL or a package name.
