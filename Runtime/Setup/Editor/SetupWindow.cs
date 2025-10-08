@@ -183,6 +183,8 @@ namespace NekoLib
             }
         }
 
+        // Removed automatic syncing to avoid unintended changes; user applies explicitly.
+
         private SetupPackagesSettings _pkgSettings;
         private Vector2 _pkgScroll;
         private Dictionary<string, string> _gitInstalledMap; // normalized git url -> package name
@@ -351,13 +353,43 @@ namespace NekoLib
 
             using (new EditorGUILayout.VerticalScope())
             {
+                const float LabelW = 150f;
+                const float ButtonW = 90f;
+                // Namespace Root (with Apply)
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField("Root", GUILayout.Width(60));
+                    EditorGUILayout.LabelField("Namespace Root", GUILayout.Width(LabelW));
+                    EditorGUI.BeginChangeCheck();
+                    string newNs = EditorGUILayout.TextField(_settings.NamespaceRoot, GUILayout.ExpandWidth(true));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(_settings, "Change Namespace Root");
+                        _settings.NamespaceRoot = newNs; // setter sanitizes spaces
+                        EditorUtility.SetDirty(_settings);
+                        AssetDatabase.SaveAssets();
+                    }
+                    GUILayout.Space(6);
+                    string proj = EditorSettings.projectGenerationRootNamespace;
+                    string projSan = string.IsNullOrWhiteSpace(proj) ? string.Empty : new string(proj.Where(c => !char.IsWhiteSpace(c)).ToArray());
+                    string local = _settings.NamespaceRoot; // already sanitized
+                    using (new EditorGUI.DisabledScope(local == projSan))
+                    {
+                        if (GUILayout.Button(new GUIContent("Apply", "Set Project Settings → Root namespace to this value"), GUILayout.Width(ButtonW)))
+                        {
+                            EditorSettings.projectGenerationRootNamespace = local;
+                            ShowNotification(new GUIContent("Root namespace updated"));
+                        }
+                    }
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Project Folders Root", GUILayout.Width(LabelW));
                     EditorGUI.BeginDisabledGroup(true);
-                    EditorGUILayout.TextField(_settings.RootPath);
+                    EditorGUILayout.TextField(_settings.RootPath, GUILayout.ExpandWidth(true));
                     EditorGUI.EndDisabledGroup();
-                    if (GUILayout.Button("Choose…", GUILayout.Width(90)))
+                    GUILayout.Space(6);
+                    if (GUILayout.Button("Choose…", GUILayout.Width(ButtonW)))
                     {
                         string abs = EditorUtility.OpenFolderPanel("Select Root Folder (under Assets)", Application.dataPath, "");
                         if (!string.IsNullOrEmpty(abs))
