@@ -36,6 +36,11 @@ namespace NekoLib
             _settings = SetupFoldersSettings.LoadOrCreate();
             EnsureSessionSelectionFromSettings();
             _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            // Seed from manifest immediately for first paint
+            if (SetupPackagesTool.TryBuildInstalledGitMapFromManifest(out var manifestMap))
+            {
+                _gitInstalledMap = manifestMap;
+            }
             BeginRefreshUpmGitCache();
             // Refresh when UPM packages change externally
             UnityEditor.PackageManager.Events.registeredPackages += OnPackagesChanged;
@@ -199,7 +204,15 @@ namespace NekoLib
                     map[SetupPackagesTool.NormalizeGitUrl(url)] = p.name;
                 }
             }
-            _gitInstalledMap = map;
+            // If UPM returns nothing (edge cases), keep manifest-based map
+            if (map.Count == 0 && _gitInstalledMap != null && _gitInstalledMap.Count > 0)
+            {
+                // keep existing
+            }
+            else
+            {
+                _gitInstalledMap = map;
+            }
             _gitListRequest = null;
             Repaint();
         }

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -47,6 +48,63 @@ namespace NekoLib
             int hashIdx = afterAt.IndexOf('#');
             if (hashIdx > -1) afterAt = afterAt.Substring(0, hashIdx);
             return afterAt;
+        }
+
+        /// <summary>
+        /// Build a map of normalized Git URL -> package name by reading Packages/manifest.json dependencies.
+        /// Returns true if successful and sets 'map'.
+        /// </summary>
+        public static bool TryBuildInstalledGitMapFromManifest(out System.Collections.Generic.Dictionary<string, string> map)
+        {
+            map = new System.Collections.Generic.Dictionary<string, string>();
+            try
+            {
+                string projectPath = Directory.GetParent(Application.dataPath)?.FullName;
+                if (string.IsNullOrEmpty(projectPath)) return false;
+                string manifestPath = Path.Combine(projectPath, "Packages", "manifest.json");
+                if (!File.Exists(manifestPath)) return false;
+                string json = File.ReadAllText(manifestPath);
+                // Naively extract entries under "dependencies": { ... }
+                int depIdx = json.IndexOf("\"dependencies\"", StringComparison.Ordinal);
+                if (depIdx < 0) return false;
+                int braceStart = json.IndexOf('{', depIdx);
+                if (braceStart < 0) return false;
+                int depth = 0; int i = braceStart; int end = -1;
+                for (; i < json.Length; i++)
+                {
+                    char c = json[i];
+                    if (c == '{') depth++;
+                    else if (c == '}') { depth--; if (depth == 0) { end = i; break; } }
+                }
+                if (end <= braceStart) return false;
+                string depsBlock = json.Substring(braceStart + 1, end - braceStart - 1);
+
+                // Match key-value pairs like  "com.something": "https://...git#hash"
+                var rx = new Regex("\\\"([^\\\"]+)\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.Multiline);
+                var m = rx.Matches(depsBlock);
+                foreach (Match match in m)
+                {
+                    if (match.Groups.Count < 3) continue;
+                    string pkgName = match.Groups[1].Value;
+                    string val = match.Groups[2].Value;
+                    // consider it a git dep if looks like URL and likely git
+                    if (LooksLikeGitUrl(val) || val.Contains("git+"))
+                    {
+                        string v = val;
+                        if (v.StartsWith("git+", StringComparison.OrdinalIgnoreCase)) v = v.Substring(4);
+                        int hashIdx = v.IndexOf('#');
+                        if (hashIdx > -1) v = v.Substring(0, hashIdx);
+                        string key = NormalizeGitUrl(v);
+                        if (!string.IsNullOrEmpty(key)) map[key] = pkgName;
+                    }
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return false;
+            }
         }
 
         /// <summary>
