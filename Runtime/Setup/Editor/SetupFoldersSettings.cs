@@ -21,7 +21,9 @@ namespace NekoLib
             public bool enabled = true;
         }
 
+        [HideInInspector]
         [SerializeField] private string _rootPath = "Assets/Project";
+        [HideInInspector]
         [SerializeField] private List<FolderOption> _folders = new();
 
         public string RootPath { get => _rootPath; set => _rootPath = string.IsNullOrWhiteSpace(value) ? "Assets/Project" : value; }
@@ -61,19 +63,11 @@ namespace NekoLib
                 settings = CreateInstance<SetupFoldersSettings>();
                 settings.SetDefaults();
                 AssetDatabase.CreateAsset(settings, assetPath);
-                settings.hideFlags = HideFlags.HideInHierarchy | HideFlags.NotEditable;
                 AssetDatabase.SaveAssets();
             }
             else
             {
-                // Hide from Project/Inspector
-                var flags = HideFlags.HideInHierarchy | HideFlags.NotEditable;
-                if ((settings.hideFlags & flags) != flags)
-                {
-                    settings.hideFlags = flags;
-                    EditorUtility.SetDirty(settings);
-                    AssetDatabase.SaveAssets();
-                }
+                // no-op; fields are hidden via [HideInInspector]
             }
             return settings;
         }

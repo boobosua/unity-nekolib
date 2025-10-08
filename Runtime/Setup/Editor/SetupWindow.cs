@@ -14,6 +14,8 @@ namespace NekoLib
         private const string WindowTitle = "Project Setup";
         private static readonly string[] Tabs = new[] { "Folders", "Packages", "Settings" };
         private int _tabIndex;
+        // Cache icon content to avoid per-GUI allocations
+        private static GUIContent _installedCheckContent;
 
         // settings
         private static SetupFoldersSettings _settings;
@@ -36,6 +38,12 @@ namespace NekoLib
             _settings = SetupFoldersSettings.LoadOrCreate();
             EnsureSessionSelectionFromSettings();
             _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            // prepare cached GUI content
+            if (_installedCheckContent == null)
+            {
+                var check = EditorGUIUtility.IconContent("TestPassed");
+                _installedCheckContent = (check != null && check.image != null) ? check : new GUIContent("Installed");
+            }
             // Seed from manifest immediately for first paint
             if (SetupPackagesTool.TryBuildInstalledGitMapFromManifest(out var manifestMap))
             {
@@ -66,6 +74,9 @@ namespace NekoLib
         private void OnDisable()
         {
             Events.registeredPackages -= OnPackagesChanged;
+            // ensure no stray update handlers remain
+            EditorApplication.update -= PollUpmGitCache;
+            EditorApplication.update -= PollAddRequests;
         }
 
         private void OnPackagesChanged(PackageRegistrationEventArgs args)
@@ -302,9 +313,7 @@ namespace NekoLib
                                     // Show a green checkmark icon rather than a button
                                     var old = GUI.contentColor;
                                     GUI.contentColor = new Color(0.45f, 0.95f, 0.45f);
-                                    var check = EditorGUIUtility.IconContent("TestPassed");
-                                    if (check == null || check.image == null) check = new GUIContent("Installed");
-                                    GUILayout.Label(check, GUILayout.Width(90));
+                                    GUILayout.Label(_installedCheckContent, GUILayout.Width(90));
                                     GUI.contentColor = old;
                                 }
                                 else
