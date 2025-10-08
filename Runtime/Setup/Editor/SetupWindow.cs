@@ -37,17 +37,31 @@ namespace NekoLib
             EnsureSessionSelectionFromSettings();
             _pkgSettings = SetupPackagesSettings.LoadOrCreate();
             BeginRefreshUpmGitCache();
+            // Refresh when UPM packages change externally
+            UnityEditor.PackageManager.Events.registeredPackages += OnPackagesChanged;
             Repaint();
         }
 
         // Repaint when the project changes (folders created/deleted/moved)
         private void OnProjectChange()
         {
+            BeginRefreshUpmGitCache();
             Repaint();
         }
 
         // Also refresh when the window gains focus
         private void OnFocus()
+        {
+            BeginRefreshUpmGitCache();
+            Repaint();
+        }
+
+        private void OnDisable()
+        {
+            UnityEditor.PackageManager.Events.registeredPackages -= OnPackagesChanged;
+        }
+
+        private void OnPackagesChanged(UnityEditor.PackageManager.PackageRegistrationEventArgs args)
         {
             BeginRefreshUpmGitCache();
             Repaint();
@@ -156,6 +170,8 @@ namespace NekoLib
         private Dictionary<string, string> _gitInstalledMap; // normalized git url -> package name
         private ListRequest _gitListRequest;
         private bool _gitListPending;
+        private Dictionary<string, AddRequest> _pendingAdds = new Dictionary<string, AddRequest>(); // normalized git url -> request
+        private bool _pollingAdds;
 
         private void BeginRefreshUpmGitCache()
         {
@@ -188,6 +204,47 @@ namespace NekoLib
             Repaint();
         }
 
+        private void BeginAddPackage(string url)
+        {
+            var req = SetupPackagesTool.AddPackage(url);
+            if (req == null) return;
+            string key = SetupPackagesTool.NormalizeGitUrl(url);
+            _pendingAdds[key] = req;
+            if (!_pollingAdds)
+            {
+                _pollingAdds = true;
+                EditorApplication.update += PollAddRequests;
+            }
+        }
+
+        private void PollAddRequests()
+        {
+            if (_pendingAdds == null || _pendingAdds.Count == 0)
+            {
+                EditorApplication.update -= PollAddRequests;
+                _pollingAdds = false;
+                return;
+            }
+            var keys = new List<string>(_pendingAdds.Keys);
+            foreach (var k in keys)
+            {
+                var r = _pendingAdds[k];
+                if (r == null || !r.IsCompleted) continue;
+                if (r.Status == StatusCode.Success)
+                {
+                    Debug.Log($"Install succeeded: {k}");
+                }
+                else
+                {
+                    Debug.LogError($"Install failed: {k} => {r.Error?.message}");
+                }
+                _pendingAdds.Remove(k);
+                // ensure UPM state reflects latest
+                BeginRefreshUpmGitCache();
+                Repaint();
+            }
+        }
+
         private void DrawPackagesTab()
         {
             if (_pkgSettings == null) _pkgSettings = SetupPackagesSettings.LoadOrCreate();
@@ -214,6 +271,7 @@ namespace NekoLib
                             if (_gitInstalledMap != null)
                                 _gitInstalledMap.TryGetValue(normalized, out installedName);
                             bool installed = !string.IsNullOrEmpty(installedName);
+                            bool isInstalling = _pendingAdds.ContainsKey(normalized);
 
                             // Tint URL like folders tab when installed
                             var oldContent = GUI.contentColor;
@@ -223,39 +281,39 @@ namespace NekoLib
                             EditorGUI.EndDisabledGroup();
                             GUI.contentColor = oldContent;
 
-                            using (new EditorGUI.DisabledScope(_gitInstalledMap == null && _gitListPending))
+                            using (new EditorGUI.DisabledScope((_gitInstalledMap == null && _gitListPending)))
                             {
-                                var btnLabel = installed ? "Uninstall" : "Install";
-                                var oldBg = GUI.backgroundColor;
                                 if (installed)
                                 {
-                                    // Odin-like red (#E74C3C)
-                                    GUI.backgroundColor = new Color32(231, 76, 60, 255);
+                                    // Show a green checkmark icon rather than a button
+                                    var old = GUI.contentColor;
+                                    GUI.contentColor = new Color(0.45f, 0.95f, 0.45f);
+                                    var check = EditorGUIUtility.IconContent("TestPassed");
+                                    if (check == null || check.image == null) check = new GUIContent("Installed");
+                                    GUILayout.Label(check, GUILayout.Width(90));
+                                    GUI.contentColor = old;
                                 }
-                                if (GUILayout.Button(btnLabel, GUILayout.Width(90)))
+                                else
                                 {
-                                    if (installed)
-                                    {
-                                        var rem = SetupPackagesTool.RemovePackage(installedName);
-                                        if (rem != null) Debug.Log($"Uninstall requested: {installedName}");
-                                    }
-                                    else
+                                    // Show Install button, but prevent spamming while installing
+                                    var oldEn = GUI.enabled;
+                                    GUI.enabled = !isInstalling;
+                                    string label = isInstalling ? "Installing..." : "Install";
+                                    if (GUILayout.Button(label, GUILayout.Width(90)))
                                     {
                                         if (SetupPackagesTool.ValidatePackageIdentifier(pkg.url, out bool isGit, out string err) && isGit)
                                         {
-                                            var add = SetupPackagesTool.AddPackage(pkg.url);
-                                            if (add != null) Debug.Log($"Install requested: {pkg.url}");
+                                            BeginAddPackage(pkg.url);
+                                            Debug.Log($"Install requested: {pkg.url}");
+                                            // UI disables via isInstalling
                                         }
                                         else
                                         {
                                             Debug.LogError(string.IsNullOrEmpty(err) ? "Configured URL is not a valid Git URL." : err);
                                         }
                                     }
-                                    // Refresh the cache shortly after request
-                                    EditorApplication.delayCall += () => BeginRefreshUpmGitCache();
-                                    EditorApplication.delayCall += Repaint;
+                                    GUI.enabled = oldEn;
                                 }
-                                GUI.backgroundColor = oldBg;
                             }
                         }
                     }
