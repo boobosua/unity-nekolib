@@ -45,7 +45,7 @@ namespace NekoLib
             }
             BeginRefreshUpmGitCache();
             // Refresh when UPM packages change externally
-            UnityEditor.PackageManager.Events.registeredPackages += OnPackagesChanged;
+            Events.registeredPackages += OnPackagesChanged;
             Repaint();
         }
 
@@ -65,10 +65,10 @@ namespace NekoLib
 
         private void OnDisable()
         {
-            UnityEditor.PackageManager.Events.registeredPackages -= OnPackagesChanged;
+            Events.registeredPackages -= OnPackagesChanged;
         }
 
-        private void OnPackagesChanged(UnityEditor.PackageManager.PackageRegistrationEventArgs args)
+        private void OnPackagesChanged(PackageRegistrationEventArgs args)
         {
             BeginRefreshUpmGitCache();
             Repaint();

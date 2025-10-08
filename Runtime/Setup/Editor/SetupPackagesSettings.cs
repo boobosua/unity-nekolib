@@ -46,12 +46,19 @@ namespace NekoLib
                 settings = CreateInstance<SetupPackagesSettings>();
                 settings.SetDefaults();
                 AssetDatabase.CreateAsset(settings, assetPath);
+                settings.hideFlags = HideFlags.HideInHierarchy | HideFlags.NotEditable;
                 AssetDatabase.SaveAssets();
             }
             else
             {
                 // Enforce code-defined list even if the asset already exists
                 settings.SetDefaults();
+                var flags = HideFlags.HideInHierarchy | HideFlags.NotEditable;
+                if ((settings.hideFlags & flags) != flags)
+                {
+                    settings.hideFlags = flags;
+                    EditorUtility.SetDirty(settings);
+                }
                 EditorUtility.SetDirty(settings);
                 AssetDatabase.SaveAssets();
             }
