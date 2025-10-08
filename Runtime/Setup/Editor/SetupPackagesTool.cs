@@ -17,16 +17,25 @@ namespace NekoLib
         {
             if (string.IsNullOrWhiteSpace(url)) return string.Empty;
             url = url.Trim();
-            // Remove trailing .git and normalize scheme/host case
+            // Remove git+ prefix if present
+            if (url.StartsWith("git+", StringComparison.OrdinalIgnoreCase))
+                url = url.Substring(4);
+            // Drop fragment (#...) and query (?...)
+            int hashIdx = url.IndexOf('#');
+            if (hashIdx > -1) url = url.Substring(0, hashIdx);
+            int qIdx = url.IndexOf('?');
+            if (qIdx > -1) url = url.Substring(0, qIdx);
+            // Remove trailing .git
             if (url.EndsWith(".git", StringComparison.OrdinalIgnoreCase))
                 url = url.Substring(0, url.Length - 4);
+            // Strip schemes and git@ user prefix
             url = url.Replace("ssh://", "")
                      .Replace("git@", "")
                      .Replace("https://", "")
                      .Replace("http://", "");
-            // Replace ':' after host with '/'
+            // Replace ':' after host with '/' for git@host:org/repo
             int idx = url.IndexOf(':');
-            if (idx > -1 && url.IndexOf('/') == -1)
+            if (idx > -1 && (url.IndexOf('/') == -1 || idx < url.IndexOf('/')))
             {
                 url = url.Substring(0, idx) + "/" + url.Substring(idx + 1);
             }

@@ -40,6 +40,8 @@ namespace NekoLib
             if (SetupPackagesTool.TryBuildInstalledGitMapFromManifest(out var manifestMap))
             {
                 _gitInstalledMap = manifestMap;
+                // ensure we repaint immediately with manifest data
+                Repaint();
             }
             BeginRefreshUpmGitCache();
             // Refresh when UPM packages change externally
@@ -182,7 +184,6 @@ namespace NekoLib
         {
             if (_gitListPending) return;
             _gitListPending = true;
-            _gitInstalledMap = null;
             _gitListRequest = Client.List(true, true);
             EditorApplication.update += PollUpmGitCache;
         }
