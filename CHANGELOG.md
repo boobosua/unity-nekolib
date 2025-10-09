@@ -1,3 +1,10 @@
+## [1.9.7] - 2025-10-09
+
+### Project Setup Window
+
+- Add a setup window to guide users through initial project setup.
+- Add a button to open the setup window under the tool section.
+
 ## [1.9.4] - 2025-09-25
 
 ### Overhaul Singleton Pattern

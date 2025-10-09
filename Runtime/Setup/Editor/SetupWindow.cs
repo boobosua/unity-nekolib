@@ -24,12 +24,15 @@ namespace NekoLib
         private List<SetupFoldersSettings.FolderOption> _sessionSelection;
         private Vector2 _scroll;
         private Vector2 _settingsScroll;
+        // Draft text for Namespace Root. We keep this separate so typing doesn't save or trigger validation until Apply.
+        private string _namespaceRootDraft;
+        private bool _namespaceRootDraftDirty;
 
         [MenuItem("Tools/Neko Indie/Startup/Project Setup", priority = 0)]
         public static void ShowWindow()
         {
             var window = GetWindow<SetupWindow>(false, WindowTitle, true);
-            window.minSize = new Vector2(480, 360);
+            window.minSize = new Vector2(480, 370);
             window.Show();
         }
 
@@ -38,6 +41,12 @@ namespace NekoLib
             _settings = SetupFoldersSettings.LoadOrCreate();
             EnsureSessionSelectionFromSettings();
             _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            // Initialize draft from current Project Settings so the window reflects external changes
+            var projRoot = EditorSettings.projectGenerationRootNamespace;
+            _namespaceRootDraft = string.IsNullOrEmpty(projRoot)
+                ? (_settings != null ? _settings.NamespaceRoot : string.Empty)
+                : projRoot;
+            _namespaceRootDraftDirty = false;
             // prepare cached GUI content
             if (_installedCheckContent == null)
             {
@@ -68,6 +77,15 @@ namespace NekoLib
         private void OnFocus()
         {
             BeginRefreshUpmGitCache();
+            // If user hasn't edited the draft in this session, keep it in sync with Project Settings on focus
+            if (!_namespaceRootDraftDirty)
+            {
+                var projRoot = EditorSettings.projectGenerationRootNamespace ?? string.Empty;
+                if (!string.Equals(_namespaceRootDraft ?? string.Empty, projRoot))
+                {
+                    _namespaceRootDraft = projRoot;
+                }
+            }
             Repaint();
         }
 
@@ -350,6 +368,11 @@ namespace NekoLib
         private void DrawSettingsTab()
         {
             if (_settings == null) _settings = SetupFoldersSettings.LoadOrCreate();
+            if (_namespaceRootDraft == null)
+            {
+                _namespaceRootDraft = EditorSettings.projectGenerationRootNamespace ?? _settings.NamespaceRoot;
+                _namespaceRootDraftDirty = false;
+            }
 
             using (new EditorGUILayout.VerticalScope())
             {
@@ -359,24 +382,31 @@ namespace NekoLib
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.LabelField("Namespace Root", GUILayout.Width(LabelW));
+                    // Do NOT persist while typing; keep a draft until Apply is pressed
                     EditorGUI.BeginChangeCheck();
-                    string newNs = EditorGUILayout.TextField(_settings.NamespaceRoot, GUILayout.ExpandWidth(true));
+                    string newDraft = EditorGUILayout.TextField(_namespaceRootDraft, GUILayout.ExpandWidth(true));
                     if (EditorGUI.EndChangeCheck())
                     {
-                        Undo.RecordObject(_settings, "Change Namespace Root");
-                        _settings.NamespaceRoot = newNs; // setter sanitizes spaces
-                        EditorUtility.SetDirty(_settings);
-                        AssetDatabase.SaveAssets();
+                        _namespaceRootDraft = newDraft;
+                        _namespaceRootDraftDirty = true;
                     }
                     GUILayout.Space(6);
                     string proj = EditorSettings.projectGenerationRootNamespace;
                     string projSan = string.IsNullOrWhiteSpace(proj) ? string.Empty : new string(proj.Where(c => !char.IsWhiteSpace(c)).ToArray());
-                    string local = _settings.NamespaceRoot; // already sanitized
-                    using (new EditorGUI.DisabledScope(local == projSan))
+                    string draftSan = string.IsNullOrWhiteSpace(_namespaceRootDraft) ? string.Empty : new string(_namespaceRootDraft.Where(c => !char.IsWhiteSpace(c)).ToArray());
+                    using (new EditorGUI.DisabledScope(draftSan == projSan))
                     {
                         if (GUILayout.Button(new GUIContent("Apply", "Set Project Settings → Root namespace to this value"), GUILayout.Width(ButtonW)))
                         {
-                            EditorSettings.projectGenerationRootNamespace = local;
+                            // Persist to settings with validation running once via the property setter
+                            Undo.RecordObject(_settings, "Change Namespace Root");
+                            _settings.NamespaceRoot = _namespaceRootDraft; // setter sanitizes
+                            EditorUtility.SetDirty(_settings);
+                            AssetDatabase.SaveAssets();
+                            // Apply to Project Settings
+                            EditorSettings.projectGenerationRootNamespace = _settings.NamespaceRoot;
+                            _namespaceRootDraft = _settings.NamespaceRoot;
+                            _namespaceRootDraftDirty = false;
                             ShowNotification(new GUIContent("Root namespace updated"));
                         }
                     }
