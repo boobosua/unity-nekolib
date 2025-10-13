@@ -1,12 +1,14 @@
 #if UNITY_EDITOR
-using UnityEngine;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace NekoLib.Components
 {
     [CustomEditor(typeof(SpriteAnimatorBase), true)]
     public class SpriteAnimatorEditorBase : Editor
     {
+        private const string TabSessionKey = "NekoLib.SpriteAnimatorEditorBase.Tab";
         private SerializedProperty _sprites;
         private SerializedProperty _frameRate;
         private SerializedProperty _loopMode;
@@ -17,14 +19,13 @@ namespace NekoLib.Components
         private SerializedProperty _frameEvents;
         private SerializedProperty _onAnimationComplete;
         private SerializedProperty _onLoopComplete;
-        private SerializedProperty _currentFrame;
-        private SerializedProperty _isPlaying;
-        private SerializedProperty _isReversed;
 
         private Sprite[] _previousSprites;
         private int _selectedFrameToAdd = 0;
-        private bool _frameEventsFoldout = true;
+        private List<bool> _eventFoldouts = new();
         private SpriteAnimatorBase.LoopMode _previousLoopMode;
+        private int _selectedTab = 0; // 0: Settings, 1: Events
+        private static GUIStyle _foldoutNoFocusStyle;
 
         protected virtual void OnEnable()
         {
@@ -38,27 +39,61 @@ namespace NekoLib.Components
             _frameEvents = serializedObject.FindProperty("_frameEvents");
             _onAnimationComplete = serializedObject.FindProperty("_onAnimationComplete");
             _onLoopComplete = serializedObject.FindProperty("_onLoopComplete");
-            _currentFrame = serializedObject.FindProperty("_currentFrame");
-            _isPlaying = serializedObject.FindProperty("_isPlaying");
-            _isReversed = serializedObject.FindProperty("_isReversed");
 
+            _selectedTab = SessionState.GetInt(TabSessionKey, 0);
             CacheCurrentSprites();
             CacheCurrentLoopMode();
+            SyncEventFoldoutsSize();
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            DrawAnimationSettings();
+            // Improve hover responsiveness by repainting on mouse move
+            if (Event.current.type == EventType.MouseMove)
+            {
+                Repaint();
+            }
+
+            // Tabs: Settings | Events
+            EditorGUILayout.Space(2);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                int eventCount = _frameEvents != null ? _frameEvents.arraySize : 0;
+                string frameEventsLabel = eventCount > 0 ? $"Frame Events ({eventCount})" : "Frame Events";
+                GUIContent[] tabs =
+                {
+                    new("Settings"),
+                    new(frameEventsLabel)
+                };
+                int newTab = GUILayout.Toolbar(_selectedTab, tabs);
+                if (newTab != _selectedTab)
+                {
+                    _selectedTab = newTab;
+                    SessionState.SetInt(TabSessionKey, _selectedTab);
+                }
+            }
             EditorGUILayout.Space();
-            DrawFrameEvents();
-            EditorGUILayout.Space();
-            DrawEvents();
-            EditorGUILayout.Space();
-            DrawAdditionalProperties();
-            EditorGUILayout.Space();
-            DrawRuntimeAndControls();
+
+            if (_selectedTab == 0)
+            {
+                DrawAnimationSettings();
+                EditorGUILayout.Space();
+                DrawAdditionalProperties();
+                EditorGUILayout.Space();
+                // Normal Events now live under Settings tab
+                DrawEvents();
+                EditorGUILayout.Space();
+            }
+            else
+            {
+                // Frame Events tab only shows per-frame events
+                DrawFrameEvents();
+                EditorGUILayout.Space();
+            }
+
+            // Preview removed by request
 
             if (serializedObject.hasModifiedProperties)
             {
@@ -70,7 +105,7 @@ namespace NekoLib.Components
 
         private void DrawAnimationSettings()
         {
-            EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
+
             EditorGUILayout.PropertyField(_sprites);
             EditorGUILayout.PropertyField(_frameRate);
 
@@ -87,7 +122,7 @@ namespace NekoLib.Components
                     newLoopMode == SpriteAnimatorBase.LoopMode.Once)
                 {
                     ClearUnityEvent(_onLoopComplete);
-                    // Debug.Log("Cleared OnLoopComplete events because LoopMode changed to Once");
+
                 }
                 _previousLoopMode = newLoopMode;
             }
@@ -105,12 +140,11 @@ namespace NekoLib.Components
 
         private void DrawFrameEvents()
         {
-            // Create foldout header with event count
-            string headerText = _frameEvents.arraySize > 0 ? $"Frame Events ({_frameEvents.arraySize})" : "Frame Events";
-            _frameEventsFoldout = EditorGUILayout.Foldout(_frameEventsFoldout, headerText, true, EditorStyles.foldoutHeader);
-
-            if (!_frameEventsFoldout)
-                return;
+            // When no events exist, show an instructional info box; otherwise no title/header
+            if (_frameEvents.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("No frame events yet. Select a frame below and click 'Add Event' to create one.", MessageType.Info);
+            }
 
             EditorGUI.indentLevel++;
 
@@ -121,6 +155,9 @@ namespace NekoLib.Components
                 return;
             }
 
+            // Ensure foldout list size matches events
+            SyncEventFoldoutsSize();
+
             // Create frame name options
             string[] frameOptions = new string[_sprites.arraySize];
             for (int i = 0; i < _sprites.arraySize; i++)
@@ -130,7 +167,7 @@ namespace NekoLib.Components
             }
 
             // Get currently used frame indices
-            var usedFrames = new System.Collections.Generic.HashSet<int>();
+            var usedFrames = new HashSet<int>();
             for (int i = 0; i < _frameEvents.arraySize; i++)
             {
                 SerializedProperty frameEvent = _frameEvents.GetArrayElementAtIndex(i);
@@ -140,8 +177,8 @@ namespace NekoLib.Components
 
             // Check for duplicate frames and display warnings
             bool hasDuplicates = false;
-            var duplicateFrames = new System.Collections.Generic.HashSet<int>();
-            var frameCount = new System.Collections.Generic.Dictionary<int, int>();
+            var duplicateFrames = new HashSet<int>();
+            var frameCount = new Dictionary<int, int>();
 
             for (int i = 0; i < _frameEvents.arraySize; i++)
             {
@@ -167,55 +204,85 @@ namespace NekoLib.Components
                 EditorGUILayout.HelpBox($"Duplicate frame events detected for frame(s): {duplicateList}. Each frame should only have one event.", MessageType.Error);
             }
 
-            // Display existing frame events
+            // Display existing frame events (each with its own foldout)
             for (int i = 0; i < _frameEvents.arraySize; i++)
             {
                 SerializedProperty frameEvent = _frameEvents.GetArrayElementAtIndex(i);
                 SerializedProperty frameIndex = frameEvent.FindPropertyRelative("_frameIndex");
                 SerializedProperty unityEvent = frameEvent.FindPropertyRelative("_onFrame");
 
-                EditorGUILayout.BeginVertical("box");
+                // Foldout header per event with fixed height and aligned remove button
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-                EditorGUILayout.BeginHorizontal();
+                float headerH = EditorGUIUtility.singleLineHeight + 4f;
+                Rect headerRect = EditorGUILayout.GetControlRect(false, headerH);
 
-                // Frame selection dropdown with warning color for duplicates
                 bool isDuplicate = duplicateFrames.Contains(frameIndex.intValue);
-                if (isDuplicate)
+                string spriteName = "(null)";
+                var si = frameIndex.intValue;
+                if (si >= 0 && si < _sprites.arraySize)
                 {
-                    GUI.backgroundColor = new Color(1f, 0.6f, 0.6f); // Light red background
+                    var sprop = _sprites.GetArrayElementAtIndex(si).objectReferenceValue as Sprite;
+                    if (sprop != null) spriteName = sprop.name;
                 }
 
-                int selectedFrame = EditorGUILayout.Popup($"Event Frame {i}", frameIndex.intValue, frameOptions);
-                frameIndex.intValue = selectedFrame;
+                string foldLabel = $"Frame {frameIndex.intValue}: {spriteName}";
 
+                // Compute rects
+                Rect closeRect = new Rect(headerRect.xMax - 22f, headerRect.y + 2f, 18f, EditorGUIUtility.singleLineHeight);
+                Rect foldRect = new Rect(headerRect.x + 4f, headerRect.y + 2f, headerRect.width - 30f, EditorGUIUtility.singleLineHeight);
+
+                // Duplicate background tint
+                var hover = headerRect.Contains(Event.current.mousePosition);
                 if (isDuplicate)
                 {
-                    GUI.backgroundColor = Color.white; // Reset background color
+                    var tint = new Color(1f, 0.6f, 0.6f, 0.18f);
+                    EditorGUI.DrawRect(headerRect, tint);
+                }
+                else if (hover)
+                {
+                    var baseTint = EditorGUIUtility.isProSkin ? new Color(1f, 1f, 1f, 0.05f) : new Color(0f, 0f, 0f, 0.05f);
+                    EditorGUI.DrawRect(headerRect, baseTint);
                 }
 
-                // Remove button for this specific event
-                if (GUILayout.Button("×", GUILayout.Width(25), GUILayout.Height(18)))
+                // Use custom foldout style that doesn't turn blue on focus (fallback to default if unavailable)
+                EnsureStyles();
+                if (_foldoutNoFocusStyle != null)
+                {
+                    _eventFoldouts[i] = EditorGUI.Foldout(foldRect, _eventFoldouts[i], foldLabel, true, _foldoutNoFocusStyle);
+                }
+                else
+                {
+                    _eventFoldouts[i] = EditorGUI.Foldout(foldRect, _eventFoldouts[i], foldLabel, true);
+                }
+
+                if (GUI.Button(closeRect, new GUIContent("×"), EditorStyles.miniButton))
                 {
                     _frameEvents.DeleteArrayElementAtIndex(i);
-                    break; // Exit the loop since we modified the array
+                    EditorGUILayout.EndVertical();
+                    break; // Exit after modification
                 }
 
-                EditorGUILayout.EndHorizontal();
-
-                // Unity Event
-                EditorGUILayout.PropertyField(unityEvent, new GUIContent("OnFrame"));
+                if (_eventFoldouts[i])
+                {
+                    int prevIndent = EditorGUI.indentLevel;
+                    EditorGUI.indentLevel = 0; // minimize left padding for cleaner look
+                    // Unity Event
+                    EditorGUILayout.PropertyField(unityEvent, new GUIContent("OnFrame"));
+                    EditorGUI.indentLevel = prevIndent;
+                }
 
                 EditorGUILayout.EndVertical();
-                EditorGUILayout.Space(2);
+                EditorGUILayout.Space(6);
             }
 
-            // Add new frame event section
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Add New Frame Event", EditorStyles.boldLabel);
+            // Add new frame event section (outside bordered boxes)
+            // Use a style with no margins/padding so the popup can align flush left
+            EditorGUILayout.BeginVertical(GUIStyle.none);
 
             // Create available frame options (excluding already used frames)
-            var availableFrames = new System.Collections.Generic.List<int>();
-            var availableFrameOptions = new System.Collections.Generic.List<string>();
+            var availableFrames = new List<int>();
+            var availableFrameOptions = new List<string>();
 
             for (int i = 0; i < _sprites.arraySize; i++)
             {
@@ -235,10 +302,24 @@ namespace NekoLib.Components
                     _selectedFrameToAdd = 0;
                 }
 
-                EditorGUILayout.BeginHorizontal();
-                _selectedFrameToAdd = EditorGUILayout.Popup("Frame", _selectedFrameToAdd, availableFrameOptions.ToArray());
+                // Remove left padding for the add row by drawing at indent level 0
+                int prevIndentForAdd = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
 
-                if (GUILayout.Button("Add Event", GUILayout.Width(80)))
+                // A little breathing room above the add row
+                EditorGUILayout.Space(4);
+
+                // Full-width dropdown on the left, Add button on the right
+                float btnH = EditorGUIUtility.singleLineHeight + 2f;
+                Rect rowRect = EditorGUILayout.GetControlRect(false, btnH);
+                const float buttonW = 110f;
+                const float spacing = 6f;
+                Rect buttonRect = new Rect(rowRect.xMax - buttonW, rowRect.y, buttonW, btnH);
+                Rect dropdownRect = new Rect(rowRect.x, rowRect.y, rowRect.width - buttonW - spacing, btnH);
+
+                _selectedFrameToAdd = EditorGUI.Popup(dropdownRect, _selectedFrameToAdd, availableFrameOptions.ToArray());
+
+                if (GUI.Button(buttonRect, "Add Event"))
                 {
                     _frameEvents.arraySize++;
                     SerializedProperty newEvent = _frameEvents.GetArrayElementAtIndex(_frameEvents.arraySize - 1);
@@ -247,15 +328,58 @@ namespace NekoLib.Components
                     // Reset selection to first available frame after adding
                     _selectedFrameToAdd = 0;
                 }
-                EditorGUILayout.EndHorizontal();
+
+                // Restore previous indent
+                EditorGUI.indentLevel = prevIndentForAdd;
             }
             else
             {
+                // Draw the info box without left padding as well
+                int prevIndentForInfo = EditorGUI.indentLevel;
+                EditorGUI.indentLevel = 0;
                 EditorGUILayout.HelpBox("All frames already have events assigned.", MessageType.Info);
+                EditorGUI.indentLevel = prevIndentForInfo;
             }
 
             EditorGUILayout.EndVertical();
             EditorGUI.indentLevel--;
+        }
+
+        private void EnsureStyles()
+        {
+            if (_foldoutNoFocusStyle != null) return;
+            try
+            {
+                var baseStyle = EditorStyles.foldout;
+                if (baseStyle == null) return; // EditorStyles not ready yet
+                _foldoutNoFocusStyle = new GUIStyle(baseStyle);
+                // Align text colors to regular label to avoid blue-ish focus tint
+                Color c = EditorStyles.label.normal.textColor;
+                _foldoutNoFocusStyle.normal.textColor = c;
+                _foldoutNoFocusStyle.onNormal.textColor = c;
+                _foldoutNoFocusStyle.active.textColor = c;
+                _foldoutNoFocusStyle.onActive.textColor = c;
+                _foldoutNoFocusStyle.focused.textColor = c;
+                _foldoutNoFocusStyle.onFocused.textColor = c;
+                _foldoutNoFocusStyle.hover.textColor = c;
+                _foldoutNoFocusStyle.onHover.textColor = c;
+            }
+            catch
+            {
+                // In case EditorStyles is not initialized; will try again later during OnGUI
+                _foldoutNoFocusStyle = null;
+            }
+        }
+
+        private void SyncEventFoldoutsSize()
+        {
+            int size = _frameEvents != null ? _frameEvents.arraySize : 0;
+            if (_eventFoldouts == null)
+            {
+                _eventFoldouts = new List<bool>(size);
+            }
+            while (_eventFoldouts.Count < size) _eventFoldouts.Add(true);
+            while (_eventFoldouts.Count > size) _eventFoldouts.RemoveAt(_eventFoldouts.Count - 1);
         }
 
         private void DrawEvents()
@@ -264,8 +388,26 @@ namespace NekoLib.Components
 
             SpriteAnimatorBase.LoopMode currentLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
 
-            // Always show onAnimationComplete
-            EditorGUILayout.PropertyField(_onAnimationComplete);
+            // Show OnAnimationComplete only for Once; warn if misconfigured otherwise
+            if (currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
+            {
+                EditorGUILayout.PropertyField(_onAnimationComplete);
+            }
+            else
+            {
+                SerializedProperty acCalls = _onAnimationComplete.FindPropertyRelative("m_PersistentCalls.m_Calls");
+                bool hasAC = acCalls != null && acCalls.arraySize > 0;
+                if (hasAC)
+                {
+                    EditorGUILayout.HelpBox("OnAnimationComplete events detected but won't be called unless LoopMode is 'Once'. Consider removing them.", MessageType.Warning);
+                    EditorGUILayout.PropertyField(_onAnimationComplete);
+                    if (GUILayout.Button("Clear OnAnimationComplete Events"))
+                    {
+                        ClearUnityEvent(_onAnimationComplete);
+
+                    }
+                }
+            }
 
             // Show onLoopComplete with context
             if (currentLoopMode == SpriteAnimatorBase.LoopMode.Loop ||
@@ -287,80 +429,13 @@ namespace NekoLib.Components
                     if (GUILayout.Button("Clear OnLoopComplete Events"))
                     {
                         ClearUnityEvent(_onLoopComplete);
-                        Debug.Log("Manually cleared OnLoopComplete events");
+
                     }
                 }
             }
         }
 
-        private void DrawRuntimeAndControls()
-        {
-            EditorGUILayout.LabelField("Runtime & Controls", EditorStyles.boldLabel);
 
-            EditorGUILayout.BeginVertical("box");
-
-            // Frame info
-            int totalFrames = _sprites.arraySize;
-            string frameInfo = totalFrames > 0 ? $"Frame: {_currentFrame.intValue} / {totalFrames - 1}" : "Frame: 0 / 0";
-            EditorGUILayout.LabelField(frameInfo);
-
-            EditorGUILayout.Space(5);
-
-            // Progress bar showing animation state
-            Rect progressRect = EditorGUILayout.GetControlRect(false, 6);
-
-            // Calculate progress (0-1)
-            float progress = 0f;
-            if (totalFrames > 1)
-            {
-                progress = (float)_currentFrame.intValue / (totalFrames - 1);
-            }
-
-            // Draw progress bar background
-            EditorGUI.DrawRect(progressRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
-
-            // Draw progress bar fill if playing
-            if (_isPlaying.boolValue)
-            {
-                Rect fillRect = new(progressRect.x, progressRect.y, progressRect.width * progress, progressRect.height);
-                Color progressColor = _isReversed.boolValue ? new Color(0.3f, 0.7f, 1f, 0.8f) : new Color(0.3f, 0.8f, 0.3f, 0.8f);
-                EditorGUI.DrawRect(fillRect, progressColor);
-            }
-
-            EditorGUILayout.Space(10);
-
-            // Control buttons
-            GUILayout.BeginHorizontal();
-
-            SpriteAnimatorBase animator = (SpriteAnimatorBase)target;
-
-            // Play button
-            if (GUILayout.Button("Play", GUILayout.Height(30)))
-            {
-                animator.Play();
-            }
-
-            // Play Reverse button
-            if (GUILayout.Button("Play Reverse", GUILayout.Height(30)))
-            {
-                animator.PlayReverse();
-            }
-
-            // Stop button
-            if (GUILayout.Button("Stop", GUILayout.Height(30)))
-            {
-                animator.Stop();
-            }
-
-            // Restart button
-            if (GUILayout.Button("Restart", GUILayout.Height(30)))
-            {
-                animator.Restart();
-            }
-
-            GUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
-        }
 
         private void CacheCurrentSprites()
         {
@@ -447,7 +522,7 @@ namespace NekoLib.Components
                     currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
                 {
                     ClearUnityEvent(_onLoopComplete);
-                    // Debug.Log("Cleared OnLoopComplete events because LoopMode changed to Once");
+
                 }
 
                 // Cache the new loop mode
