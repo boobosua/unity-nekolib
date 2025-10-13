@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.Networking;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine.Networking;
 
 namespace NekoLib.Services
 {
@@ -56,7 +56,7 @@ namespace NekoLib.Services
             // Prevent multiple monitoring instances.
             if (_connectionMonitoringCts != null && !_connectionMonitoringCts.IsCancellationRequested)
             {
-                Debug.LogWarning("[NetworkService] Monitoring is already running.");
+                Log.Warn("[NetworkService] Monitoring is already running.");
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace NekoLib.Services
                 ? new CancellationTokenSource()
                 : CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            Debug.Log("[NetworkService] Init internet monitoring.");
+            Log.Info("[NetworkService] Init internet monitoring.");
 
             try
             {
@@ -89,7 +89,7 @@ namespace NekoLib.Services
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("[NetworkService] Internet monitoring cancelled.");
+                Log.Info("[NetworkService] Internet monitoring cancelled.");
             }
         }
 
@@ -113,3 +113,4 @@ namespace NekoLib.Services
         }
     }
 }
+

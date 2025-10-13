@@ -1,8 +1,9 @@
 using System;
 using System.Collections;
 using System.Threading.Tasks;
-using UnityEngine;
+using NekoLib.Logger;
 using NekoLib.Utilities;
+using UnityEngine;
 
 namespace NekoLib.Extensions
 {
@@ -44,7 +45,7 @@ namespace NekoLib.Extensions
             }
             else
             {
-                Debug.LogError($"Unhandled task exception: {ex}");
+                Log.Error($"Unhandled task exception: {ex}");
             }
         }
 

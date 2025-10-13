@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using NekoLib.Extensions;
+using NekoLib.Logger;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using NekoLib.Extensions;
 
 namespace NekoLib.Utilities
 {
@@ -33,7 +34,7 @@ namespace NekoLib.Utilities
         {
             if (EventSystem.current == null)
             {
-                Debug.LogWarning("EventSystem is null. Returning empty raycast results.");
+                Log.Warn("EventSystem is null. Returning empty raycast results.");
                 return new List<RaycastResult>();
             }
 

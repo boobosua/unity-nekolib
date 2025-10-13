@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using NekoLib.Logger;
 using NekoLib.Utilities;
-
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace NekoLib.Extensions
@@ -69,7 +69,7 @@ namespace NekoLib.Extensions
         {
             if (target == null)
             {
-                Debug.LogWarning($"SetOrbitRotation: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return;
             }
             SetOrbitRotation(transform, target.position, horizontalAngle, verticalAngle, distance);
@@ -96,7 +96,7 @@ namespace NekoLib.Extensions
         {
             if (target == null)
             {
-                Debug.LogWarning($"SetOrbitRotationClamped: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return;
             }
             verticalAngle = Mathf.Clamp(verticalAngle, minVerticalAngle, maxVerticalAngle);
@@ -110,7 +110,7 @@ namespace NekoLib.Extensions
         {
             if (target == null)
             {
-                Debug.LogWarning($"OrbitAround: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return;
             }
 
@@ -189,7 +189,7 @@ namespace NekoLib.Extensions
         {
             if (target == null)
             {
-                Debug.LogWarning($"LookAt2D: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return;
             }
             transform.LookAt2D(target.position);
@@ -202,7 +202,7 @@ namespace NekoLib.Extensions
         {
             if (target == null)
             {
-                Debug.LogWarning($"LookAt2D: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return;
             }
             transform.LookAt2D(target.position, angleOffset);
@@ -227,7 +227,7 @@ namespace NekoLib.Extensions
         {
             if (other == null)
             {
-                Debug.LogWarning($"DirectionTo: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return Vector3.zero;
             }
             return transform.position.DirectionTo(other.position);
@@ -240,7 +240,7 @@ namespace NekoLib.Extensions
         {
             if (other == null)
             {
-                Debug.LogWarning($"InRangeOf: Target transform is null for {transform.name}");
+                Log.Warn($"Target transform is null for {transform.name}");
                 return false;
             }
             return transform.position.InRangeOf(other.position, range);

@@ -1,6 +1,6 @@
 using System;
 using System.Text;
-using UnityEngine;
+using NekoLib.Logger;
 using NekoLib.Services;
 
 namespace NekoLib.Extensions
@@ -150,7 +150,7 @@ namespace NekoLib.Extensions
 
             if (diff < 0)
             {
-                Debug.LogWarning($"[TimeExtensions] SecondsUntilNow called with future time. Expected past time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsUntilNow called with future time. Expected past time, got: {time}. Returning 0.");
                 return 0;
             }
 
@@ -167,7 +167,7 @@ namespace NekoLib.Extensions
 
             if (diff < 0)
             {
-                Debug.LogWarning($"[TimeExtensions] SecondsUntilNowUtc called with future time. Expected past time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsUntilNowUtc called with future time. Expected past time, got: {time}. Returning 0.");
                 return 0;
             }
 
@@ -252,7 +252,7 @@ namespace NekoLib.Extensions
 
             if (diff < 0)
             {
-                Debug.LogWarning($"[TimeExtensions] SecondsFromNow called with past time. Expected future time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsFromNow called with past time. Expected future time, got: {time}. Returning 0.");
                 return 0;
             }
 
@@ -269,7 +269,7 @@ namespace NekoLib.Extensions
 
             if (diff < 0)
             {
-                Debug.LogWarning($"[TimeExtensions] SecondsFromNowUtc called with past time. Expected future time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsFromNowUtc called with past time. Expected future time, got: {time}. Returning 0.");
                 return 0;
             }
 

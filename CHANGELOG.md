@@ -1,3 +1,10 @@
+## [1.9.8] - 2025-10-13
+
+### Add Debug Logger
+
+- Add a simple debug logger to log messages, warnings, and errors with conditions.
+- Replace all Unity default Debug.Log with NekoLib.Logger.
+
 ## [1.9.7] - 2025-10-09
 
 ### Project Setup Window

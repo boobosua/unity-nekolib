@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -13,7 +14,7 @@ namespace NekoLib.Extensions
         {
             if (!ColorUtility.TryParseHtmlString(hexColorCode, out var _))
             {
-                Debug.LogWarning($"Cannot parse hex color code: {hexColorCode}");
+                Log.Warn($"Cannot parse hex color code: {hexColorCode}");
                 return text;
             }
 

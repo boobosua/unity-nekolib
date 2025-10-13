@@ -1,4 +1,5 @@
 using System;
+using NekoLib.Logger;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -126,7 +127,7 @@ namespace NekoLib.Extensions
             if (Enum.TryParse<T>(stringValue, out var result))
                 return result;
 
-            Debug.LogWarning($"Failed to parse int {value} to enum {typeof(T).Name}, using default: {defaultValue}");
+            Log.Warn($"Failed to parse int {value} to enum {typeof(T).Name}, using default: {defaultValue}");
             return defaultValue;
         }
     }

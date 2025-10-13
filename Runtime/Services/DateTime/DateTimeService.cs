@@ -2,10 +2,11 @@ using System;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.Networking;
 using NekoLib.Core;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace NekoLib.Services
 {
@@ -30,7 +31,7 @@ namespace NekoLib.Services
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeService] Synced from TimeAPI.io: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
+                Log.Info($"[DateTimeService] Synced from TimeAPI.io: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
                 return;
             }
 
@@ -38,12 +39,12 @@ namespace NekoLib.Services
             {
                 _hasSynced = true;
                 _syncedAtRealtime = Time.realtimeSinceStartup;
-                Debug.Log($"[DateTimeService] Synced from Google header: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
+                Log.Info($"[DateTimeService] Synced from Google header: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
                 return;
             }
 
             _hasSynced = false;
-            Debug.LogWarning($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+            Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
+                    Log.Warn($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
@@ -82,17 +83,17 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
+                Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeService] TimeAPI.io request was cancelled.");
+                Log.Warn("[DateTimeService] TimeAPI.io request was cancelled.");
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
+                Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
         }
@@ -119,14 +120,14 @@ namespace NekoLib.Services
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
+                    Log.Warn($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
                 var header = request.GetResponseHeader("Date");
                 if (string.IsNullOrEmpty(header))
                 {
-                    Debug.LogWarning("[DateTimeService] 'Date' header missing from Google response.");
+                    Log.Warn("[DateTimeService] 'Date' header missing from Google response.");
                     return false;
                 }
 
@@ -137,17 +138,17 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Debug.LogWarning($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
+                Log.Warn($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[DateTimeService] Google request was cancelled.");
+                Log.Warn("[DateTimeService] Google request was cancelled.");
                 return false;
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
+                Log.Warn($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
         }
@@ -167,7 +168,7 @@ namespace NekoLib.Services
             {
                 if (!_hasSynced)
                 {
-                    // Debug.LogWarning("[DateTimeService] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
+                    // Log.Warn("[DateTimeService] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
                     return DateTime.UtcNow;
                 }
 

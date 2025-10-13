@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using NekoLib.Core;
+using NekoLib.Logger;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -45,7 +47,7 @@ namespace NekoLib.Utilities
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"Error loading asset at path {filePath}: {ex.Message}");
+                        Log.Error($"Error loading asset at path {filePath}: {ex.Message}");
                     }
                 }
 
@@ -53,17 +55,17 @@ namespace NekoLib.Utilities
             }
             catch (System.IO.DirectoryNotFoundException ex)
             {
-                Debug.LogError($"Directory not found: {directoryPath}. Error: {ex.Message}");
+                Log.Error($"Directory not found: {directoryPath}. Error: {ex.Message}");
                 return new T[0];
             }
             catch (System.IO.IOException ex)
             {
-                Debug.LogError($"Error reading directory: {directoryPath}. Error: {ex.Message}");
+                Log.Error($"Error reading directory: {directoryPath}. Error: {ex.Message}");
                 return new T[0];
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Unexpected error: {ex.Message}");
+                Log.Error($"Unexpected error: {ex.Message}");
                 return new T[0];
             }
         }

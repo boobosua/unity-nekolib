@@ -1,3 +1,4 @@
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -101,7 +102,7 @@ namespace NekoLib.Extensions
             }
             else
             {
-                Debug.LogWarning("Camera is not orthographic!");
+                Log.Warn("Camera is not orthographic!");
             }
         }
 
@@ -112,7 +113,7 @@ namespace NekoLib.Extensions
         {
             if (!camera.orthographic)
             {
-                Debug.LogWarning("FitBoundsInView only works with orthographic cameras!");
+                Log.Warn("FitBoundsInView only works with orthographic cameras!");
                 return;
             }
 

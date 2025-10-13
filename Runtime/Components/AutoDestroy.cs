@@ -1,3 +1,4 @@
+using NekoLib.Logger;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -18,7 +19,7 @@ namespace NekoLib.Components
         {
             if (_destroyAfter <= 0f)
             {
-                Debug.LogWarning("[AutoDestroy] Destroy delay must be greater than zero. Object will not be destroyed.", this);
+                Log.Warn("[AutoDestroy] Destroy delay must be greater than zero. Object will not be destroyed.");
                 enabled = false;
                 return;
             }

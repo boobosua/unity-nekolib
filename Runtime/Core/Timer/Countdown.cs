@@ -1,6 +1,7 @@
 using System;
-using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoLib.Core
 {
@@ -136,7 +137,7 @@ namespace NekoLib.Core
         {
             if (additionalTime < 0f)
             {
-                Debug.LogWarning($"[{nameof(Countdown)}] Cannot extend time with {"negative value".Colorize(Swatch.VR)}: {additionalTime.ToString().Colorize(Swatch.SG)}. Operation ignored.");
+                Log.Warn($"[{nameof(Countdown)}] Cannot extend time with {"negative value".Colorize(Swatch.VR)}: {additionalTime.ToString().Colorize(Swatch.SG)}. Operation ignored.");
                 return;
             }
 
@@ -153,7 +154,7 @@ namespace NekoLib.Core
         {
             if (timeToReduce < 0f)
             {
-                Debug.LogWarning($"[{nameof(Countdown)}] Cannot reduce time with {"negative value".Colorize(Swatch.VR)}: {timeToReduce.ToString().Colorize(Swatch.SG)}. Operation ignored.");
+                Log.Warn($"[{nameof(Countdown)}] Cannot reduce time with {"negative value".Colorize(Swatch.VR)}: {timeToReduce.ToString().Colorize(Swatch.SG)}. Operation ignored.");
                 return;
             }
 

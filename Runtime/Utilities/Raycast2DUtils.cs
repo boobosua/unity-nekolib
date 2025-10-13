@@ -1,3 +1,4 @@
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Utilities
@@ -44,7 +45,7 @@ namespace NekoLib.Utilities
         {
             if (objectToCheck == null)
             {
-                Debug.LogWarning("Object to check is null.");
+                Log.Warn("Object to check is null.");
                 return false;
             }
 

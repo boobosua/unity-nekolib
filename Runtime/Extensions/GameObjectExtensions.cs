@@ -1,5 +1,6 @@
 using System;
 using NekoLib.Core;
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -98,7 +99,7 @@ namespace NekoLib.Extensions
             }
             else
             {
-                Debug.LogWarning($"Layer '{layerName.Colorize(Swatch.GA)}' not found!");
+                Log.Warn($"Layer '{layerName.Colorize(Swatch.GA)}' not found!");
             }
         }
 

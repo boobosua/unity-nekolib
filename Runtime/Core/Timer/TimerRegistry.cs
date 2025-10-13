@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Core
@@ -57,13 +58,13 @@ namespace NekoLib.Core
         {
             if (timer == null)
             {
-                Debug.LogWarning("Attempted to register a null timer.");
+                Log.Warn("[TimerRegistry] Attempted to register a null timer.");
                 return;
             }
 
             if (timer.Owner == null)
             {
-                Debug.LogWarning("Attempted to register a timer with null owner.");
+                Log.Warn("[TimerRegistry] Attempted to register a timer with null owner.");
                 return;
             }
 

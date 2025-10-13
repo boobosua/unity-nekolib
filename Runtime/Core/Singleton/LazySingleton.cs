@@ -1,6 +1,7 @@
 using System;
-using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoLib.Core
 {
@@ -21,7 +22,7 @@ namespace NekoLib.Core
             var instance = ownerObject.AddComponent<T>();
             DontDestroyOnLoad(ownerObject);
 
-            Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
+            Log.Info($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
 
             return instance;
         }

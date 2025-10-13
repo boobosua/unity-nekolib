@@ -1,6 +1,7 @@
-using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Logger;
 using NekoLib.Utilities;
+using UnityEngine;
 
 namespace NekoLib.Core
 {
@@ -26,7 +27,7 @@ namespace NekoLib.Core
             {
                 if (s_applicationIsQuitting)
                 {
-                    Debug.LogWarning($"Instance {typeof(T).Name.Colorize(Swatch.GA)} already destroyed on application quit. Won't create again - returning null.");
+                    Log.Warn($"Instance {typeof(T).Name.Colorize(Swatch.GA)} already destroyed on application quit. Won't create again - returning null.");
                     return null;
                 }
 
@@ -55,7 +56,7 @@ namespace NekoLib.Core
                     };
 
                     s_instance = obj.AddComponent<T>();
-                    Debug.Log($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
+                    Log.Info($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
                 }
                 else
                 {
@@ -64,7 +65,7 @@ namespace NekoLib.Core
 
                     for (int i = 1; i < allInstances.Length; i++)
                     {
-                        Debug.LogWarning($"Destroyed duplicate instance of {allInstances[i].name.Colorize(Swatch.GA)}.");
+                        Log.Warn($"Destroyed duplicate instance of {allInstances[i].name.Colorize(Swatch.GA)}.");
                         Destroy(allInstances[i].gameObject);
                     }
                 }
@@ -84,7 +85,7 @@ namespace NekoLib.Core
             else if (s_instance != null && s_instance != this && !s_isInitializing)
             {
                 // If there's already an instance and it's not this one, destroy this duplicate
-                Debug.LogWarning($"Destroyed duplicate instance of {gameObject.name.Colorize(Swatch.GA)}.");
+                Log.Warn($"Destroyed duplicate instance of {gameObject.name.Colorize(Swatch.GA)}.");
                 Destroy(gameObject);
                 return;
             }
@@ -120,7 +121,7 @@ namespace NekoLib.Core
             {
                 // If domain reload is disabled, we need to reset static fields manually.
                 ResetFields();
-                Debug.Log($"Resetting static fields of {typeof(T).Name.Colorize(Swatch.GA)} because domain reload is disabled.");
+                Log.Info($"Resetting static fields of {typeof(T).Name.Colorize(Swatch.GA)} because domain reload is disabled.");
             }
 #endif
         }

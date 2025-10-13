@@ -1,6 +1,7 @@
 using System;
-using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoLib.Utilities
 {
@@ -24,7 +25,7 @@ namespace NekoLib.Utilities
             var cam = camera == null ? Camera.main : camera;
             if (cam == null)
             {
-                Debug.LogWarning("Camera is null. Mouse position will be returned as Vector2.zero.");
+                Log.Warn("Camera is null. Mouse position will be returned as Vector2.zero.");
                 return Vector2.zero;
             }
 
@@ -41,7 +42,7 @@ namespace NekoLib.Utilities
             var cam = camera == null ? Camera.main : camera;
             if (cam == null)
             {
-                Debug.LogWarning("Camera is null. Mouse position will be returned as Vector3.zero.");
+                Log.Warn("Camera is null. Mouse position will be returned as Vector3.zero.");
                 return Vector3.zero;
             }
 
@@ -60,7 +61,7 @@ namespace NekoLib.Utilities
                 return hit.point;
             }
 
-            Debug.LogWarning("No object hit by raycast. Returning Vector3.zero.");
+            Log.Warn("No object hit by raycast. Returning Vector3.zero.");
             return Vector3.zero;
         }
 
@@ -72,7 +73,7 @@ namespace NekoLib.Utilities
             var cam = camera != null ? camera : Camera.main;
             if (cam == null)
             {
-                Debug.LogWarning("Camera is null. Mouse ray will be returned as default.");
+                Log.Warn("Camera is null. Mouse ray will be returned as default.");
                 return default;
             }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -237,14 +238,14 @@ namespace NekoLib.Extensions
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                Debug.LogWarning($"Null or empty string passed for enum {typeof(T).Name}, using default: {defaultValue}");
+                Log.Warn($"Null or empty string passed for enum {typeof(T).Name}, using default: {defaultValue}");
                 return defaultValue;
             }
 
             if (Enum.TryParse<T>(value, out var result))
                 return result;
 
-            Debug.LogWarning($"Failed to parse '{value}' to enum {typeof(T).Name}, using default: {defaultValue}");
+            Log.Warn($"Failed to parse '{value}' to enum {typeof(T).Name}, using default: {defaultValue}");
             return defaultValue;
         }
     }

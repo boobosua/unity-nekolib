@@ -1,6 +1,7 @@
 using System.Collections;
-using UnityEngine;
 using NekoLib.Core;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoLib.Extensions
 {
@@ -67,7 +68,6 @@ namespace NekoLib.Extensions
         public static bool IsPlayingAnimation(this Animator animator, string animName, int layerIndex = 0)
         {
             if (animator == null) return false;
-
             return animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(animName);
         }
 
@@ -77,7 +77,6 @@ namespace NekoLib.Extensions
         public static bool IsPlayingAnimation(this Animator animator, int animHash, int layerIndex = 0)
         {
             if (animator == null) return false;
-
             return animator.GetCurrentAnimatorStateInfo(layerIndex).shortNameHash == animHash;
         }
 
@@ -132,7 +131,7 @@ namespace NekoLib.Extensions
             var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
             if (stateInfo.loop)
             {
-                Debug.LogWarning($"WaitForAnimation: Animation '{stateName.Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
+                Log.Warn($"Animation '{stateName.Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
                 yield break;
             }
 
@@ -159,7 +158,7 @@ namespace NekoLib.Extensions
             var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
             if (stateInfo.loop)
             {
-                Debug.LogWarning($"WaitForAnimation: Animation with hash '{stateHash.ToString().Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
+                Log.Warn($"Animation with hash '{stateHash.ToString().Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
                 yield break;
             }
 

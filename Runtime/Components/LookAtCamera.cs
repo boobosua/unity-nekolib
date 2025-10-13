@@ -1,5 +1,6 @@
-using UnityEngine;
 using NekoLib.Extensions;
+using NekoLib.Logger;
+using UnityEngine;
 
 namespace NekoLib
 {
@@ -30,7 +31,7 @@ namespace NekoLib
 
             if (currentCamera == null)
             {
-                Debug.LogWarning("[LookAtCamera] No camera found. Component will not function.");
+                Log.Warn("[LookAtCamera] No camera found. Component will not function.");
                 return;
             }
 
