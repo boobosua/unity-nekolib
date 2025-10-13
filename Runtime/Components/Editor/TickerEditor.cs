@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
+using NekoLib.Extensions;
 using UnityEditor;
 using UnityEngine;
-using NekoLib.Extensions;
 
 namespace NekoLib.Components
 {
@@ -32,148 +32,50 @@ namespace NekoLib.Components
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_oneShot"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_ignoreTimeScale"));
 
-            // EditorGUILayout.Space(15);
-            // DrawSeparator();
-            // EditorGUILayout.Space(15);
-
             // === TIMER PROGRESS ===
             EditorGUILayout.LabelField("Progress", EditorStyles.boldLabel);
 
-            // Progress bar with percentage
             float progress = 0f;
-            string progressText = "0.0%";
-            bool isCompleted = false;
-
+            string clockText = "00:00:00";
             if (Application.isPlaying)
             {
-                progress = ticker.Progress;
-                progressText = $"{progress * 100:F1}%";
-                isCompleted = ticker.IsStopped && progress >= 1.0f;
+                progress = Mathf.Clamp01(ticker.Progress);
+                clockText = ticker.ElapsedTime.ToClock();
             }
 
-            // Custom progress bar styling
-            Rect progressRect = EditorGUILayout.GetControlRect(false, 24);
+            Rect progressRect = EditorGUILayout.GetControlRect(false, 18);
             progressRect = EditorGUI.IndentedRect(progressRect);
+            EditorGUI.ProgressBar(progressRect, progress, clockText);
 
-            // Draw progress bar background
-            Color originalColor = GUI.color;
-            GUI.color = EditorGUIUtility.isProSkin ? new Color(0.3f, 0.3f, 0.3f, 1f) : new Color(0.8f, 0.8f, 0.8f, 1f);
-            GUI.DrawTexture(progressRect, EditorGUIUtility.whiteTexture);
-
-            // Draw progress fill
-            if (progress > 0)
+            // Controls row (always visible; grayed out in Edit mode)
+            EditorGUILayout.Space(6);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            EditorGUI.BeginDisabledGroup(!Application.isPlaying);
+            if (!Application.isPlaying || ticker.IsStopped)
             {
-                Rect fillRect = new(progressRect.x, progressRect.y, progressRect.width * progress, progressRect.height);
-
-                if (isCompleted)
-                {
-                    GUI.color = new Color(0.2f, 0.8f, 0.2f, 1f); // Green for completed
-                }
-                else
-                {
-                    GUI.color = new Color(0.3f, 0.7f, 1f, 1f); // Blue for in progress
-                }
-                GUI.DrawTexture(fillRect, EditorGUIUtility.whiteTexture);
+                if (GUILayout.Button("Start", GUILayout.Width(80))) ticker.StartTimer();
+                if (GUILayout.Button("Stop", GUILayout.Width(80))) ticker.Stop();
             }
-
-            GUI.color = originalColor;
-
-            // Draw progress text
-            GUIStyle progressTextStyle = new(EditorStyles.boldLabel)
+            else if (ticker.Paused)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 11
-            };
-            progressTextStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
-            GUI.Label(progressRect, progressText, progressTextStyle);
-
-            EditorGUILayout.Space(5);
-
-            // Clock display with better styling
-            string clockText;
-            if (Application.isPlaying)
-            {
-                float elapsedTime = ticker.ElapsedTime;
-                string formattedTime = elapsedTime.ToClock();
-
-                if (ticker.IsStopped)
-                {
-                    clockText = $"{formattedTime} (Stopped)";
-                }
-                else if (ticker.Paused)
-                {
-                    clockText = $"{formattedTime} (Paused)";
-                }
-                else
-                {
-                    clockText = $"{formattedTime} (Running)";
-                }
+                if (GUILayout.Button("Resume", GUILayout.Width(80))) ticker.Resume();
+                if (GUILayout.Button("Stop", GUILayout.Width(80))) ticker.Stop();
             }
             else
             {
-                clockText = "00:00:00 (Editor)";
+                if (GUILayout.Button("Pause", GUILayout.Width(80))) ticker.Pause();
+                if (GUILayout.Button("Stop", GUILayout.Width(80))) ticker.Stop();
             }
+            EditorGUI.EndDisabledGroup();
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
 
-            GUIStyle clockStyle = new(EditorStyles.centeredGreyMiniLabel)
-            {
-                fontSize = 13,
-                fontStyle = FontStyle.Bold
-            };
-            clockStyle.normal.textColor = EditorGUIUtility.isProSkin ? new Color(0.8f, 0.8f, 0.8f, 1f) : new Color(0.4f, 0.4f, 0.4f, 1f);
-
-            EditorGUILayout.LabelField(clockText, clockStyle);
-
-            // Add timer control buttons in play mode
-            if (Application.isPlaying)
-            {
-                EditorGUILayout.Space(5);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-
-                if (ticker.IsStopped)
-                {
-                    if (GUILayout.Button("▶ Start", GUILayout.Width(80)))
-                    {
-                        ticker.StartTimer();
-                    }
-                }
-                else if (ticker.Paused)
-                {
-                    if (GUILayout.Button("▶ Resume", GUILayout.Width(80)))
-                    {
-                        ticker.Resume();
-                    }
-                    if (GUILayout.Button("⏹ Stop", GUILayout.Width(80)))
-                    {
-                        ticker.Stop();
-                    }
-                }
-                else
-                {
-                    if (GUILayout.Button("⏸ Pause", GUILayout.Width(80)))
-                    {
-                        ticker.Pause();
-                    }
-                    if (GUILayout.Button("⏹ Stop", GUILayout.Width(80)))
-                    {
-                        ticker.Stop();
-                    }
-                }
-
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.EndHorizontal();
-            }
-
-            // Force repaint to update progress bar during play mode
             if (Application.isPlaying)
             {
                 EditorUtility.SetDirty(ticker);
                 Repaint();
             }
-
-            // EditorGUILayout.Space(15);
-            // DrawSeparator();
-            // EditorGUILayout.Space(15);
 
             // === EVENTS ===
             EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
@@ -183,39 +85,8 @@ namespace NekoLib.Components
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_onTimeOut"));
 
             EditorGUILayout.Space(10);
-
             serializedObject.ApplyModifiedProperties();
         }
-
-        // private void DrawSectionHeader(string title, Color accentColor)
-        // {
-        //     GUIStyle headerStyle = new(EditorStyles.boldLabel)
-        //     {
-        //         fontSize = 14,
-        //         fontStyle = FontStyle.Bold,
-        //         alignment = TextAnchor.MiddleLeft
-        //     };
-
-        //     headerStyle.normal.textColor = accentColor;
-
-        //     Rect headerRect = EditorGUILayout.GetControlRect(false, 20);
-        //     GUI.Label(headerRect, title, headerStyle);
-        // }
-
-        // private void DrawSeparator()
-        // {
-        //     Rect separatorRect = EditorGUILayout.GetControlRect(false, 1);
-        //     separatorRect.height = 1;
-
-        //     Color separatorColor = EditorGUIUtility.isProSkin
-        //         ? new Color(0.4f, 0.4f, 0.4f, 1f)
-        //         : new Color(0.6f, 0.6f, 0.6f, 1f);
-
-        //     Color originalColor = GUI.color;
-        //     GUI.color = separatorColor;
-        //     GUI.DrawTexture(separatorRect, EditorGUIUtility.whiteTexture);
-        //     GUI.color = originalColor;
-        // }
     }
 }
 #endif
