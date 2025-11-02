@@ -5,7 +5,7 @@ using UnityEngine;
 namespace NekoLib.Core
 {
     [DisallowMultipleComponent]
-    public class TimerRegistry : MonoBehaviour
+    public sealed class TimerRegistry : MonoBehaviour
     {
         private readonly List<TimerBase> _activeTimers = new();
         private readonly List<TimerBase> _timersToRemove = new();

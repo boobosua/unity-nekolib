@@ -3,7 +3,6 @@ using System.Collections;
 using System.Threading.Tasks;
 using NekoLib.Logger;
 using NekoLib.Utilities;
-using UnityEngine;
 
 namespace NekoLib.Extensions
 {
