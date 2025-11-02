@@ -84,3 +84,19 @@ Debug.LogError("Error!".Colorize(Swatch.VR));
 button.color = Swatch.VC;
 errorText.color = Swatch.VR;
 ```
+
+### Log
+
+Simple conditional logger. Methods are compiled only in the Editor, Development builds, or when `NEKOLIB_LOG` is defined.
+
+```csharp
+using NekoLib.Logger;
+
+// Basic usage
+Log.Info("Started");
+Log.Warn("Potential issue");
+Log.Error("Something went wrong");
+
+// With context to ping an object in the Console
+Log.Info("Found object", someGameObject);
+```

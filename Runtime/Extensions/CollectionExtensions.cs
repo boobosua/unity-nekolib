@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using NekoLib.Collections;
 using Random = UnityEngine.Random;
 
 namespace NekoLib.Extensions
@@ -85,7 +87,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Checks if the array contains any null elements.
         /// </summary>
-        public static bool HasNullElements<T>(this T[] arr) where T : class
+        public static bool ContainsNull<T>(this T[] arr) where T : class
         {
             if (arr.IsNullOrEmpty()) return false;
 
@@ -108,7 +110,7 @@ namespace NekoLib.Extensions
         /// Returns a string representation of an array.
         /// Does not work on nested arrays or array that is nested in other structures.
         /// </summary>
-        public static string Format<T>(this T[] arr)
+        public static string ToLiteral<T>(this T[] arr)
         {
             // Handle null.
             if (arr == null)
@@ -231,6 +233,206 @@ namespace NekoLib.Extensions
 
             return arr.Last(); // Fallback, should rarely happen due to floating point precision
         }
+
+        public static bool IsNullOrEmpty<T>(this T[,] grid)
+        {
+            return grid == null || grid.Length == 0;
+        }
+
+        public static string ToLiteral<T>(this T[,] grid)
+        {
+            if (grid == null)
+                return "null";
+
+            int height = grid.GetLength(0);
+            int width = grid.GetLength(1);
+            var sb = new StringBuilder();
+            sb.Append("{");
+            for (int y = 0; y < height; y++)
+            {
+                if (y > 0) sb.Append(", ");
+                sb.Append(y);
+                sb.Append(": [");
+                for (int x = 0; x < width; x++)
+                {
+                    if (x > 0) sb.Append(", ");
+                    var v = grid[y, x];
+                    sb.Append(v?.ToString() ?? "null");
+                }
+                sb.Append("]");
+            }
+            sb.Append("}");
+            return sb.ToString();
+        }
+        #endregion
+
+        #region Grid<T>
+        /// <summary>
+        /// Checks if the grid contains the specified element.
+        /// </summary>
+        public static bool Contains<T>(this Grid<T> grid, T item)
+        {
+            if (grid.IsNullOrEmpty())
+                return false;
+
+            // Linear scan over the contiguous buffer is faster than nested x/y loops
+            // and matches the grid's row-major layout.
+            var cmp = EqualityComparer<T>.Default;
+            var span = grid.AsSpan();
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (cmp.Equals(span[i], item))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the (x, y) index of the specified element in the grid; throws if not found.
+        /// </summary>
+        public static (int x, int y) IndexOf<T>(this Grid<T> grid, T item)
+        {
+            if (grid.TryIndexOf(item, out var pos))
+                return (pos.x, pos.y);
+            throw new InvalidOperationException("Element not found in grid");
+        }
+
+        public static bool TryIndexOf<T>(this Grid<T> grid, T item, out (int x, int y) pos)
+        {
+            if (grid.IsNullOrEmpty())
+            {
+                pos = default;
+                return false;
+            }
+
+            var cmp = EqualityComparer<T>.Default;
+            int w = grid.Width;
+            var span = grid.AsSpan();
+            int len = span.Length;
+
+            for (int i = 0; i < len; i++)
+            {
+                if (cmp.Equals(span[i], item))
+                {
+                    pos = (i % w, i / w);
+                    return true;
+                }
+            }
+
+            pos = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the last (x, y) index of the specified element in the grid; throws if not found.
+        /// </summary>
+        public static (int x, int y) LastIndexOf<T>(this Grid<T> grid, T item)
+        {
+            if (grid.TryLastIndexOf(item, out var pos))
+                return (pos.x, pos.y);
+            throw new InvalidOperationException("Element not found in grid");
+        }
+
+        /// <summary>
+        /// Tries to find the last occurrence of the specified element scanning from the end.
+        /// </summary>
+        public static bool TryLastIndexOf<T>(this Grid<T> grid, T item, out (int x, int y) pos)
+        {
+            if (grid.IsNullOrEmpty())
+            {
+                pos = default;
+                return false;
+            }
+
+            var cmp = EqualityComparer<T>.Default;
+            int w = grid.Width;
+            var span = grid.AsSpan();
+
+            for (int i = span.Length - 1; i >= 0; i--)
+            {
+                if (cmp.Equals(span[i], item))
+                {
+                    pos = (i % w, i / w);
+                    return true;
+                }
+            }
+
+            pos = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the first element of the grid.
+        /// </summary>
+        public static T First<T>(this Grid<T> grid)
+        {
+            if (grid.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get first element from null or empty grid");
+            return grid[0, 0];
+        }
+
+        /// <summary>
+        /// Returns the last element of the grid.
+        /// </summary>
+        public static T Last<T>(this Grid<T> grid)
+        {
+            if (grid.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get last element from null or empty grid");
+            return grid[grid.Width - 1, grid.Height - 1];
+        }
+
+        /// <summary>
+        /// Checks if the grid is null or empty.
+        /// </summary>
+        public static bool IsNullOrEmpty<T>(this Grid<T> grid)
+        {
+            return grid == null || grid.Width == 0 || grid.Height == 0;
+        }
+
+        /// <summary>
+        /// Checks if the grid contains any null elements.
+        /// </summary>
+        public static bool ContainsNull<T>(this Grid<T> grid) where T : class
+        {
+            if (grid.IsNullOrEmpty()) return false;
+
+            // Faster: linear scan over the contiguous buffer.
+            var span = grid.AsSpan();
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (span[i] == null) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns a string representation of a grid.
+        /// Does not work on nested grids or grid that is nested in other structures.
+        /// </summary>
+        public static string ToLiteral<T>(this Grid<T> grid)
+        {
+            if (grid == null)
+                return "null";
+
+            var sb = new StringBuilder();
+            sb.Append($"Grid<{typeof(T).Name}>({grid.Width}x{grid.Height}): ");
+            sb.Append("{");
+            for (int y = 0; y < grid.Height; y++)
+            {
+                if (y > 0) sb.Append(", ");
+                sb.Append(y);
+                sb.Append(": [");
+                for (int x = 0; x < grid.Width; x++)
+                {
+                    if (x > 0) sb.Append(", ");
+                    var v = grid[x, y];
+                    sb.Append(v?.ToString() ?? "null");
+                }
+                sb.Append("]");
+            }
+            sb.Append("}");
+            return sb.ToString();
+        }
         #endregion
 
         #region List
@@ -308,7 +510,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Checks if the list contains any null elements.
         /// </summary>
-        public static bool HasNullElements<T>(this List<T> list) where T : class
+        public static bool ContainsNull<T>(this List<T> list) where T : class
         {
             if (list.IsNullOrEmpty()) return false;
 
@@ -331,7 +533,7 @@ namespace NekoLib.Extensions
         /// Returns a string representation of a list.
         /// Does not work on nested lists or list that is nested in other structures.
         /// </summary>
-        public static string Format<T>(this List<T> list)
+        public static string ToLiteral<T>(this List<T> list)
         {
             // Handle null.
             if (list == null)
@@ -417,7 +619,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Checks if the dictionary contains any null values.
         /// </summary>
-        public static bool HasNullValues<TKey, TValue>(this Dictionary<TKey, TValue> dictionary)
+        public static bool ContainsNullValues<TKey, TValue>(this Dictionary<TKey, TValue> dictionary)
             where TValue : class
         {
             if (dictionary.IsNullOrEmpty()) return false;
@@ -449,7 +651,7 @@ namespace NekoLib.Extensions
         /// Returns a string representation of a dictionary.
         /// Does not work on nested dictionaries or dictionary that is nested in other structures.
         /// </summary>
-        public static string Format<K, V>(this Dictionary<K, V> dict) where K : notnull
+        public static string ToLiteral<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             // Handle null.
             if (dict == null)
@@ -468,27 +670,27 @@ namespace NekoLib.Extensions
         /// Returns a string representation of a queue.
         /// Does not work on nested queues or queue that is nested in other structures.
         /// </summary>
-        public static string Format<T>(this Queue<T> queue)
+        public static string ToLiteral<T>(this Queue<T> queue)
         {
-            return queue.ToList().Format();
+            return queue.ToList().ToLiteral();
         }
 
         /// <summary>
         /// Returns a string representation of a stack.
         /// Does not work on nested stacks or stack that is nested in other structures.
         /// </summary>
-        public static string Format<T>(this Stack<T> stack)
+        public static string ToLiteral<T>(this Stack<T> stack)
         {
-            return stack.ToList().Format();
+            return stack.ToList().ToLiteral();
         }
 
         /// <summary>
         /// Returns a string representation of a hashset.
         /// Does not work on nested hashsets or hashset that is nested in other structures.
         /// </summary>
-        public static string Format<T>(this HashSet<T> set)
+        public static string ToLiteral<T>(this HashSet<T> set)
         {
-            return set.ToList().Format();
+            return set.ToList().ToLiteral();
         }
     }
 }

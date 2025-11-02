@@ -15,9 +15,10 @@ namespace NekoLib
         public static class PrefKeys
         {
             public const string PreferencesRoot = "NekoLib";
-            public const string SceneSwitcherEnabled = PreferencesRoot + ":SceneSwitcherEnabled";
+            public const string HideToolbar = PreferencesRoot + ":HideToolbar";
             public const string ActivateLoadedAdditive = PreferencesRoot + ":ActivateLoadedAdditiveOnSelect";
-            public const string TimeScaleToolEnabled = PreferencesRoot + ":TimeScaleToolEnabled";
+            public const string TimeScaleMax = PreferencesRoot + ":TimeScaleMax";
+            // TimeScaleToolEnabled removed: TimeScale is now controlled by global HideToolbar
             public const string AutoReenterPlayAfterClear = PreferencesRoot + ":AutoReenterPlayAfterClear";
         }
 

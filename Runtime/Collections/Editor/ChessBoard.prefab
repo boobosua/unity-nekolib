@@ -1,0 +1,408 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2557643801451780899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3271556009883961964}
+  - component: {fileID: 8579752764479173812}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3271556009883961964
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2557643801451780899}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 52275372585117807}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8579752764479173812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2557643801451780899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 749a25b57933c44ccbab6bcc7017de0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &2732795336195280889
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 52275372585117807}
+  - component: {fileID: 7419533040315960989}
+  m_Layer: 0
+  m_Name: ChessBoard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &52275372585117807
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2732795336195280889}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3271556009883961964}
+  - {fileID: 5230621979058927016}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7419533040315960989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2732795336195280889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6fdc4fd9d8bc4b419a38ebb758c18d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 8
+  height: 8
+  _boardGrid:
+    rid: 6793504148022886647
+  _chestGrid:
+    rid: 6793504148022886658
+  _chestDataGrid:
+    rid: 6793504148022886663
+  references:
+    version: 2
+    RefIds:
+    - rid: 6793504148022886647
+      type: {class: 'Grid`1[[System.Int32, mscorlib]]', ns: NekoLib.Collections, asm: NekoLib}
+      data:
+        _width: 0
+        _height: 0
+        _data: 
+    - rid: 6793504148022886658
+      type: {class: 'Grid`1[[Chest, Assembly-CSharp]]', ns: NekoLib.Collections, asm: NekoLib}
+      data:
+        _width: 2
+        _height: 1
+        _data:
+        - {fileID: 8579752764479173812}
+        - {fileID: 2618553539687351933}
+    - rid: 6793504148022886663
+      type: {class: 'Grid`1[[ChestData, Assembly-CSharp]]', ns: NekoLib.Collections,
+        asm: NekoLib}
+      data:
+        _width: 20
+        _height: 4
+        _data:
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: sdasdsads
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+        - chestName: 
+          goldAmount: 0
+          isLocked: 0
+--- !u!1 &3630416366390771203
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5230621979058927016}
+  - component: {fileID: 2618553539687351933}
+  m_Layer: 0
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5230621979058927016
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3630416366390771203}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 52275372585117807}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2618553539687351933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3630416366390771203}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 749a25b57933c44ccbab6bcc7017de0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

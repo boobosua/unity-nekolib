@@ -1,3 +1,12 @@
+## [1.9.9] - 2025-11-02
+
+### Introduces significant improvements and new features:
+
+- Add Grid Collection
+- New collection extensions
+- Add option to hide toolbar tools
+- Add more time scale max values
+
 ## [1.9.8] - 2025-10-13
 
 ### Add Debug Logger

@@ -32,6 +32,8 @@ namespace NekoLib
         private static void EnsureInstall()
         {
             if (installed) return;
+            // Respect global HideToolbar preference (default: hidden)
+            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null)
             {
@@ -113,6 +115,37 @@ namespace NekoLib
             PositionContainer(root, container);
             ResizeButtonToContainer();
             installed = true;
+        }
+
+        private static void Uninstall()
+        {
+            if (!installed) return;
+            installed = false;
+            try
+            {
+                if (container != null && container.parent != null)
+                {
+                    container.parent.Remove(container);
+                }
+            }
+            catch { }
+            container = null;
+            clearButton = null;
+            clearIcon = null;
+        }
+
+        internal static void ApplyPreferenceChange(bool enabled)
+        {
+            if (enabled)
+            {
+                // Attempt install when enabled
+                EditorApplication.delayCall += EnsureInstall;
+            }
+            else
+            {
+                // Remove toolbar UI when disabled
+                Uninstall();
+            }
         }
 
         private static void ResizeButtonToContainer()

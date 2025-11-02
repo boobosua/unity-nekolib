@@ -12,11 +12,10 @@ namespace NekoLib
     [InitializeOnLoad]
     internal static class TimeScaleTool
     {
-        private const string PrefEnabledKey = "NekoLib:TimeScaleToolEnabled"; // existing preference toggle
         private const string PrefStoredValue = "NekoLib:TimeScaleValue";      // kept for backward compatibility (not authoritative anymore)
         private const float DefaultTimeScale = 1f;
         private const float MinTimeScale = 0f;
-        private const float MaxTimeScale = 5f;
+        private static float MaxTimeScale => Mathf.Max(10f, (float)NekoLibPreferences.TimeScaleMax);
 
         private static bool installed;
         private static VisualElement rootContainer;
@@ -39,11 +38,12 @@ namespace NekoLib
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
-        private static bool Enabled => EditorPrefs.GetBool(PrefEnabledKey, true);
+        // Enabled state is determined by the global HideToolbar preference.
 
         private static void EnsureInstall()
         {
-            if (!Enabled || installed) return;
+            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
+            if (installed) return;
             var toolbarRoot = ToolbarUtils.GetToolbarRoot();
             if (toolbarRoot == null)
             {

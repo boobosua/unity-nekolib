@@ -211,8 +211,8 @@ T[] shuffled = array.Shuffle();
 T[] swapped = array.Swap(0, 1);
 T[] swappedByElement = array.Swap(item1, item2);
 bool isEmpty = array.IsNullOrEmpty();
-bool hasNulls = array.HasNullElements();
-string formatted = array.Format(); // "[item1, item2, item3]"
+bool hasNulls = array.ContainsNull();
+string formatted = array.ToLiteral(); // "[item1, item2, item3]"
 T first = array.First();
 T last = array.Last();
 T[] sliced = array.Slice(2, 5);
@@ -226,8 +226,8 @@ T randomItem = list.Rand();
 int randomIndex = list.RandIndex();
 List<T> shuffled = list.Shuffle();
 List<T> swapped = list.Swap(0, 1);
-bool hasNulls = list.HasNullElements();
-string formatted = list.Format(); // "{item1, item2, item3}"
+bool hasNulls = list.ContainsNull();
+string formatted = list.ToLiteral(); // "{item1, item2, item3}"
 T first = list.First();
 T last = list.Last();
 List<T> multiple = list.RandMultiple(3);
@@ -236,14 +236,36 @@ T weighted = list.RandWeighted(item => item.weight);
 // Dictionary operations
 V randomValue = dict.RandV();
 K randomKey = dict.RandK();
-bool hasNulls = dict.HasNullValues();
+bool hasNulls = dict.ContainsNullValues();
 Dictionary<K, V> copy = dict.AsNewCopy();
-string formatted = dict.Format(); // "{key1: value1, key2: value2}"
+string formatted = dict.ToLiteral(); // "{key1: value1, key2: value2}"
+
+// Grid<T> operations
+Grid<int> grid = new Grid<int>(10, 5);
+grid[3, 2] = 42;                       // unchecked fast indexer
+int v = grid[3, 2];
+
+bool contains = grid.Contains(42);    // linear scan over contiguous buffer
+// IndexOf returns (x,y) tuple and throws if not found
+var pos = grid.IndexOf(42);            // (int x, int y)
+// Safe variants
+if (grid.TryIndexOf(42, out var foundPos)) Debug.Log(foundPos);
+
+// Last occurrence helpers
+var last = grid.LastIndexOf(42);
+if (grid.TryLastIndexOf(42, out var lastPos)) Debug.Log(lastPos);
+
+int first = grid.First();              // element at (0,0)
+int lastElem = grid.Last();            // element at (width-1,height-1)
+bool emptyGrid = grid.IsNullOrEmpty();
+// For reference-type grids:
+bool hasNullsInGrid = default(Grid<object>).IsNullOrEmpty() ? false : grid.ContainsNull();
+string literal = grid.ToLiteral();     // compact textual representation
 
 // Other collections
-string queueFormatted = queue.Format();
-string stackFormatted = stack.Format();
-string setFormatted = hashSet.Format();
+string queueFormatted = queue.ToLiteral();
+string stackFormatted = stack.ToLiteral();
+string setFormatted = hashSet.ToLiteral();
 ```
 
 ### TimeExtensions

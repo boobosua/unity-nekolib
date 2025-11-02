@@ -41,23 +41,16 @@ namespace NekoLib
         private const string SessionOriginalSceneKey = "NekoLib:OriginalSceneBeforePlay";
         private const string SessionPlaySwitchedKey = "NekoLib:PlaySwitchedFlag";
 
-        private const string PrefKey = "NekoLib:SceneSwitcherEnabled"; // mirror key used in preferences
         private const string PrefActivateLoadedAdditive = "NekoLib:ActivateLoadedAdditiveOnSelect"; // new preference
         #endregion
-
-        private static bool IsEnabledPreference()
-        {
-            return EditorPrefs.GetBool(PrefKey, true);
-        }
-
         static SceneSwitcherToolbar()
         {
             #region Initialization
             EditorApplication.delayCall += () =>
             {
                 RefreshSceneList();
-                if (IsEnabledPreference())
-                    EditorApplication.update += TryInstall;
+                // Install on startup unless the global HideToolbar preference is set
+                try { if (!NekoLibPreferences.HideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
                 LoadStartupPrefs();
                 // Recover persisted session info (domain reload safety)
                 if (string.IsNullOrEmpty(originalSceneBeforePlay))
@@ -82,7 +75,8 @@ namespace NekoLib
 
         private static void TryInstall()
         {
-            if (!IsEnabledPreference()) return; // preference disabled
+            // If global HideToolbar is enabled, don't install
+            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
             if (initialized) return;
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
@@ -154,7 +148,7 @@ namespace NekoLib
             }
             containerRef = null;
             // Re-register install attempt if preference re-enabled later
-            if (IsEnabledPreference())
+            if (!NekoLibPreferences.HideToolbar)
             {
                 EditorApplication.update += TryInstall;
             }
