@@ -1,5 +1,7 @@
 #nullable enable
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -10,7 +12,7 @@ namespace NekoLib.Collections
     /// Lightweight, cache-friendly 2D grid backed by a flat array.
     /// </summary>
     [DebuggerDisplay("Grid<{typeof(T).Name}>({Width}x{Height})")]
-    public sealed class Grid<T>
+    public sealed class Grid<T> : IEnumerable<T>
     {
         // Unity persistence: allow SerializeReference to persist dimensions and data.
         // Fields must be non-readonly and marked [SerializeField].
@@ -21,15 +23,6 @@ namespace NekoLib.Collections
         public int Width => _width;
         public int Height => _height;
         public int Length => _data?.Length ?? 0;
-
-        /// <summary>
-        /// Fast, unchecked indexer. Ensure x/y are valid before using.
-        /// </summary>
-        public ref T this[int x, int y]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _data[x + (y * _width)];
-        }
 
         public Grid(int width, int height)
         {
@@ -45,9 +38,29 @@ namespace NekoLib.Collections
             Fill(fillValue);
         }
 
+        /// <summary>
+        /// Fast, unchecked indexer. Ensure x/y are valid before using.
+        /// </summary>
+        public ref T this[int x, int y]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _data[x + (y * _width)];
+        }
+
+        /// <summary>
+        /// Fast, unchecked indexer. Ensure pos is valid before using.
+        /// </summary>
+        public ref T this[Vector2Int vector]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _data[vector.x + (vector.y * _width)];
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool InBounds(int x, int y) =>
-            (uint)x < (uint)_width && (uint)y < (uint)_height;
+        public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool InBounds(Vector2Int vector) => InBounds(vector.x, vector.y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGet(int x, int y, out T value)
@@ -62,6 +75,18 @@ namespace NekoLib.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGet(Vector2Int vector, out T value)
+        {
+            if (!InBounds(vector))
+            {
+                value = default!;
+                return false;
+            }
+            value = _data[vector.x + (vector.y * _width)];
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TrySet(int x, int y, in T value)
         {
             if (!InBounds(x, y))
@@ -72,7 +97,20 @@ namespace NekoLib.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TrySet(Vector2Int vector, in T value)
+        {
+            if (!InBounds(vector))
+                return false;
+
+            _data[vector.x + (vector.y * _width)] = value;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetRefUnchecked(int x, int y) => ref _data[x + (y * _width)];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetRefUnchecked(Vector2Int vector) => ref _data[vector.x + (vector.y * _width)];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan() => _data.AsSpan();
@@ -130,6 +168,17 @@ namespace NekoLib.Collections
                 for (int x = 0; x < w; x++, i++)
                     action(x, y, ref _data[i]);
             }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < _data.Length; i++)
+                yield return _data[i];
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public override string ToString()
