@@ -1,4 +1,3 @@
-````markdown
 # NekoLib Collections
 
 Lightweight, cache-friendly collection helpers. Primary focus: `Grid<T>` — a flat-array backed 2D grid with ref access and Span-friendly APIs.
@@ -55,4 +54,3 @@ converted.CopyTo(dst);
 - Use when you want a compact, cache-friendly 2D buffer with ref access.
 - Prefer `Grid<T>` over `T[,]` for performance-critical loops, contiguous memory access, and APIs that need Span<T>.
 - `Grid<T>` exposes both safe (TryGet/TrySet) and very-fast unchecked ref access via the indexer.
-````
