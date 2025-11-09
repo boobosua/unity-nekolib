@@ -1,3 +1,12 @@
+## [1.9.12] - 2025-11-10
+
+### Major Timer Extension Updates
+
+- Add InvokeEvery extension method to invoke an action repeatedly at a specified interval.
+- Add InvokeEverySeconds extension method to invoke an action repeatedly at a specified interval in seconds.
+- Add TickEverySeconds extension method to invoke an action repeatedly at a specified interval in seconds for a specified duration.
+- Improve TimerTrackerWindow and Timer inspector window.
+
 ## [1.9.9] - 2025-11-02
 
 ### Introduces significant improvements and new features:

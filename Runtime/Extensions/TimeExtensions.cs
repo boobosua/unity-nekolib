@@ -11,7 +11,7 @@ namespace NekoLib.Extensions
         private const double SecondsPerHour = 3600.0;
         private const double SecondsPerDay = 86400.0;
 
-        private static readonly StringBuilder _stringBuilder = new(32);
+        private static readonly StringBuilder s_stringBuilder = new(32);
 
         #region Time to String Formatting
         /// <summary>
@@ -67,7 +67,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static string ToReadableFormat(this TimeSpan timeSpan, bool useSpacing = false)
         {
-            _stringBuilder.Clear();
+            s_stringBuilder.Clear();
 
             var totalDays = (int)timeSpan.TotalDays;
             var hours = timeSpan.Hours;
@@ -76,32 +76,32 @@ namespace NekoLib.Extensions
 
             if (totalDays >= 1)
             {
-                _stringBuilder.Append(totalDays).Append('d');
-                if (useSpacing) _stringBuilder.Append(' ');
-                _stringBuilder.Append(hours).Append('h');
-                if (useSpacing) _stringBuilder.Append(' ');
-                _stringBuilder.Append(minutes).Append('m');
+                s_stringBuilder.Append(totalDays).Append('d');
+                if (useSpacing) s_stringBuilder.Append(' ');
+                s_stringBuilder.Append(hours).Append('h');
+                if (useSpacing) s_stringBuilder.Append(' ');
+                s_stringBuilder.Append(minutes).Append('m');
             }
             else if (timeSpan.TotalHours >= 1)
             {
-                _stringBuilder.Append(hours).Append('h');
-                if (useSpacing) _stringBuilder.Append(' ');
-                _stringBuilder.Append(minutes).Append('m');
-                if (useSpacing) _stringBuilder.Append(' ');
-                _stringBuilder.Append(seconds).Append('s');
+                s_stringBuilder.Append(hours).Append('h');
+                if (useSpacing) s_stringBuilder.Append(' ');
+                s_stringBuilder.Append(minutes).Append('m');
+                if (useSpacing) s_stringBuilder.Append(' ');
+                s_stringBuilder.Append(seconds).Append('s');
             }
             else if (timeSpan.TotalMinutes >= 1)
             {
-                _stringBuilder.Append(minutes).Append('m');
-                if (useSpacing) _stringBuilder.Append(' ');
-                _stringBuilder.Append(seconds).Append('s');
+                s_stringBuilder.Append(minutes).Append('m');
+                if (useSpacing) s_stringBuilder.Append(' ');
+                s_stringBuilder.Append(seconds).Append('s');
             }
             else
             {
-                _stringBuilder.Append(seconds).Append('s');
+                s_stringBuilder.Append(seconds).Append('s');
             }
 
-            return _stringBuilder.ToString();
+            return s_stringBuilder.ToString();
         }
 
         /// <summary>

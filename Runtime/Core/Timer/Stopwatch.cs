@@ -1,11 +1,12 @@
 using System;
+using NekoLib.Extensions;
 using UnityEngine;
 
 namespace NekoLib.Core
 {
     public class Stopwatch : TimerBase
     {
-        private Func<bool> _stopCondition;
+        private Func<bool> _stopCondition = null;
 
         /// <summary>
         /// A timer that counts up until manually stopped or based on a certain predicate.
@@ -15,6 +16,9 @@ namespace NekoLib.Core
             _stopCondition = stopCondition;
         }
 
+        /// <summary>
+        /// Starts the stopwatch.
+        /// </summary>
         public override void Start()
         {
             _elapsedTime = 0f;
@@ -23,9 +27,6 @@ namespace NekoLib.Core
 
         public override void Tick(float deltaTime)
         {
-            // if (!IsRunning)
-            //     return;
-
             if (!ShouldTick)
                 return;
 
@@ -39,16 +40,19 @@ namespace NekoLib.Core
             InvokeUpdate(_elapsedTime);
         }
 
-        public void StopAndGetTime(out float endTime)
+        /// <summary>
+        /// Stops the stopwatch and returns the elapsed time.
+        /// </summary>
+        public float StopAndGetTime(bool invokeStopEvent = true)
         {
-            base.Stop();
-            endTime = _elapsedTime;
+            base.Stop(invokeStopEvent);
+            return _elapsedTime.AtLeast(0f);
         }
 
-        override public void Dispose()
+        public override void Dispose()
         {
-            base.Dispose();
             _stopCondition = null;
+            base.Dispose();
         }
     }
 }

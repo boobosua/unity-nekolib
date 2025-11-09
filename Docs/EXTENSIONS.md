@@ -317,12 +317,23 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 ### TimerExtensions
 
 ```csharp
-// Create timers directly from components
-Countdown countdown = this.CreateCountdown(10f);
-Stopwatch stopwatch = this.CreateStopwatch();
+// Create / start countdowns
+Countdown cd = this.CreateCountdown(10f);
+Countdown started = this.StartCountdown(5f);
+Countdown conditional = this.StartCountdown(30f, () => isReady);
+
+// Stopwatches
+Stopwatch sw = this.CreateStopwatch();
+Stopwatch running = this.StartStopwatch();
+
+// Delayed and repeated actions
+this.InvokeDelayed(2f, () => Debug.Log("Delayed"), useUnscaledTime: true);
+IDisposable every = this.InvokeEvery(1f, () => Debug.Log("Tick"));
+IDisposable secondsTicker = this.TickEverySeconds(1, 5, secs => Debug.Log($"Ticked {secs}s"), () => Debug.Log("Done"));
 
 // Cleanup timers
 this.CleanupTimers();
+this.CleanupComponentTimers();
 ```
 
 ### SerializeExtensions

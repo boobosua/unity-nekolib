@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using NekoLib; // for EditorPagination
 using NekoLib.Extensions;
 using UnityEditor;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace NekoLib.Core
     {
         private int _selectedTab = 0;
         private readonly string[] _tabNames = { "Countdown", "Stopwatch" };
+        private EditorPagination.State _countdownState;
+        private EditorPagination.State _stopwatchState;
 
         public override void OnInspectorGUI()
         {
@@ -48,8 +51,8 @@ namespace NekoLib.Core
             EditorGUILayout.Space(10);
 
             // Draw tabs
-            _selectedTab = GUILayout.Toolbar(_selectedTab, _tabNames);
-            EditorGUILayout.Space(5);
+            _selectedTab = GUILayout.Toolbar(_selectedTab, _tabNames, new GUIStyle(GUI.skin.button) { fontSize = 11, fixedHeight = 20 });
+            EditorGUILayout.Space(3);
 
             // Draw selected tab content
             if (_selectedTab == 0)
@@ -76,39 +79,48 @@ namespace NekoLib.Core
                 return;
             }
 
-            // Draw header with flexible spacing
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("MonoBehaviour", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.LabelField("Elapsed", EditorStyles.boldLabel, GUILayout.Width(60));
-            GUILayout.Space(10);
-            EditorGUILayout.LabelField("Total", EditorStyles.boldLabel, GUILayout.Width(60));
-            EditorGUILayout.EndHorizontal();
+            // Pagination bar
+            var slice = EditorPagination.Draw(ref _countdownState, countdowns.Count, 10, null, "Countdown", "Countdowns");
 
-            // Draw separator
-            var rect = EditorGUILayout.GetControlRect(false, 1);
-            EditorGUI.DrawRect(rect, Color.gray);
+            // Column widths
+            const float RightColWidth = 55f;
+            const float Spacing = 6f;
+            const float RowH = 18f;
 
-            // Draw countdown list
-            foreach (var countdown in countdowns)
+            // Header (drawn with rects for consistent alignment) with horizontal margins
+            var headerRect = EditorGUILayout.GetControlRect(false, RowH);
+            headerRect = new Rect(headerRect.x + 8, headerRect.y, headerRect.width - 16, headerRect.height);
+            DrawRowBackground(headerRect, -1); // no stripe
+            var monoRect = new Rect(headerRect.x, headerRect.y, headerRect.width - (RightColWidth * 2 + Spacing * 2), headerRect.height);
+            var elapsedRect = new Rect(monoRect.xMax + Spacing, headerRect.y, RightColWidth, headerRect.height);
+            var totalRect = new Rect(elapsedRect.xMax + Spacing, headerRect.y, RightColWidth, headerRect.height);
+            var hdr = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleLeft };
+            GUI.Label(monoRect, "Mono", hdr);
+            var hdrRight = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleRight };
+            GUI.Label(elapsedRect, "Elapsed", hdrRight);
+            GUI.Label(totalRect, "Total", hdrRight);
+            var sep = EditorGUILayout.GetControlRect(false, 1);
+            EditorGUI.DrawRect(sep, new Color(0.5f, 0.5f, 0.5f, 0.25f));
+
+            // Rows
+            for (int i = slice.Start, uiRow = 0; i < slice.End; i++, uiRow++)
             {
-                EditorGUILayout.BeginHorizontal();
+                var countdown = countdowns[i];
+                var row = EditorGUILayout.GetControlRect(false, RowH);
+                row = new Rect(row.x + 8, row.y, row.width - 16, row.height);
+                DrawRowBackground(row, uiRow);
 
-                // MonoBehaviour name
+                monoRect = new Rect(row.x, row.y, row.width - (RightColWidth * 2 + Spacing * 2), row.height);
+                elapsedRect = new Rect(monoRect.xMax + Spacing, row.y, RightColWidth, row.height);
+                totalRect = new Rect(elapsedRect.xMax + Spacing, row.y, RightColWidth, row.height);
+
+                var left = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleLeft };
+                var right = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleRight };
+
                 string componentName = countdown.OwnerComponent != null ? countdown.OwnerComponent.GetType().Name : "NULL";
-                EditorGUILayout.LabelField(componentName);
-                GUILayout.FlexibleSpace();
-
-                // Elapsed time
-                string elapsedTime = FormatTime(countdown.RemainTime);
-                EditorGUILayout.LabelField(elapsedTime, GUILayout.Width(60));
-                GUILayout.Space(10);
-
-                // Total time
-                string totalTime = FormatTime(countdown.TotalTime);
-                EditorGUILayout.LabelField(totalTime, GUILayout.Width(60));
-
-                EditorGUILayout.EndHorizontal();
+                GUI.Label(monoRect, componentName, left);
+                GUI.Label(elapsedRect, FormatTime(countdown.RemainTime), right);
+                GUI.Label(totalRect, FormatTime(countdown.TotalTime), right);
             }
         }
 
@@ -120,32 +132,48 @@ namespace NekoLib.Core
                 return;
             }
 
-            // Draw header with flexible spacing
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("MonoBehaviour", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.LabelField("Elapsed", EditorStyles.boldLabel, GUILayout.Width(60));
-            EditorGUILayout.EndHorizontal();
+            // Pagination bar
+            var slice = EditorPagination.Draw(ref _stopwatchState, stopwatches.Count, 10, null, "Stopwatch", "Stopwatches");
 
-            // Draw separator
-            var rect = EditorGUILayout.GetControlRect(false, 1);
-            EditorGUI.DrawRect(rect, Color.gray);
+            const float RightColWidth = 55f;
+            const float Spacing = 6f;
+            const float RowH = 18f;
 
-            // Draw stopwatch list
-            foreach (var stopwatch in stopwatches)
+            var headerRect = EditorGUILayout.GetControlRect(false, RowH);
+            headerRect = new Rect(headerRect.x + 8, headerRect.y, headerRect.width - 16, headerRect.height);
+            DrawRowBackground(headerRect, -1);
+            var monoRect = new Rect(headerRect.x, headerRect.y, headerRect.width - (RightColWidth + Spacing), headerRect.height);
+            var elapsedRect = new Rect(monoRect.xMax + Spacing, headerRect.y, RightColWidth, headerRect.height);
+            var hdr = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleLeft };
+            var hdrRight = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleRight };
+            GUI.Label(monoRect, "Mono", hdr);
+            GUI.Label(elapsedRect, "Elapsed", hdrRight);
+            var sep = EditorGUILayout.GetControlRect(false, 1);
+            EditorGUI.DrawRect(sep, new Color(0.5f, 0.5f, 0.5f, 0.25f));
+
+            for (int i = slice.Start, uiRow = 0; i < slice.End; i++, uiRow++)
             {
-                EditorGUILayout.BeginHorizontal();
+                var sw = stopwatches[i];
+                var row = EditorGUILayout.GetControlRect(false, RowH);
+                row = new Rect(row.x + 8, row.y, row.width - 16, row.height);
+                DrawRowBackground(row, uiRow);
+                monoRect = new Rect(row.x, row.y, row.width - (RightColWidth + Spacing), row.height);
+                elapsedRect = new Rect(monoRect.xMax + Spacing, row.y, RightColWidth, row.height);
 
-                // MonoBehaviour name
-                string componentName = stopwatch.OwnerComponent != null ? stopwatch.OwnerComponent.GetType().Name : "NULL";
-                EditorGUILayout.LabelField(componentName);
-                GUILayout.FlexibleSpace();
+                var left = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleLeft };
+                var right = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleRight };
 
-                // Elapsed time
-                string elapsedTime = FormatTime(stopwatch.RemainTime);
-                EditorGUILayout.LabelField(elapsedTime, GUILayout.Width(60));
+                string componentName = sw.OwnerComponent != null ? sw.OwnerComponent.GetType().Name : "NULL";
+                GUI.Label(monoRect, componentName, left);
+                GUI.Label(elapsedRect, FormatTime(sw.RemainTime), right);
+            }
+        }
 
-                EditorGUILayout.EndHorizontal();
+        private void DrawRowBackground(Rect r, int rowIndex)
+        {
+            if (rowIndex >= 0 && (rowIndex % 2 == 1))
+            {
+                EditorGUI.DrawRect(r, new Color(0f, 0f, 0f, 0.06f));
             }
         }
 

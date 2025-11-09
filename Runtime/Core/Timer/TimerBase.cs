@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
 using NekoLib.Extensions;
+using UnityEngine;
 
 namespace NekoLib.Core
 {
@@ -133,22 +133,25 @@ namespace NekoLib.Core
         /// <summary>
         /// Stops the timer.
         /// </summary>
-        public virtual void Stop()
+        public virtual void Stop(bool invokeStopEvent = true)
         {
             if (IsRunning)
             {
                 IsRunning = false;
-                InvokeStop();
+                if (invokeStopEvent)
+                {
+                    InvokeStop();
+                }
             }
         }
 
         /// <summary>
         /// Stops the timer and removes it from the TimerRegistry.
         /// </summary>
-        public void StopAndDestroy()
+        public void StopAndDestroy(bool invokeStopEvent = true)
         {
-            Stop();
-            _ownerComponent.GetOrAdd<TimerRegistry>().UnregisterTimer(this);
+            Stop(invokeStopEvent);
+            Dispose();
         }
 
         protected void InvokeStart()
@@ -189,10 +192,15 @@ namespace NekoLib.Core
 
         public virtual void Dispose()
         {
+            IsRunning = false;
+
             OnStart = null;
             OnStop = null;
             OnUpdate = null;
+
             _updateCondition = null;
+
+            _ownerComponent.GetOrAdd<TimerRegistry>().UnregisterTimer(this);
         }
     }
 }

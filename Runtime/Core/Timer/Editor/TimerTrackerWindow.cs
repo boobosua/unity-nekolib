@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using NekoLib.Extensions;
 using UnityEditor;
 using UnityEngine;
-using NekoLib.Extensions;
 
 namespace NekoLib.Core
 {
@@ -18,10 +18,10 @@ namespace NekoLib.Core
         private int _selectedTab = 0;
         private readonly string[] _tabNames = { "Countdowns", "Stopwatches" };
 
-        // Pagination
-        private const int ITEMS_PER_PAGE = 20;
-        private int _currentCountdownPage = 0;
-        private int _currentStopwatchPage = 0;
+        // Pagination (compact style via EditorPagination utility)
+        private const int ITEMS_PER_PAGE = 20; // enforce 20 items per page
+        private EditorPagination.State _countdownPageState;
+        private EditorPagination.State _stopwatchPageState;
 
         // UI Colors - Enhanced for better contrast and readability
         private readonly Color RUNNING_BLUE = new(0.2f, 0.6f, 0.9f, 0.3f);      // Lighter blue background
@@ -37,9 +37,9 @@ namespace NekoLib.Core
         private readonly Color PAUSED_TEXT = new(0.7f, 0.6f, 0.1f, 1f);         // Darker yellow text
 
 
-        // Table configuration
-        private const float ROW_HEIGHT = 38f;
-        private const float HEADER_HEIGHT = 42f;
+        // Table configuration (compact but tall enough for 2-line object/component)
+        private const float ROW_HEIGHT = 30f;
+        private const float HEADER_HEIGHT = 26f;
 
         private Vector2 _scrollPosition;
 
@@ -64,8 +64,8 @@ namespace NekoLib.Core
                 {
                     _smoothProgressValues.Clear();
                     _selectedTab = 0;
-                    _currentCountdownPage = 0;
-                    _currentStopwatchPage = 0;
+                    _countdownPageState = default;
+                    _stopwatchPageState = default;
                     _scrollPosition = Vector2.zero;
                 }
                 _wasPlaying = Application.isPlaying;
@@ -76,7 +76,7 @@ namespace NekoLib.Core
                     return;
                 }
 
-                EditorGUILayout.Space(15);
+                EditorGUILayout.Space(4);
 
                 // Get timer data from all TimerRegistry components in the scene
                 var allTimers = GetAllTimers();
@@ -97,12 +97,12 @@ namespace NekoLib.Core
                 var originalStyle = GUI.skin.button;
                 var tabStyle = new GUIStyle(originalStyle)
                 {
-                    fontSize = 14,
-                    fixedHeight = 35
+                    fontSize = 12,
+                    fixedHeight = 22
                 };
 
                 _selectedTab = GUILayout.Toolbar(_selectedTab, _tabNames, tabStyle);
-                EditorGUILayout.Space(12);
+                EditorGUILayout.Space(4);
 
                 // Draw table content without margins to match tab width
                 EditorGUILayout.BeginVertical();
@@ -127,7 +127,7 @@ namespace NekoLib.Core
 
                 EditorGUILayout.EndVertical();
 
-                EditorGUILayout.Space(20);
+                EditorGUILayout.Space(6);
 
                 // Draw statistics at the bottom
                 DrawStatisticsPanel(stats, allTimers.Count);
@@ -175,17 +175,11 @@ namespace NekoLib.Core
                 return;
             }
 
-            // Pagination
-            int totalPages = Mathf.CeilToInt((float)countdowns.Count / ITEMS_PER_PAGE);
-            _currentCountdownPage = Mathf.Clamp(_currentCountdownPage, 0, totalPages - 1);
+            // Pagination via utility
+            var slice = EditorPagination.Draw(ref _countdownPageState, countdowns.Count, ITEMS_PER_PAGE, HEADER_HEIGHT - 8, "Countdown", "Countdowns");
 
-            DrawPaginationControls(ref _currentCountdownPage, totalPages, countdowns.Count, "countdowns");
-
-            // Get items for current page
-            var pageItems = countdowns
-                .Skip(_currentCountdownPage * ITEMS_PER_PAGE)
-                .Take(ITEMS_PER_PAGE)
-                .ToList();
+            // Get items for current slice
+            var pageItems = countdowns.Skip(slice.Start).Take(slice.End - slice.Start).ToList();
 
             // Draw table header
             DrawCountdownTableHeader();
@@ -205,17 +199,11 @@ namespace NekoLib.Core
                 return;
             }
 
-            // Pagination
-            int totalPages = Mathf.CeilToInt((float)stopwatches.Count / ITEMS_PER_PAGE);
-            _currentStopwatchPage = Mathf.Clamp(_currentStopwatchPage, 0, totalPages - 1);
+            // Pagination via utility
+            var slice = EditorPagination.Draw(ref _stopwatchPageState, stopwatches.Count, ITEMS_PER_PAGE, HEADER_HEIGHT - 8, "Stopwatch", "Stopwatches");
 
-            DrawPaginationControls(ref _currentStopwatchPage, totalPages, stopwatches.Count, "stopwatches");
-
-            // Get items for current page
-            var pageItems = stopwatches
-                .Skip(_currentStopwatchPage * ITEMS_PER_PAGE)
-                .Take(ITEMS_PER_PAGE)
-                .ToList();
+            // Get items for current slice
+            var pageItems = stopwatches.Skip(slice.Start).Take(slice.End - slice.Start).ToList();
 
             // Draw table header
             DrawStopwatchTableHeader();
@@ -246,10 +234,11 @@ namespace NekoLib.Core
             float statusWidth = totalWidth * 0.15f;      // 15% for Status
 
             float x = headerRect.x;
-            var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            var headerStyle = new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                fontSize = 13,
-                alignment = TextAnchor.MiddleCenter
+                fontSize = 11,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             headerStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
 
@@ -290,10 +279,11 @@ namespace NekoLib.Core
             float statusWidth = totalWidth * 0.3f;       // 30% for Status
 
             float x = headerRect.x;
-            var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            var headerStyle = new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                fontSize = 13,
-                alignment = TextAnchor.MiddleCenter
+                fontSize = 11,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             headerStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
 
@@ -329,14 +319,18 @@ namespace NekoLib.Core
                 float gameObjectWidth = totalWidth * 0.25f; // 25% for GameObject
                 float totalTimeWidth = totalWidth * 0.15f;  // 15% for Total Time
                 float currentTimeWidth = totalWidth * 0.15f; // 15% for Remaining
-                float progressWidth = totalWidth * 0.3f;     // 30% for Progress
+                float progressWidth = totalWidth * 0.30f;     // 30% for Progress
                 float statusWidth = totalWidth * 0.15f;      // 15% for Status
 
                 float x = rowRect.x;
 
                 // Determine timer state for progress bar and status text
-                bool isCompleted = !countdown.IsRunning && countdown.Progress >= 1.0f;
-                bool isPaused = countdown.IsPausedDueToOwner || (!countdown.IsRunning && countdown.Progress < 1.0f);
+                bool ownerActive = countdown.IsOwnerActiveAndEnabled;
+                // Countdown Progress is remaining/total, so completion is when remaining ~ 0
+                bool reachedEnd = countdown.RemainTime <= 0.0001f || countdown.InverseProgress >= 0.999f;
+                bool manualStopNonLoop = !countdown.IsRunning && ownerActive && !countdown.IsLooping && !reachedEnd;
+                bool isCompleted = !countdown.IsRunning && (reachedEnd || manualStopNonLoop);
+                bool isPaused = !isCompleted && (countdown.IsPausedDueToOwner || (countdown.IsRunning && !ownerActive));
 
                 // Use dimmed text color for content to distinguish from headers
                 Color baseTextColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
@@ -360,14 +354,14 @@ namespace NekoLib.Core
 
                 // Total Time column
                 DrawCenteredText(new Rect(x, rowRect.y, totalTimeWidth, rowRect.height),
-                    FormatTime(countdown.TotalTime), dimmedTextColor, 12);
+                    FormatTime(countdown.TotalTime), dimmedTextColor, 10);
                 x += totalTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Remaining Time column
                 float remainingTime = countdown.RemainTime;
                 DrawCenteredText(new Rect(x, rowRect.y, currentTimeWidth, rowRect.height),
-                    FormatTime(remainingTime), dimmedTextColor, 12);
+                    FormatTime(remainingTime), dimmedTextColor, 10);
                 x += currentTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
@@ -379,7 +373,7 @@ namespace NekoLib.Core
 
                 // Status column
                 string status = GetTimerStatus(countdown, isCompleted, isPaused);
-                DrawCenteredText(new Rect(x, rowRect.y, statusWidth, rowRect.height), status.ToUpper(), statusTextColor, 11);
+                DrawCenteredText(new Rect(x, rowRect.y, statusWidth, rowRect.height), status.ToUpper(), statusTextColor, 9);
             }
             catch (System.Exception e)
             {
@@ -404,14 +398,16 @@ namespace NekoLib.Core
 
                 // Dynamic column widths matching header (full width to match tabs)
                 float totalWidth = rowRect.width; // Use full width
-                float gameObjectWidth = totalWidth * 0.4f;   // 40% for GameObject
-                float elapsedTimeWidth = totalWidth * 0.3f;  // 30% for Elapsed Time
-                float statusWidth = totalWidth * 0.3f;       // 30% for Status
+                float gameObjectWidth = totalWidth * 0.40f;   // 40% for GameObject
+                float elapsedTimeWidth = totalWidth * 0.30f;  // 30% for Elapsed Time
+                float statusWidth = totalWidth * 0.30f;       // 30% for Status
 
                 float x = rowRect.x;
 
                 // Determine timer state for status text
-                bool isPaused = stopwatch.IsPausedDueToOwner || !stopwatch.IsRunning;
+                bool ownerActive = stopwatch.IsOwnerActiveAndEnabled;
+                bool isCompleted = !stopwatch.IsRunning && stopwatch.IsOwnerValid && ownerActive;
+                bool isPaused = !isCompleted && (stopwatch.IsPausedDueToOwner || (stopwatch.IsRunning && !ownerActive));
 
                 // Use dimmed text color for content to distinguish from headers
                 Color baseTextColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
@@ -419,7 +415,9 @@ namespace NekoLib.Core
 
                 // Status text color matches progress bar color
                 Color statusTextColor;
-                if (isPaused)
+                if (isCompleted)
+                    statusTextColor = COMPLETED_TEXT;
+                else if (isPaused)
                     statusTextColor = PAUSED_TEXT;
                 else if (stopwatch.IsRunning)
                     statusTextColor = RUNNING_TEXT;
@@ -433,13 +431,13 @@ namespace NekoLib.Core
 
                 // Elapsed Time column
                 DrawCenteredText(new Rect(x, rowRect.y, elapsedTimeWidth, rowRect.height),
-                    FormatTime(stopwatch.RemainTime), dimmedTextColor, 13);
+                    FormatTime(stopwatch.RemainTime), dimmedTextColor, 10);
                 x += elapsedTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Status column
-                string status = GetTimerStatus(stopwatch, false, isPaused);
-                DrawCenteredText(new Rect(x, rowRect.y, statusWidth, rowRect.height), status.ToUpper(), statusTextColor, 11);
+                string status = GetTimerStatus(stopwatch, isCompleted, isPaused);
+                DrawCenteredText(new Rect(x, rowRect.y, statusWidth, rowRect.height), status.ToUpper(), statusTextColor, 9);
             }
             catch (System.Exception e)
             {
@@ -474,14 +472,15 @@ namespace NekoLib.Core
             // GameObject name (clickable)
             var objectStyle = new GUIStyle(EditorStyles.linkLabel)
             {
-                fontSize = 12,
+                fontSize = 11,
                 alignment = TextAnchor.MiddleLeft,
-                fontStyle = FontStyle.Bold
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             objectStyle.normal.textColor = textColor;
 
             if (timer.Owner != null && GUI.Button(
-                new Rect(centeredRect.x, centeredRect.y + 4, centeredRect.width, 16),
+                new Rect(centeredRect.x, centeredRect.y + 3, centeredRect.width, 14),
                 objectName, objectStyle))
             {
                 EditorGUIUtility.PingObject(timer.Owner);
@@ -491,32 +490,34 @@ namespace NekoLib.Core
             // Component name
             var componentStyle = new GUIStyle(EditorStyles.miniLabel)
             {
-                fontSize = 10,
+                fontSize = 9,
                 alignment = TextAnchor.MiddleLeft,
-                fontStyle = FontStyle.Italic
+                fontStyle = FontStyle.Italic,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             componentStyle.normal.textColor = Color.Lerp(textColor, Color.gray, 0.4f);
 
-            GUI.Label(new Rect(centeredRect.x, centeredRect.y + 22, centeredRect.width, 12),
+            GUI.Label(new Rect(centeredRect.x, centeredRect.y + 17, centeredRect.width, 11),
                 componentName, componentStyle);
         }
 
         private void DrawCenteredText(Rect rect, string text, Color textColor, int fontSize)
         {
-            var textStyle = new GUIStyle(EditorStyles.label)
+            var textStyle = new GUIStyle(EditorStyles.miniLabel)
             {
                 fontSize = fontSize,
                 alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             textStyle.normal.textColor = textColor;
-
-            GUI.Label(rect, text, textStyle);
+            var rr = new Rect(rect.x, rect.y - 1, rect.width, rect.height + 2); // slight nudge for perfect vertical centering
+            GUI.Label(rr, text, textStyle);
         }
 
         private void DrawProgressColumn(Rect rect, float inverseProgress, float normalProgress, bool isCompleted, bool isPaused, bool isRunning, TimerBase timer)
         {
-            var progressRect = new Rect(rect.x + 8, rect.y + 8, rect.width - 16, 22);
+            var progressRect = new Rect(rect.x + 6, rect.y + 4, rect.width - 12, 16);
 
             // Smooth progress animation
             float displayProgress = inverseProgress;
@@ -566,23 +567,30 @@ namespace NekoLib.Core
 
             // Progress text
             string progressText = inverseProgress.AsPercent();
-            var progressTextStyle = new GUIStyle(EditorStyles.boldLabel)
+            var progressTextStyle = new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                fontSize = 11,
-                alignment = TextAnchor.MiddleCenter
+                fontSize = 9,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             progressTextStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
-
-            GUI.Label(progressRect, progressText, progressTextStyle);
+            var pr = new Rect(progressRect.x, progressRect.y - 1, progressRect.width, progressRect.height + 2);
+            GUI.Label(pr, progressText, progressTextStyle);
         }
 
         private string GetTimerStatus(TimerBase timer, bool isCompleted, bool isPaused)
         {
             if (isCompleted)
-                return "Completed";
-            else if (isPaused)
-                return timer.IsPausedDueToOwner ? "Owner Disabled" : "Paused";
-            else if (timer.IsRunning)
+                return "Done";
+
+            if (isPaused)
+            {
+                if (timer.IsPausedDueToOwner)
+                    return "Owner Off";
+                return "Paused";
+            }
+
+            if (timer.IsRunning)
             {
                 string status = "Running";
                 if (timer.UseUnscaledTime) status += " (Unscaled)";
@@ -590,41 +598,9 @@ namespace NekoLib.Core
                     status += $" Loop {countdown.CurrentLoopIteration + 1}";
                 return status;
             }
+
+            // Non-running and not completed (e.g., manually stopped before start or state indeterminate)
             return "Stopped";
-        }
-
-        private void DrawPaginationControls(ref int currentPage, int totalPages, int totalItems, string itemType)
-        {
-            if (totalPages <= 1) return;
-
-            EditorGUILayout.Space(5);
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-
-            var buttonStyle = new GUIStyle(GUI.skin.button)
-            {
-                fontSize = 14,
-                fixedHeight = 28
-            };
-
-            if (GUILayout.Button("◀", buttonStyle, GUILayout.Width(40)) && currentPage > 0)
-            {
-                currentPage--;
-            }
-
-            var labelStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel);
-            labelStyle.fontSize = 12;
-            EditorGUILayout.LabelField($"Page {currentPage + 1} of {totalPages} ({totalItems} {itemType})",
-                labelStyle, GUILayout.Width(200));
-
-            if (GUILayout.Button("▶", buttonStyle, GUILayout.Width(40)) && currentPage < totalPages - 1)
-            {
-                currentPage++;
-            }
-
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.Space(8);
         }
 
         private void DrawStatisticsPanel(TimerStatistics stats, int totalCount)
@@ -632,14 +608,14 @@ namespace NekoLib.Core
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             // Title
-            var titleStyle = new GUIStyle(EditorStyles.boldLabel)
+            var titleStyle = new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                fontSize = 16,
-                alignment = TextAnchor.MiddleCenter
+                fontSize = 11,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(0, 0, 0, 0)
             };
-            EditorGUILayout.LabelField($"Timer Statistics ({totalCount} Total)", titleStyle, GUILayout.Height(30));
-
-            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField($"Timers ({totalCount})", titleStyle, GUILayout.Height(18));
+            EditorGUILayout.Space(2);
 
             // Statistics grid
             EditorGUILayout.BeginHorizontal();
@@ -647,9 +623,9 @@ namespace NekoLib.Core
             // Use default text color for all stat cards, only backgrounds are colored
             Color defaultTextColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
 
-            DrawStatCard("Running", stats.Running, defaultTextColor, RUNNING_BLUE);
-            DrawStatCard("Paused", stats.Paused, defaultTextColor, PAUSED_YELLOW);
-            DrawStatCard("Completed", stats.Completed, defaultTextColor, COMPLETED_GREEN);
+            DrawStatCard("Run", stats.Running, defaultTextColor, RUNNING_BLUE);
+            DrawStatCard("Pause", stats.Paused, defaultTextColor, PAUSED_YELLOW);
+            DrawStatCard("Done", stats.Completed, defaultTextColor, COMPLETED_GREEN);
 
             if (stats.Leaked > 0)
             {
@@ -660,7 +636,7 @@ namespace NekoLib.Core
 
             if (stats.Leaked > 0)
             {
-                EditorGUILayout.Space(8);
+                EditorGUILayout.Space(4);
                 EditorGUILayout.HelpBox($"{stats.Leaked} leaked timer(s) detected - their GameObjects have been destroyed", MessageType.Warning);
             }
 
@@ -669,10 +645,10 @@ namespace NekoLib.Core
 
         private void DrawStatCard(string label, int count, Color textColor, Color bgColor)
         {
-            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.Height(75));
+            EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.Height(54));
 
             // Background
-            Rect cardRect = EditorGUILayout.GetControlRect(false, 70);
+            Rect cardRect = EditorGUILayout.GetControlRect(false, 50);
             EditorGUI.DrawRect(cardRect, bgColor);
 
             // Border
@@ -682,26 +658,28 @@ namespace NekoLib.Core
             EditorGUI.DrawRect(new Rect(cardRect.x + cardRect.width - 1, cardRect.y, 1, cardRect.height), BORDER_COLOR);
 
             // Count
-            var countStyle = new GUIStyle(EditorStyles.boldLabel)
+            var countStyle = new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                fontSize = 22,
+                fontSize = 14,
                 alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             countStyle.normal.textColor = textColor;
 
-            GUI.Label(new Rect(cardRect.x, cardRect.y + 12, cardRect.width, 25), count.ToString(), countStyle);
+            GUI.Label(new Rect(cardRect.x, cardRect.y + 10, cardRect.width, 18), count.ToString(), countStyle);
 
             // Label
-            var labelStyle = new GUIStyle(EditorStyles.label)
+            var labelStyle = new GUIStyle(EditorStyles.miniLabel)
             {
-                fontSize = 12,
+                fontSize = 9,
                 alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 0)
             };
             labelStyle.normal.textColor = Color.Lerp(textColor, Color.gray, 0.3f);
 
-            GUI.Label(new Rect(cardRect.x, cardRect.y + 42, cardRect.width, 18), label, labelStyle);
+            GUI.Label(new Rect(cardRect.x, cardRect.y + 28, cardRect.width, 14), label, labelStyle);
 
             EditorGUILayout.EndVertical();
         }
@@ -712,22 +690,44 @@ namespace NekoLib.Core
 
             foreach (var timer in timers)
             {
-                if (!timer.IsOwnerValid)
+                bool ownerValid = timer.IsOwnerValid;
+                bool ownerActive = timer.IsOwnerActiveAndEnabled;
+
+                if (!ownerValid)
                 {
                     stats.Leaked++;
+                    continue;
                 }
-                else if (timer.IsRunning && timer.IsOwnerActiveAndEnabled)
+
+                // Running (active and enabled)
+                if (timer.IsRunning && ownerActive)
                 {
                     stats.Running++;
+                    continue;
                 }
-                else if (timer.IsRunning && !timer.IsOwnerActiveAndEnabled)
+
+                // Paused due to owner disabled/inactive
+                if (timer.IsPausedDueToOwner || (timer.IsRunning && !ownerActive))
                 {
                     stats.Paused++;
+                    continue;
                 }
-                else
+
+                // Not running here and owner is valid (likely either Paused or Done)
+                if (timer is Stopwatch)
                 {
-                    // Check if it's completed
-                    if (timer is Countdown countdown && countdown.Progress >= 1.0f)
+                    // Stopwatches are considered Done when not running
+                    stats.Completed++;
+                    continue;
+                }
+
+                if (timer is Countdown cd)
+                {
+                    // Done if reached end OR manually stopped (non-loop) while owner is active
+                    bool reachedEnd = cd.Progress >= 1.0f || cd.RemainTime <= 0.0001f;
+                    bool manualStopNonLoop = !cd.IsRunning && ownerActive && !cd.IsLooping && !reachedEnd; // treat manual stop as done
+
+                    if (reachedEnd || manualStopNonLoop)
                     {
                         stats.Completed++;
                     }
@@ -735,7 +735,11 @@ namespace NekoLib.Core
                     {
                         stats.Paused++;
                     }
+                    continue;
                 }
+
+                // Fallback
+                stats.Paused++;
             }
 
             return stats;

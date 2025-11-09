@@ -7,8 +7,8 @@ namespace NekoLib.Core
     [DisallowMultipleComponent]
     public sealed class TimerRegistry : MonoBehaviour
     {
-        private readonly List<TimerBase> _activeTimers = new();
-        private readonly List<TimerBase> _timersToRemove = new();
+        private readonly List<TimerBase> _activeTimers = new(16);
+        private readonly List<TimerBase> _timersToRemove = new(8);
 
         /// <summary>
         /// Gets the current count of active timers.
@@ -79,10 +79,13 @@ namespace NekoLib.Core
         /// </summary>
         public void UnregisterTimer(TimerBase timer)
         {
-            if (timer != null)
+            if (timer != null && _activeTimers.Contains(timer))
             {
-                timer.Dispose();
                 _activeTimers.Remove(timer);
+            }
+            else
+            {
+                Log.Warn("[TimerRegistry] Attempted to unregister a timer that is not registered.");
             }
         }
 
@@ -152,16 +155,18 @@ namespace NekoLib.Core
         public void CleanupTimers()
         {
             // Dispose all active timers
-            foreach (var timer in _activeTimers)
+            for (var i = _activeTimers.Count - 1; i >= 0; i--)
             {
-                timer?.Dispose();
+                var t = _activeTimers[i];
+                t?.Dispose();
             }
             _activeTimers.Clear();
 
             // Dispose all timers in removal list
-            foreach (var timer in _timersToRemove)
+            for (var i = _timersToRemove.Count - 1; i >= 0; i--)
             {
-                timer?.Dispose();
+                var t = _timersToRemove[i];
+                t?.Dispose();
             }
             _timersToRemove.Clear();
         }

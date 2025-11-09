@@ -1,13 +1,13 @@
 using System;
-using UnityEngine;
-using UnityEngine.Events;
 using NekoLib.Extensions;
 using NekoLib.Utilities;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace NekoLib.Components
 {
-    [AddComponentMenu("NekoLib/Ticker")]
-    public class Ticker : MonoBehaviour
+    [AddComponentMenu("NekoLib/Timer")]
+    public class Timer : MonoBehaviour
     {
         [Tooltip("Time to wait before timeout (seconds)")]
         [SerializeField, Min(0f)] private float _waitTime = 1f;

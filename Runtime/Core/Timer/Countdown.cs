@@ -175,9 +175,6 @@ namespace NekoLib.Core
 
         public override void Tick(float deltaTime)
         {
-            // if (!IsRunning)
-            //     return;
-
             if (!ShouldTick)
                 return;
 
@@ -227,9 +224,9 @@ namespace NekoLib.Core
 
         public override void Dispose()
         {
-            base.Dispose();
             OnLoop = null;
             _loopStopCondition = null;
+            base.Dispose();
         }
     }
 }
