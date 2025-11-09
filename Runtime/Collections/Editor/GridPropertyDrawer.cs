@@ -21,6 +21,7 @@ namespace NekoLib.Collections
         private const float ListLeftMargin = 8f; // extra padding so foldout icon/label don't hug the box border
         private static readonly Dictionary<string, int> RowPage = new();
         private static readonly Dictionary<string, Vector2Int> PendingDims = new();
+        private static readonly Dictionary<string, string> CreationErrors = new();
 
         private static float CalcElementsBlockHeight(SerializedProperty rootProperty, SerializedProperty dataSP, int width, int height)
         {
@@ -54,11 +55,18 @@ namespace NekoLib.Collections
             return elementsBlock;
         }
 
+        private object GetGridValue(SerializedProperty property)
+        {
+            try { return fieldInfo?.GetValue(property.serializedObject.targetObject); }
+            catch { return null; }
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            // When null, we only show the size inputs and Create button line
-            if (property.managedReferenceValue == null)
-                return Line;
+            var gridVal = GetGridValue(property);
+            // Always one line (header) if null
+            if (gridVal == null)
+                return Line + EditorGUIUtility.standardVerticalSpacing;
 
             // Prefer SerializedProperty to compute UI height accurately (especially for serializable classes)
             var widthSP = property.FindPropertyRelative("_width");
@@ -70,8 +78,11 @@ namespace NekoLib.Collections
             int width = widthSP.intValue;
             int height = heightSP.intValue;
 
-            // Always at least the size line.
-            float total = Line;
+            // Always at least the header line.
+            if (!property.isExpanded)
+                return Line + EditorGUIUtility.standardVerticalSpacing; // collapsed: header only
+
+            float total = Line; // header line
 
             bool hasRows = width > 0 && height > 0;
             if (!hasRows)
@@ -85,49 +96,111 @@ namespace NekoLib.Collections
 
             float section = (SectionPad * 2) + pagerBlock + elementsBlock;
             total += VSpace + section;
-            return total;
+            return total + EditorGUIUtility.standardVerticalSpacing; // bottom spacing so following properties are not jammed
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            var gridObj = property.managedReferenceValue;
+            // Header foldout: restrict clickable/toggle area to label region only so input fields are fully interactive.
+            var headerRect = new Rect(position.x, position.y, position.width, Line);
+            float foldoutLabelWidth = Mathf.Max(EditorGUIUtility.labelWidth, GUI.skin.label.CalcSize(label).x + 18f); // include arrow padding
+            var foldoutRect = new Rect(headerRect.x, headerRect.y, foldoutLabelWidth, Line);
+            // Only toggle on the foldout arrow/label, not the entire header row
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
+
+            // Compute content rect on the same line, to the right of the foldout/label region
+            var indentedHeader = EditorGUI.IndentedRect(headerRect);
+            float contentStartX = Mathf.Min(position.x + position.width - 50f, indentedHeader.x + foldoutLabelWidth); // keep some room
+            var headerContentRect = new Rect(contentStartX, headerRect.y, position.x + position.width - contentStartX, Line);
+
+            // We'll still draw width/height on the header even when collapsed
+            bool collapsed = !property.isExpanded;
+
+            var gridObj = GetGridValue(property);
             if (gridObj == null)
             {
                 // Allow creating a new grid when null: [width] [height] [Create]
-                var content = EditorGUI.PrefixLabel(position, label);
+                var content = headerContentRect;
                 string key = property.propertyPath;
                 if (!PendingDims.TryGetValue(key, out var dims)) dims = new Vector2Int(1, 1);
 
                 float btnW = 70f;
-                float halfN = (content.width - 8f - btnW);
+                float halfN = content.width - 8f - btnW;
                 halfN *= 0.5f;
-                var wRectN = new Rect(content.x, content.y, halfN, Line);
-                var hRectN = new Rect(wRectN.xMax + 4f, content.y, halfN, Line);
+
+                var wLabelN = new GUIContent("w:", "Grid width (columns)");
+                var hLabelN = new GUIContent("h:", "Grid height (rows)");
+                float wLabWN = Mathf.Max(14f, GUI.skin.label.CalcSize(wLabelN).x);
+                float hLabWN = Mathf.Max(14f, GUI.skin.label.CalcSize(hLabelN).x);
+
+                var wLabelRectN = new Rect(content.x, content.y, wLabWN, Line);
+                var wRectN = new Rect(wLabelRectN.xMax + 2f, content.y, halfN - (wLabWN + 2f), Line);
+                var hStartXN = wRectN.xMax + 4f;
+                var hLabelRectN = new Rect(hStartXN, content.y, hLabWN, Line);
+                var hRectN = new Rect(hLabelRectN.xMax + 2f, content.y, halfN - (hLabWN + 2f), Line);
                 var bRect = new Rect(hRectN.xMax + 8f, content.y, btnW, Line);
 
-                dims.x = Mathf.Max(1, EditorGUI.IntField(wRectN, dims.x));
-                dims.y = Mathf.Max(1, EditorGUI.IntField(hRectN, dims.y));
+                // Labels with tooltips and adjacent fields (allow 0/negative temporarily for validation feedback)
+                EditorGUI.LabelField(wLabelRectN, wLabelN);
+                dims.x = EditorGUI.IntField(wRectN, dims.x);
+                EditorGUI.LabelField(hLabelRectN, hLabelN);
+                dims.y = EditorGUI.IntField(hRectN, dims.y);
                 PendingDims[key] = dims;
 
-                if (GUI.Button(bRect, "Create"))
+                bool dimsValid = dims.x > 0 && dims.y > 0;
+                string createTooltip = "Create a new Grid instance with the specified width (columns) and height (rows).";
+                var btnContent = new GUIContent("Create", createTooltip);
+
+                if (!dimsValid)
                 {
-                    var tN = fieldInfo.FieldType; // closed generic Grid<T>
-                    var ctor = tN.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(int), typeof(int) }, null);
-                    if (ctor != null)
+                    var warnRect = new Rect(content.x, content.y + Line + 2f, content.width, Line * 1.2f);
+                    EditorGUI.HelpBox(warnRect, "Width and Height must be > 0", MessageType.Warning);
+                }
+                if (CreationErrors.TryGetValue(key, out var errMsg))
+                {
+                    var errRect = new Rect(content.x, content.y + Line + (dimsValid ? 2f : Line + 6f), content.width, Line * 1.4f);
+                    EditorGUI.HelpBox(errRect, errMsg, MessageType.Error);
+                }
+
+                using (new EditorGUI.DisabledScope(!dimsValid))
+                {
+                    if (GUI.Button(bRect, btnContent))
                     {
-                        var newGrid = ctor.Invoke(new object[] { dims.x, dims.y });
-                        Undo.RecordObject(property.serializedObject.targetObject, "Create Grid");
-                        property.serializedObject.Update();
-                        property.managedReferenceValue = newGrid;
-                        property.serializedObject.ApplyModifiedProperties();
-                        PendingDims.Remove(key);
+                        try
+                        {
+                            var tN = fieldInfo.FieldType; // closed generic Grid<T>
+                            var ctor = tN.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(int), typeof(int) }, null);
+                            if (ctor == null)
+                            {
+                                CreationErrors[key] = "No (int,int) constructor found.";
+                            }
+                            else
+                            {
+                                var newGrid = ctor.Invoke(new object[] { Mathf.Max(1, dims.x), Mathf.Max(1, dims.y) }); // ensure >=1
+                                Undo.RecordObject(property.serializedObject.targetObject, "Create Grid");
+                                fieldInfo.SetValue(property.serializedObject.targetObject, newGrid); // reflection assignment for non-managed
+                                if (property.propertyType == SerializedPropertyType.ManagedReference)
+                                    property.managedReferenceValue = newGrid;
+                                property.serializedObject.Update();
+                                property.serializedObject.ApplyModifiedProperties();
+                                EditorUtility.SetDirty(property.serializedObject.targetObject);
+                                property.isExpanded = true; // auto-expand after creation for visibility
+                                PendingDims.Remove(key);
+                                CreationErrors.Remove(key);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            CreationErrors[key] = ex.Message;
+                            Debug.LogException(ex);
+                        }
                     }
                 }
 
                 EditorGUI.EndProperty();
-                return;
+                return; // for null grid we only draw the header/create row
             }
 
             var gridType = gridObj.GetType();
@@ -147,15 +220,28 @@ namespace NekoLib.Collections
             int width = widthSP.intValue;
             int height = heightSP.intValue;
 
-            // First line: label + Vector2Int-style [Width] [Height]
+            // First line below is the same header line: vector-style [w] [h] to the right of the foldout label
             var r = new Rect(position.x, position.y, position.width, Line);
-            var contentRect = EditorGUI.PrefixLabel(r, label);
+            var contentRect = headerContentRect;
             var half = (contentRect.width - 4f) * 0.5f;
-            var wRect = new Rect(contentRect.x, contentRect.y, half, Line);
-            var hRect = new Rect(contentRect.x + half + 4f, contentRect.y, half, Line);
+
+            var wLabel = new GUIContent("w:", "Grid width (columns)");
+            var hLabel = new GUIContent("h:", "Grid height (rows)");
+            float wLabW = Mathf.Max(14f, GUI.skin.label.CalcSize(wLabel).x);
+            float hLabW = Mathf.Max(14f, GUI.skin.label.CalcSize(hLabel).x);
+
+            var wLabelRect = new Rect(contentRect.x, contentRect.y, wLabW, Line);
+            var wRect = new Rect(wLabelRect.xMax + 2f, contentRect.y, half - (wLabW + 2f), Line);
+
+            float hStartX = contentRect.x + half + 4f;
+            var hLabelRect = new Rect(hStartX, contentRect.y, hLabW, Line);
+            var hRect = new Rect(hLabelRect.xMax + 2f, contentRect.y, half - (hLabW + 2f), Line);
 
             EditorGUI.BeginChangeCheck();
+            // Draw labels with tooltips right before the input fields
+            EditorGUI.LabelField(wLabelRect, wLabel);
             int newW = Mathf.Max(1, EditorGUI.IntField(wRect, width));
+            EditorGUI.LabelField(hLabelRect, hLabel);
             int newH = Mathf.Max(1, EditorGUI.IntField(hRect, height));
             if (EditorGUI.EndChangeCheck())
             {
@@ -163,8 +249,10 @@ namespace NekoLib.Collections
                 if (newGrid != null)
                 {
                     Undo.RecordObject(property.serializedObject.targetObject, "Resize Grid");
+                    fieldInfo.SetValue(property.serializedObject.targetObject, newGrid);
+                    if (property.propertyType == SerializedPropertyType.ManagedReference)
+                        property.managedReferenceValue = newGrid;
                     property.serializedObject.Update();
-                    property.managedReferenceValue = newGrid;
                     property.serializedObject.ApplyModifiedProperties();
 
                     gridObj = newGrid;
@@ -176,13 +264,18 @@ namespace NekoLib.Collections
             }
             r.y += Line + VSpace;
 
+            if (collapsed)
+            {
+                EditorGUI.EndProperty();
+                return; // only header with w/h shown when collapsed
+            }
+
             // Pager + list only when grid has rows
             if (width > 0 && height > 0)
             {
                 // Calculate section rect (help-box style) using dynamic element heights
                 string key = property.propertyPath;
-                if (!RowPage.TryGetValue(key, out int rowForHeight)) rowForHeight = 0;
-                rowForHeight = Mathf.Clamp(rowForHeight, 0, Math.Max(0, height - 1));
+                // Reserve height for pager (line + vertical padding); no extra magic offset needed now
                 float pagerBlockH = Line + (VSpace * 2);
                 float elementsBlockH = CalcElementsBlockHeight(property, dataSP, width, height);
                 float sectionHeight = (SectionPad * 2) + pagerBlockH + elementsBlockH;
@@ -190,36 +283,79 @@ namespace NekoLib.Collections
                 var sectionRect = new Rect(position.x, r.y, position.width, sectionHeight);
                 GUI.Box(sectionRect, GUIContent.none, EditorStyles.helpBox);
 
+                // Context menu (right-click) on header or section to clear grid
+
                 // Inner content rect
                 var inner = new Rect(sectionRect.x + SectionPad, sectionRect.y + SectionPad, sectionRect.width - (SectionPad * 2), sectionRect.height - (SectionPad * 2));
 
-                // Pager with small spacing above/below
+                // Pager with small spacing above/below — draw with immediate mode (no GUILayout) to keep layout isolated
                 var pager = inner;
-                pager.height = Line;
+                pager.height = pagerBlockH; // use the same reserved height used for section sizing
 
-                // Persist and clamp row
                 if (!RowPage.TryGetValue(key, out int row)) row = 0;
                 row = Mathf.Clamp(row, 0, Math.Max(0, height - 1));
 
-                // Center Prev | Row x/y | Next
-                var labelText = $"Row {row + 1}/{Math.Max(1, height)}";
-                float labelW = GUI.skin.label.CalcSize(new GUIContent(labelText)).x + 8f;
-                float btnW = 60f;
-                float totalW = btnW + 8f + labelW + 8f + btnW;
-                float startX = pager.x + (pager.width - totalW) * 0.5f;
+                // Left: total items label; Right: navigation cluster "◀ [n] / total ▶"
+                int totalItems = Mathf.Max(0, width * height);
+                string countLabel = $"{totalItems} {(totalItems == 1 ? "Item" : "Items")}";
+                float countW = Mathf.Max(60f, GUI.skin.label.CalcSize(new GUIContent(countLabel)).x);
+                float btnW = 22f;
+                float fieldW = 22f;
+                float space = 4f;
+                float totalLabelW = GUI.skin.label.CalcSize(new GUIContent($"/ {height}")).x;
+                float clusterW = btnW + space + fieldW + space + totalLabelW + space + btnW;
 
-                var prevRect = new Rect(startX, pager.y, btnW, Line);
-                var infoRect = new Rect(prevRect.xMax + 8f, pager.y, labelW, Line);
-                var nextRect = new Rect(infoRect.xMax + 8f, pager.y, btnW, Line);
+                float y = pager.y + VSpace;
+                // Left-aligned total label (dimmed)
+                var countRect = new Rect(pager.x, y, countW, Line);
+                var prevColor = GUI.color;
+                GUI.color = new Color(prevColor.r, prevColor.g, prevColor.b, 0.7f);
+                EditorGUI.LabelField(countRect, countLabel, EditorStyles.miniLabel);
+                GUI.color = prevColor;
 
-                if (GUI.Button(prevRect, "Prev")) row = Mathf.Max(0, row - 1);
-                GUI.Label(infoRect, labelText, EditorStyles.label);
-                if (GUI.Button(nextRect, "Next")) row = Mathf.Min(Math.Max(0, height - 1), row + 1);
+                // Right-aligned nav cluster
+                float startX = pager.x + pager.width - clusterW;
+                // Ensure some gap from the left label if space is tight
+                float minStart = countRect.xMax + 8f;
+                if (startX < minStart) startX = minStart;
+
+                var prevRect = new Rect(startX, y, btnW, Line);
+                var pageRect = new Rect(prevRect.xMax + space, y, fieldW, Line);
+                var totalRect = new Rect(pageRect.xMax + space, y, totalLabelW, Line);
+                var nextRect = new Rect(totalRect.xMax + space, y, btnW, Line);
+
+                using (new EditorGUI.DisabledScope(row <= 0))
+                {
+                    if (GUI.Button(prevRect, "\u25C0", EditorStyles.miniButton)) // ◀
+                        row = Mathf.Max(0, row - 1);
+                }
+
+                string pageText = (row + 1).ToString();
+                var tfStyle = new GUIStyle(EditorStyles.miniTextField)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fixedHeight = Line
+                };
+                string newText = EditorGUI.TextField(pageRect, pageText, tfStyle);
+                if (newText != pageText && int.TryParse(newText, out int pageNum))
+                {
+                    if (pageNum >= 1 && pageNum <= height)
+                        row = pageNum - 1;
+                }
+
+                EditorGUI.LabelField(totalRect, $"/ {height}", EditorStyles.miniLabel);
+
+                using (new EditorGUI.DisabledScope(row >= height - 1))
+                {
+                    if (GUI.Button(nextRect, "\u25B6", EditorStyles.miniButton)) // ▶
+                        row = Mathf.Min(Math.Max(0, height - 1), row + 1);
+                }
                 RowPage[key] = row;
 
                 // Move below pager with tiny spacing
                 var listRect = inner;
-                listRect.y = pager.y + Line + VSpace;
+                // Place list below the actual pager height
+                listRect.y = pager.y + pager.height + VSpace;
                 listRect.height = inner.yMax - listRect.y;
                 listRect.x += ListLeftMargin;
                 listRect.width -= ListLeftMargin;
@@ -251,28 +387,6 @@ namespace NekoLib.Collections
                     if (elemProp != null)
                     {
                         EditorGUI.PropertyField(lineRect, elemProp, new GUIContent($"Element [{xi}]"), includeChildren: true);
-                        // If this is a non-Unity class element and it's currently null, offer a small inline "New" button
-                        if (t.IsClass && !typeof(UnityEngine.Object).IsAssignableFrom(t) && (currentVal == null))
-                        {
-                            var btnRect = new Rect(lineRect.xMax - 54f, lineRect.y, 50f, Line);
-                            if (GUI.Button(btnRect, "New"))
-                            {
-                                try
-                                {
-                                    var inst = Activator.CreateInstance(t);
-                                    if (TrySetCell(gridObj, gridType, t, xi, row, inst))
-                                    {
-                                        Undo.RecordObject(property.serializedObject.targetObject, "Create Element");
-                                        property.serializedObject.Update();
-                                        property.serializedObject.ApplyModifiedProperties();
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.LogException(e);
-                                }
-                            }
-                        }
                     }
                     else
                     {
@@ -285,6 +399,10 @@ namespace NekoLib.Collections
 
                 // Advance r.y below the section
                 r.y = sectionRect.yMax + VSpace;
+            }
+            else
+            {
+                // Provide context menu even for empty grid structure (width/height zero) on header
             }
 
             EditorGUI.EndProperty();
