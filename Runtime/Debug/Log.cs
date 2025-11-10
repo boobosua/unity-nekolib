@@ -55,5 +55,17 @@ namespace NekoLib.Logger
         /// </summary>
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD"), Conditional("NEKOLIB_LOG")]
         public static void Exception(Exception exception, Object context) => Debug.LogException(exception, context);
+
+        /// <summary>
+        /// Asserts a condition and logs a message if the assertion fails.
+        /// </summary>
+        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD"), Conditional("NEKOLIB_LOG")]
+        public static void Assert(bool condition, string message = "Assertion failed!") => Debug.Assert(condition, message);
+
+        /// <summary>
+        /// Asserts a condition with a context object to ping/select in the Unity Console if the
+        /// assertion fails.
+        [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD"), Conditional("NEKOLIB_LOG")]
+        public static void Assert(bool condition, string message, Object context) => Debug.Assert(condition, message, context);
     }
 }
