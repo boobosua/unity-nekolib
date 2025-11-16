@@ -94,15 +94,8 @@ namespace NekoLib.Core
                 var stats = CalculateStatistics(allTimers);
 
                 // Draw tabs with better styling
-                var originalStyle = GUI.skin.button;
-                var tabStyle = new GUIStyle(originalStyle)
-                {
-                    fontSize = 12,
-                    fixedHeight = 22
-                };
-
-                _selectedTab = GUILayout.Toolbar(_selectedTab, _tabNames, tabStyle);
-                EditorGUILayout.Space(4);
+                _selectedTab = NekoEditorTabBar.Draw(_selectedTab, _tabNames, 24f);
+                EditorGUILayout.Space(2);
 
                 // Draw table content without margins to match tab width
                 EditorGUILayout.BeginVertical();
