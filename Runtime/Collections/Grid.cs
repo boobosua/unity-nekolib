@@ -12,6 +12,9 @@ namespace NekoLib.Collections
     /// Lightweight, cache-friendly 2D grid backed by a flat array.
     /// </summary>
     [DebuggerDisplay("Grid<{typeof(T).Name}>({Width}x{Height})")]
+#if ODIN_INSPECTOR
+    [Sirenix.OdinInspector.DrawWithUnity]
+#endif
     public sealed class Grid<T> : IEnumerable<T>
     {
         // Unity persistence: allow SerializeReference to persist dimensions and data.
