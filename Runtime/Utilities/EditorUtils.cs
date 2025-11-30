@@ -4,7 +4,6 @@ using UnityEngine;
 using NekoLib.Core;
 using NekoLib.Logger;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

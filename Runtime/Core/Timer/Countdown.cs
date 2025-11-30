@@ -85,6 +85,20 @@ namespace NekoLib.Core
             _loopStopCondition = null;
         }
 
+        /// <summary>
+        /// Internal method to reinitialize a pooled countdown timer.
+        /// </summary>
+        internal void ReInitialize(MonoBehaviour ownerComponent, float totalTime)
+        {
+            ReInitializeBase(ownerComponent);
+            _totalTime = totalTime.AtLeast(0f);
+            _loopType = LoopType.None;
+            _loopCount = 0;
+            _currentLoopIteration = 0;
+            _loopStopCondition = null;
+            OnLoop = null;
+        }
+
         public override void Start()
         {
             _elapsedTime = _totalTime;

@@ -10,12 +10,12 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Creates a new Countdown timer owned by this MonoBehaviour.
         /// </summary>
-        public static Countdown CreateCountdown(this MonoBehaviour monoBehaviour, float duration)
+        public static Countdown GetCountdown(this MonoBehaviour monoBehaviour, float duration)
         {
             if (monoBehaviour == null)
                 throw new ArgumentNullException(nameof(monoBehaviour));
 
-            return new Countdown(monoBehaviour, duration);
+            return TimerPlayerLoopDriver.GetCountdown(monoBehaviour, duration);
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration)
         {
-            var countdown = CreateCountdown(monoBehaviour, duration);
+            var countdown = GetCountdown(monoBehaviour, duration);
             countdown.Start();
             return countdown;
         }
@@ -33,7 +33,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration, Func<bool> updateWhen)
         {
-            var countdown = CreateCountdown(monoBehaviour, duration);
+            var countdown = GetCountdown(monoBehaviour, duration);
             if (updateWhen != null)
             {
                 countdown.SetUpdateWhen(updateWhen);
@@ -45,12 +45,12 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Creates a new Stopwatch timer owned by this MonoBehaviour.
         /// </summary>
-        public static Stopwatch CreateStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
+        public static Stopwatch GetStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
         {
             if (monoBehaviour == null)
                 throw new ArgumentNullException(nameof(monoBehaviour));
 
-            return new Stopwatch(monoBehaviour, stopCondition);
+            return TimerPlayerLoopDriver.GetStopwatch(monoBehaviour, stopCondition);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static Stopwatch StartStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
         {
-            var stopwatch = CreateStopwatch(monoBehaviour, stopCondition);
+            var stopwatch = GetStopwatch(monoBehaviour, stopCondition);
             stopwatch.Start();
             return stopwatch;
         }
@@ -66,19 +66,19 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Invokes the specified action after a delay.
         /// </summary>
-        public static void InvokeDelayed(this MonoBehaviour monoBehaviour, float delay, Action action, bool useUnscaledTime = false)
+        public static void InvokeAfterDelay(this MonoBehaviour monoBehaviour, float delay, Action action, bool useUnscaledTime = false)
         {
             if (monoBehaviour == null)
                 throw new ArgumentNullException(nameof(monoBehaviour));
 
             if (delay <= 0f)
             {
-                Log.Warn("InvokeAfter called with non-positive delay. Invoking action immediately.");
+                Log.Warn("InvokeAfterDelay called with non-positive delay. Invoking action immediately.");
                 action?.Invoke();
                 return;
             }
 
-            var countdown = CreateCountdown(monoBehaviour, delay);
+            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, delay);
 
             if (useUnscaledTime)
             {
@@ -123,7 +123,7 @@ namespace NekoLib.Extensions
                 Log.Warn("Interval too small for InvokeEvery. Consider using Update() or FixedUpdate() instead.");
             }
 
-            var countdown = CreateCountdown(monoBehaviour, interval);
+            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, interval);
 
             if (useUnscaledTime)
             {
@@ -156,7 +156,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Invokes the specified action repeatedly at the given interval in seconds.
         /// </summary>
-        public static IDisposable TickEverySeconds(this MonoBehaviour monoBehaviour, int intervalSeconds, int durationSeconds, Action<int> onTick, Action onStop, Func<bool> updateWhen = null, bool useUnscaledTime = false)
+        public static IDisposable InvokeEverySeconds(this MonoBehaviour monoBehaviour, int intervalSeconds, int durationSeconds, Action<int> onTick, Action onStop, Func<bool> updateWhen = null, bool useUnscaledTime = false)
         {
             if (monoBehaviour == null)
                 throw new ArgumentNullException(nameof(monoBehaviour));
@@ -172,7 +172,7 @@ namespace NekoLib.Extensions
             }
 
             var elapsedSeconds = 0;
-            var countdown = CreateCountdown(monoBehaviour, intervalSeconds);
+            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, intervalSeconds);
 
             countdown.SetLoop();
 
@@ -226,32 +226,6 @@ namespace NekoLib.Extensions
 
             countdown.Start();
             return countdown;
-        }
-
-        /// <summary>
-        /// Stops and removes all timers owned by this MonoBehaviour's GameObject.
-        /// </summary>
-        public static void CleanupTimers(this MonoBehaviour monoBehaviour)
-        {
-            if (monoBehaviour == null) return;
-
-            if (monoBehaviour.TryGetComponent<TimerRegistry>(out var timerRegistry))
-            {
-                timerRegistry.CleanUpForObject(monoBehaviour.gameObject);
-            }
-        }
-
-        /// <summary>
-        /// Stops and removes all timers owned by this MonoBehaviour component.
-        /// </summary>
-        public static void CleanupComponentTimers(this MonoBehaviour monoBehaviour)
-        {
-            if (monoBehaviour == null) return;
-
-            if (monoBehaviour.TryGetComponent<TimerRegistry>(out var timerRegistry))
-            {
-                timerRegistry.CleanUpForComponent(monoBehaviour);
-            }
         }
     }
 }

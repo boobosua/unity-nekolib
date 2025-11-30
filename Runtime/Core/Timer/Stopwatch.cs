@@ -17,6 +17,15 @@ namespace NekoLib.Core
         }
 
         /// <summary>
+        /// Internal method to reinitialize a pooled stopwatch timer.
+        /// </summary>
+        internal void ReInitialize(MonoBehaviour ownerComponent, Func<bool> stopCondition)
+        {
+            ReInitializeBase(ownerComponent);
+            _stopCondition = stopCondition;
+        }
+
+        /// <summary>
         /// Starts the stopwatch.
         /// </summary>
         public override void Start()

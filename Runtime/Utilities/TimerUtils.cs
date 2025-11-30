@@ -1,13 +1,19 @@
 using System;
+using NekoLib.Core;
 using UnityEngine;
 
-namespace NekoLib.Core
+namespace NekoLib.Utilities
 {
-    /// <summary>
-    /// Factory class for creating timers with fluent builder pattern.
-    /// </summary>
-    public static class TimerFactory
+    public static partial class Utils
     {
+        /// <summary>
+        /// Enables pooling for Countdown and Stopwatch timers to reduce memory allocations.
+        /// </summary>
+        public static void EnableTimerPooling(int maxPoolSize = 128)
+        {
+            TimerPlayerLoopDriver.EnablePooling(maxPoolSize);
+        }
+
         /// <summary>
         /// Starts building a Countdown timer.
         /// </summary>
@@ -134,7 +140,7 @@ namespace NekoLib.Core
         /// </summary>
         public Countdown Build()
         {
-            var countdown = new Countdown(_owner, _duration);
+            var countdown = TimerPlayerLoopDriver.GetCountdown(_owner, _duration);
 
             if (_useUnscaledTime)
                 countdown.SetUnscaledTime();
@@ -221,7 +227,7 @@ namespace NekoLib.Core
         /// </summary>
         public Stopwatch Build()
         {
-            var stopwatch = new Stopwatch(_owner, _stopCondition);
+            var stopwatch = TimerPlayerLoopDriver.GetStopwatch(_owner, _stopCondition);
 
             if (_useUnscaledTime)
                 stopwatch.SetUnscaledTime();

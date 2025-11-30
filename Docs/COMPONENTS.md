@@ -41,17 +41,3 @@ orbit.Target = playerTransform;
 orbit.Distance = 5f;
 // Orbits around player
 ```
-
-### Ticker
-
-Versatile timer component with events.
-
-```csharp
-var ticker = GetComponent<Ticker>();
-ticker.OnTimeOut.AddListener(() => Debug.Log("Timer finished!"));
-ticker.StartTimer(10f);
-
-// Check progress
-float progress = ticker.Progress; // 0.0 to 1.0
-string time = ticker.ClockFormat; // "00:00:05"
-```

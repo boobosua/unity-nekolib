@@ -13,8 +13,9 @@ namespace NekoLib.Core
         protected Func<bool> _updateCondition = null;
 
         protected float _elapsedTime;
-        private readonly GameObject _owner;
-        private readonly MonoBehaviour _ownerComponent;
+        private GameObject _owner;
+        private MonoBehaviour _ownerComponent;
+        private bool _disposed;
         public float RemainTime => _elapsedTime;
         public GameObject Owner => _owner;
         public MonoBehaviour OwnerComponent => _ownerComponent;
@@ -93,17 +94,42 @@ namespace NekoLib.Core
         protected TimerBase(MonoBehaviour ownerComponent)
         {
             if (ownerComponent == null)
-            {
                 throw new ArgumentNullException(nameof(ownerComponent), "Timer owner component cannot be null");
-            }
 
             _ownerComponent = ownerComponent;
             _owner = ownerComponent.gameObject;
             _useUnscaledTime = false;
             IsRunning = false;
             _updateCondition = null;
+            _disposed = false;
 
-            ownerComponent.GetOrAdd<TimerRegistry>().RegisterTimer(this);
+            // Register immediately with the global driver
+            TimerPlayerLoopDriver.Register(this);
+        }
+
+        /// <summary>
+        /// Internal method to reinitialize a pooled timer with a new owner.
+        /// </summary>
+        internal void ReInitializeBase(MonoBehaviour ownerComponent)
+        {
+            if (ownerComponent == null)
+                throw new ArgumentNullException(nameof(ownerComponent), "Timer owner component cannot be null");
+
+            _ownerComponent = ownerComponent;
+            _owner = ownerComponent.gameObject;
+
+            _elapsedTime = 0f;
+            _useUnscaledTime = false;
+            IsRunning = false;
+            _updateCondition = null;
+
+            OnStart = null;
+            OnUpdate = null;
+            OnStop = null;
+            _disposed = false;
+
+            // Re-register after reinitialization
+            TimerPlayerLoopDriver.Register(this);
         }
 
         /// <summary>
@@ -146,7 +172,7 @@ namespace NekoLib.Core
         }
 
         /// <summary>
-        /// Stops the timer and removes it from the TimerRegistry.
+        /// Stops the timer and unregisters it from the global timer driver.
         /// </summary>
         public void StopAndDestroy(bool invokeStopEvent = true)
         {
@@ -192,6 +218,8 @@ namespace NekoLib.Core
 
         public virtual void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
             IsRunning = false;
 
             OnStart = null;
@@ -200,7 +228,8 @@ namespace NekoLib.Core
 
             _updateCondition = null;
 
-            _ownerComponent.GetOrAdd<TimerRegistry>().UnregisterTimer(this);
+            // Unregister from driver; driver will remove on next cycle or immediately if not updating
+            TimerPlayerLoopDriver.Unregister(this);
         }
     }
 }

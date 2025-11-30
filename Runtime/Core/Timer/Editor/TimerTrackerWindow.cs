@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NekoLib.Extensions;
+using NekoLib.Logger;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,14 +10,14 @@ namespace NekoLib.Core
 {
     public class TimerTrackerWindow : EditorWindow
     {
-        [MenuItem("Window/Neko Indie/Timer Tracker")]
+        [MenuItem("Window/Neko Framework/Timer Tracker")]
         public static void ShowWindow()
         {
             GetWindow<TimerTrackerWindow>("Timer Tracker");
         }
 
         private int _selectedTab = 0;
-        private readonly string[] _tabNames = { "Countdowns", "Stopwatches" };
+        private readonly string[] _tabNames = { "Countdowns", "Stopwatches", "Pooling" };
 
         // Pagination (compact style via EditorPagination utility)
         private const int ITEMS_PER_PAGE = 20; // enforce 20 items per page
@@ -58,7 +59,6 @@ namespace NekoLib.Core
         {
             try
             {
-
                 // Check if we just exited play mode and cleanup
                 if (_wasPlaying && !Application.isPlaying)
                 {
@@ -78,7 +78,7 @@ namespace NekoLib.Core
 
                 EditorGUILayout.Space(4);
 
-                // Get timer data from all TimerRegistry components in the scene
+                // Get timer data from the global PlayerLoop driver
                 var allTimers = GetAllTimers();
                 var countdowns = allTimers.OfType<Countdown>().ToList();
                 var stopwatches = allTimers.OfType<Stopwatch>().ToList();
@@ -97,33 +97,43 @@ namespace NekoLib.Core
                 _selectedTab = NekoEditorTabBar.Draw(_selectedTab, _tabNames, 24f);
                 EditorGUILayout.Space(2);
 
-                // Draw table content without margins to match tab width
-                EditorGUILayout.BeginVertical();
-
-                // Draw Excel-like table
-                _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-                try
+                // Handle Pooling tab separately (full-page view)
+                bool poolingEnabled = TimerPlayerLoopDriver.IsPoolingEnabled;
+                if (_selectedTab == 2)
                 {
-                    if (_selectedTab == 0)
-                    {
-                        DrawCountdownTable(countdowns);
-                    }
-                    else
-                    {
-                        DrawStopwatchTable(stopwatches);
-                    }
+                    // Prevent visual overlap: reset scroll for pooling page
+                    _scrollPosition = Vector2.zero;
+
+                    DrawPoolingFullPage(countdowns.Count, stopwatches.Count);
                 }
-                finally
+                else
                 {
-                    EditorGUILayout.EndScrollView();
+                    // Draw table content without margins to match tab width
+                    EditorGUILayout.BeginVertical();
+
+                    // Draw Excel-like table
+                    _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+                    try
+                    {
+                        if (_selectedTab == 0)
+                        {
+                            DrawCountdownTable(countdowns);
+                        }
+                        else
+                        {
+                            DrawStopwatchTable(stopwatches);
+                        }
+                    }
+                    finally
+                    {
+                        EditorGUILayout.EndScrollView();
+                    }
+
+                    EditorGUILayout.EndVertical();
+
+                    EditorGUILayout.Space(6);
+                    DrawStatisticsPanel(stats, allTimers.Count);
                 }
-
-                EditorGUILayout.EndVertical();
-
-                EditorGUILayout.Space(6);
-
-                // Draw statistics at the bottom
-                DrawStatisticsPanel(stats, allTimers.Count);
 
                 // Auto-refresh
                 if (Application.isPlaying)
@@ -134,30 +144,17 @@ namespace NekoLib.Core
             catch (System.Exception e)
             {
                 GUIUtility.ExitGUI();
-                Debug.LogError($"[TimerTracker] OnGUI Error: {e}");
+                Log.Error($"[TimerTracker] OnGUI Error: {e}");
             }
         }
 
         private List<TimerBase> GetAllTimers()
         {
-            var timers = new List<TimerBase>();
-
             if (!Application.isPlaying)
-                return timers;
+                return new List<TimerBase>();
 
-            // Find all TimerRegistry components in the scene
-            var timerRegistries = Object.FindObjectsByType<TimerRegistry>(FindObjectsSortMode.None);
-
-            foreach (var registry in timerRegistries)
-            {
-                if (registry != null)
-                {
-                    var activeTimers = registry.GetActiveTimers();
-                    timers.AddRange(activeTimers);
-                }
-            }
-
-            return timers;
+            // Read directly from the global PlayerLoop driver
+            return TimerPlayerLoopDriver.GetActiveTimersSnapshot();
         }
 
         private void DrawCountdownTable(List<Countdown> countdowns)
@@ -370,7 +367,7 @@ namespace NekoLib.Core
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[TimerTracker] Error drawing countdown row: {e}");
+                Log.Error($"[TimerTracker] Error drawing countdown row: {e}");
             }
         }
 
@@ -434,7 +431,7 @@ namespace NekoLib.Core
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[TimerTracker] Error drawing stopwatch row: {e}");
+                Log.Error($"[TimerTracker] Error drawing stopwatch row: {e}");
             }
         }
 
@@ -673,6 +670,53 @@ namespace NekoLib.Core
             labelStyle.normal.textColor = Color.Lerp(textColor, Color.gray, 0.3f);
 
             GUI.Label(new Rect(cardRect.x, cardRect.y + 28, cardRect.width, 14), label, labelStyle);
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawPoolingFullPage(int activeCountdowns, int activeStopwatches)
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            // Title
+            var titleStyle = new GUIStyle(EditorStyles.miniBoldLabel)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 0)
+            };
+            EditorGUILayout.LabelField("Pooling", titleStyle, GUILayout.Height(20));
+            EditorGUILayout.Space(4);
+
+            if (!TimerPlayerLoopDriver.IsPoolingEnabled)
+            {
+                // Gray-out look: big info box
+                EditorGUILayout.HelpBox("Pooling is not enabled. Call `TimerConfig.EnablePooling(...)` at startup to use pooling.", MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
+            // Top summary cards
+            EditorGUILayout.BeginHorizontal();
+            var defaultColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
+            DrawStatCard("Active", TimerPlayerLoopDriver.ActiveTimerCount, defaultColor, RUNNING_BLUE);
+            DrawStatCard("CD Pool", TimerPlayerLoopDriver.CountdownPoolCount, defaultColor, COMPLETED_GREEN);
+            DrawStatCard("SW Pool", TimerPlayerLoopDriver.StopwatchPoolCount, defaultColor, COMPLETED_GREEN);
+            DrawStatCard("Max Pool", TimerPlayerLoopDriver.MaxPoolSize, defaultColor, ZEBRA_STRIPE);
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(6);
+
+            // Details section
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Details", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Active Countdowns: {activeCountdowns}");
+            EditorGUILayout.LabelField($"Active Stopwatches: {activeStopwatches}");
+            EditorGUILayout.LabelField($"Countdown Pool Available: {TimerPlayerLoopDriver.CountdownPoolCount}");
+            EditorGUILayout.LabelField($"Stopwatch Pool Available: {TimerPlayerLoopDriver.StopwatchPoolCount}");
+            EditorGUILayout.LabelField($"Max Pool Size (per type approx.): {TimerPlayerLoopDriver.MaxPoolSize}");
+            EditorGUILayout.EndVertical();
 
             EditorGUILayout.EndVertical();
         }

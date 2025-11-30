@@ -32,16 +32,20 @@ AudioManager.Instance.PlayMusic(backgroundMusic);
 
 ### Creating Timers
 
+Use the fluent builders exposed via `Utils` in `NekoLib.Utilities`.
+
 ```csharp
-// Countdown timer
-var countdown = TimerFactory.CreateCountdown(this)
+using NekoLib.Utilities; // namespace for Utils
+
+// Countdown timer (loops 3 times, only updates when not paused)
+var countdown = Utils.CreateCountdown(this)
     .SetDuration(10f)
     .SetLoop(3)
-    .SetUpdateWhen(() => !isPaused) // Conditional updates
+    .SetUpdateWhen(() => !isPaused)
     .Build();
 
-// Stopwatch timer
-var stopwatch = TimerFactory.CreateStopwatch(this)
+// Stopwatch timer (auto stops when gameIsOver && only updates in active state)
+var stopwatch = Utils.CreateStopwatch(this)
     .SetStopCondition(() => gameIsOver)
     .SetUpdateWhen(() => isActiveState)
     .Build();
@@ -66,6 +70,45 @@ countdown.Stop();
 // Conditional updates - timer only ticks when condition is true
 timer.SetUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
+
+### Invoke Helpers
+
+Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Extensions`) that schedule actions via the PlayerLoop timer system — no coroutines required.
+
+```csharp
+using NekoLib.Extensions;
+
+// Invoke once after a delay (scaled or unscaled time)
+this.InvokeAfterDelay(2f, () => Debug.Log("Fired after 2s"));
+this.InvokeAfterDelay(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
+
+// Repeated invoke every interval (returns IDisposable -> Dispose to stop)
+IDisposable handle = this.InvokeEvery(1f, () => Debug.Log("Tick each second"));
+handle.Dispose(); // stops
+
+// Invoke on whole-second ticks for a total duration
+this.InvokeEverySeconds(
+    intervalSeconds: 1,
+    durationSeconds: 10,
+    onTick: sec => Debug.Log($"Tick {sec}s"),
+    onStop: () => Debug.Log("Finished 10s")
+);
+
+// Stopwatch convenience via extensions
+var sw = this.GetStopwatch();          // create
+sw.OnUpdate += t => Debug.Log($"Elapsed: {t:F2}s");
+sw.Start();
+// ... later
+float elapsed = sw.StopAndGetTime();   // returns seconds
+sw.Dispose();                          // return to pool if pooling enabled
+```
+
+Notes:
+
+- All helpers use the PlayerLoop-driven `TimerPlayerLoopDriver` (no MonoBehaviour `Update`).
+- Enable pooling at startup: `Utils.EnableTimerPooling(256);` (namespace `NekoLib.Utilities`).
+- `TimerFactory` and `TimerConfig` were removed; migrate to `Utils.CreateCountdown(...)` / `Utils.CreateStopwatch(...)` and `Utils.EnableTimerPooling(...)`.
+- Dispose timers you no longer need to minimize the Active list and leverage pooling.
 
 ### Color Swatch
 

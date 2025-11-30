@@ -1,3 +1,11 @@
+## [1.9.14] - 2025-12-01
+
+### Timer Pooling Enhancements
+
+- Add diagnostics to monitor timer pooling status in the editor.
+- Overhaul timer system to using PlayerLoopDriver for better performance and management.
+- Improve timer pooling mechanism to reduce garbage collection and enhance performance.
+
 ## [1.9.12] - 2025-11-10
 
 ### Major Timer Extension Updates

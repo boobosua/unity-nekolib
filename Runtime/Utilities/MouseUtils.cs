@@ -79,11 +79,5 @@ namespace NekoLib.Utilities
 
             return cam.ScreenPointToRay(Input.mousePosition);
         }
-
-        [Obsolete("Use IsMouseInGameWindow() instead.")]
-        public static bool IsMouseOverGameWindow => IsMouseInGameWindow();
-
-        [Obsolete("Use GetMousePosition2D() instead.")]
-        public static Vector2 MouseWorldPosition => GetMousePosition2D();
     }
 }
