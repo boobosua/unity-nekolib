@@ -10,6 +10,7 @@ namespace NekoLib.Core
     /// <summary>
     /// Internal driver that integrates timers into Unity's PlayerLoop for efficient updating.
     /// </summary>
+    [UnityEngine.Scripting.Preserve]
     internal static class TimerPlayerLoopDriver
     {
         // Configuration
