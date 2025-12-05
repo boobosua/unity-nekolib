@@ -34,7 +34,7 @@ namespace NekoLib
         private static VisualElement containerRef;
 
         // Startup scene override (integrated formerly separate tool)
-        private const string PrefStartupPath = "NekoLib:StartupScenePath";
+        private const string PrefStartupPath = "NekoLib:StartupScenePath"; // legacy (EditorPrefs)
         private static string startupScenePath;            // stored path for marked startup scene
         private static bool playSwitched;                  // did we switch on play enter
         private static string originalSceneBeforePlay;     // path to restore after play
@@ -50,7 +50,7 @@ namespace NekoLib
             {
                 RefreshSceneList();
                 // Install on startup unless the global HideToolbar preference is set
-                try { if (!NekoLibPreferences.HideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
+                try { if (!NekoLibSettings.GetOrCreate().hideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
                 LoadStartupPrefs();
                 // Recover persisted session info (domain reload safety)
                 if (string.IsNullOrEmpty(originalSceneBeforePlay))
@@ -76,7 +76,7 @@ namespace NekoLib
         private static void TryInstall()
         {
             // If global HideToolbar is enabled, don't install
-            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
+            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
             if (initialized) return;
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
@@ -148,7 +148,7 @@ namespace NekoLib
             }
             containerRef = null;
             // Re-register install attempt if preference re-enabled later
-            if (!NekoLibPreferences.HideToolbar)
+            if (!NekoLibSettings.GetOrCreate().hideToolbar)
             {
                 EditorApplication.update += TryInstall;
             }
@@ -480,12 +480,24 @@ namespace NekoLib
         // --- Startup Scene Override Logic ---
         private static void LoadStartupPrefs()
         {
-            startupScenePath = EditorPrefs.GetString(PrefStartupPath, string.Empty);
+            // Project-scoped PlayMode start scene only
+            var startScene = EditorSceneManager.playModeStartScene;
+            if (startScene != null)
+            {
+                var startPath = AssetDatabase.GetAssetPath(startScene);
+                startupScenePath = startPath;
+            }
+            else
+            {
+                startupScenePath = string.Empty;
+            }
+
             if (!string.IsNullOrEmpty(startupScenePath) && !System.IO.File.Exists(startupScenePath))
             {
                 // scene was removed
                 startupScenePath = string.Empty;
-                EditorPrefs.DeleteKey(PrefStartupPath);
+                // Clear Unity start scene
+                EditorSceneManager.playModeStartScene = null;
             }
         }
 
@@ -500,7 +512,7 @@ namespace NekoLib
                 if (active.IsValid() && !string.IsNullOrEmpty(active.path))
                 {
                     startupScenePath = active.path;
-                    EditorPrefs.SetString(PrefStartupPath, startupScenePath);
+                    PersistStartupScenePath(startupScenePath);
                 }
             }
             else
@@ -509,18 +521,36 @@ namespace NekoLib
                 {
                     // Switch mark to current scene instead of unmarking
                     startupScenePath = active.path;
-                    EditorPrefs.SetString(PrefStartupPath, startupScenePath);
+                    PersistStartupScenePath(startupScenePath);
                 }
                 else
                 {
                     startupScenePath = string.Empty;
-                    EditorPrefs.DeleteKey(PrefStartupPath);
+                    // Clear Unity start scene
+                    EditorSceneManager.playModeStartScene = null;
+                    // Mirror clear into NekoLibSettings asset
+                    var settings = NekoLibSettings.GetOrCreate();
+                    settings.startupScenePath = string.Empty;
+                    EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
                 }
             }
 #if UNITY_2020_1_OR_NEWER
             PopulateToolbarMenu();
 #endif
             #endregion
+        }
+
+        private static void PersistStartupScenePath(string path)
+        {
+            // Persist via Unity's built-in project-scoped PlayMode start scene
+            var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
+            EditorSceneManager.playModeStartScene = sceneAsset;
+            // Mirror into NekoLibSettings asset for project-scoped visibility
+            var settings = NekoLibSettings.GetOrCreate();
+            settings.startupScenePath = path;
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
         }
 
         private static string StartupSceneName()

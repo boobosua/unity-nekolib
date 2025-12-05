@@ -33,7 +33,7 @@ namespace NekoLib
         {
             if (installed) return;
             // Respect global HideToolbar preference (default: hidden)
-            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
+            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null)
             {
@@ -256,12 +256,12 @@ namespace NekoLib
             if (!confirmed) return;
 
             bool domainReloadDisabled = NekoLib.Utilities.Utils.IsReloadDomainDisabled();
-            bool autoReenter = NekoLibPreferences.AutoReenterPlayAfterClear;
+            bool autoReenter = NekoLibSettings.GetOrCreate().autoReenterPlayAfterClear;
 
             if (!EditorApplication.isPlaying)
             {
                 PerformClear();
-                bool willReenter = NekoLibPreferences.AutoReenterPlayAfterClear && SessionState.GetBool(RequestedFromPlayKey, false);
+                bool willReenter = NekoLibSettings.GetOrCreate().autoReenterPlayAfterClear && SessionState.GetBool(RequestedFromPlayKey, false);
                 if (domainReloadDisabled)
                 {
                     // Domain reload disabled: explicitly request a reload now per spec

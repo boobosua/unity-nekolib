@@ -15,7 +15,7 @@ namespace NekoLib
         private const string PrefStoredValue = "NekoLib:TimeScaleValue";      // kept for backward compatibility (not authoritative anymore)
         private const float DefaultTimeScale = 1f;
         private const float MinTimeScale = 0f;
-        private static float MaxTimeScale => Mathf.Max(10f, (float)NekoLibPreferences.TimeScaleMax);
+        private static float MaxTimeScale => Mathf.Max(10f, (float)NekoLibSettings.GetOrCreate().timeScaleMax);
 
         private static bool installed;
         private static VisualElement rootContainer;
@@ -42,7 +42,7 @@ namespace NekoLib
 
         private static void EnsureInstall()
         {
-            try { if (NekoLibPreferences.HideToolbar) return; } catch { }
+            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
             if (installed) return;
             var toolbarRoot = ToolbarUtils.GetToolbarRoot();
             if (toolbarRoot == null)
@@ -251,6 +251,22 @@ namespace NekoLib
             lastAppliedTimeScale = v;
             valueLabel.text = FormatValue(v);
             PushValueToTimeManager();
+            ApplyTimeScaleRuntimeOnly();
+        }
+
+        internal static void RefreshFromSettings()
+        {
+            // Called when project settings change to update slider bounds and clamp current
+            float newMax = MaxTimeScale;
+            if (timeSlider != null)
+            {
+                timeSlider.highValue = newMax;
+                timeSlider.lowValue = MinTimeScale;
+                float clamped = Mathf.Clamp(lastAppliedTimeScale, MinTimeScale, newMax);
+                lastAppliedTimeScale = clamped;
+                timeSlider.SetValueWithoutNotify(clamped);
+            }
+            if (valueLabel != null) valueLabel.text = FormatValue(lastAppliedTimeScale);
             ApplyTimeScaleRuntimeOnly();
         }
 
