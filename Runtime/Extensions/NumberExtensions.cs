@@ -80,7 +80,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Returns true if a random roll succeeds based on the probability rate.
         /// </summary>
-        public static bool RollChance(this float probability, float min = 0f, float max = 1f)
+        public static bool IsSuccessfulRoll(this float probability, float min = 0f, float max = 1f)
         {
             if (probability < min || probability > max)
             {
@@ -94,7 +94,7 @@ namespace NekoLib.Extensions
         /// <summary>
         /// Returns true if a random roll succeeds based on the percentage rate.
         /// </summary>
-        public static bool RollChance(this int probability, int min = 0, int max = 100)
+        public static bool IsSuccessfulRoll(this int probability, int min = 0, int max = 100)
         {
             if (probability < min || probability > max)
             {

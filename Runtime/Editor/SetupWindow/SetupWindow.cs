@@ -28,7 +28,7 @@ namespace NekoLib
         private string _namespaceRootDraft;
         private bool _namespaceRootDraftDirty;
 
-        [MenuItem("Tools/Neko Framework/Startup/Project Setup", priority = 0)]
+        [MenuItem("Tools/Neko Framework/Project Setup", priority = 0)]
         public static void ShowWindow()
         {
             var window = GetWindow<SetupWindow>(false, WindowTitle, true);

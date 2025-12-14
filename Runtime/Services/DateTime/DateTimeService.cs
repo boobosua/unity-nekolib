@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,38 +20,147 @@ namespace NekoLib.Services
         private static DateTime _syncedUtcTime;
         private static float _syncedAtRealtime;
         private static bool _hasSynced;
+        private static bool _isFetching;
+
+        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, float requestStartRealtime, float requestEndRealtime)
+        {
+            var rttSeconds = Mathf.Max(0f, requestEndRealtime - requestStartRealtime);
+            return serverUtcTime.AddSeconds(rttSeconds * 0.5f);
+        }
+
+        /// <summary>
+        /// Fetches the current time from the server (Coroutine version).
+        /// </summary>
+        public static IEnumerator FetchTimeFromServerCoroutine()
+        {
+            if (_hasSynced || _isFetching) yield break;
+
+            _isFetching = true;
+            Log.Info("[DateTimeService] Starting time sync (coroutine)...");
+
+            try
+            {
+                _syncedUtcTime = DateTime.UtcNow;
+
+                var success = false;
+                var utcTime = default(DateTime);
+
+                yield return TryFetchTimeFromTimeApiCoroutine((ok, time) =>
+                {
+                    success = ok;
+                    utcTime = time;
+                });
+
+                if (success)
+                {
+                    MarkSynced(utcTime, "TimeAPI.io");
+                    yield break;
+                }
+
+                yield return TryFetchTimeFromHttpHeaderCoroutine((ok, time) =>
+                {
+                    success = ok;
+                    utcTime = time;
+                });
+
+                if (success)
+                {
+                    MarkSynced(utcTime, "Google header");
+                    yield break;
+                }
+
+                _hasSynced = false;
+                Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+            }
+            finally
+            {
+                _isFetching = false;
+            }
+        }
 
         /// <summary>
         /// Fetches the current time from the server.
         /// </summary>
         public static async Task FetchTimeFromServerAsync(CancellationToken token = default)
         {
-            _syncedUtcTime = DateTime.UtcNow;
+            if (_hasSynced || _isFetching) return;
 
-            if (await TryFetchTimeFromTimeApi(token))
+            _isFetching = true;
+            Log.Info("[DateTimeService] Starting time sync (async)...");
+
+            try
             {
-                _hasSynced = true;
-                _syncedAtRealtime = Time.realtimeSinceStartup;
-                Log.Info($"[DateTimeService] Synced from TimeAPI.io: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
-                return;
+                _syncedUtcTime = DateTime.UtcNow;
+
+                if (await TryFetchTimeFromTimeApiAsync(token))
+                {
+                    MarkSynced("TimeAPI.io");
+                    return;
+                }
+
+                if (await TryFetchTimeFromHttpHeaderAsync(token))
+                {
+                    MarkSynced("Google header");
+                    return;
+                }
+
+                _hasSynced = false;
+                Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+            }
+            finally
+            {
+                _isFetching = false;
+            }
+        }
+
+        /// <summary>
+        /// Fetches the current time from the TimeAPI.io service (Coroutine version).
+        /// </summary>
+        private static IEnumerator TryFetchTimeFromTimeApiCoroutine(Action<bool, DateTime> onDone)
+        {
+            using var request = UnityWebRequest.Get(PrimaryUrl);
+            request.timeout = TimeoutSeconds;
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            var startRealtime = Time.realtimeSinceStartup;
+
+            yield return request.SendWebRequest();
+
+            var endRealtime = Time.realtimeSinceStartup;
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Log.Warn($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
+                onDone?.Invoke(false, default);
+                yield break;
             }
 
-            if (await TryFetchTimeFromHttpHeader(token))
+            var json = request.downloadHandler.text;
+            var result = JsonUtility.FromJson<TimeApiResponse>(json);
+
+            if (result == null || string.IsNullOrEmpty(result.dateTime))
             {
-                _hasSynced = true;
-                _syncedAtRealtime = Time.realtimeSinceStartup;
-                Log.Info($"[DateTimeService] Synced from Google header: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
-                return;
+                Log.Warn("[DateTimeService] TimeAPI.io response missing 'dateTime'.");
+                onDone?.Invoke(false, default);
+                yield break;
             }
 
-            _hasSynced = false;
-            Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+            // Parse as UTC to avoid timezone issues
+            if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+            {
+                var adjustedTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
+                onDone?.Invoke(true, adjustedTime);
+                yield break;
+            }
+
+            Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
+            onDone?.Invoke(false, default);
         }
 
         /// <summary>
         /// Tries to fetch the current time from the TimeAPI.io service.
         /// </summary>
-        private static async Task<bool> TryFetchTimeFromTimeApi(CancellationToken token = default)
+        private static async Task<bool> TryFetchTimeFromTimeApiAsync(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
             request.timeout = TimeoutSeconds;
@@ -58,6 +168,7 @@ namespace NekoLib.Services
 
             try
             {
+                var startRealtime = Time.realtimeSinceStartup;
                 var operation = request.SendWebRequest();
 
                 // Wait for completion using cancellation token
@@ -66,6 +177,8 @@ namespace NekoLib.Services
                     token.ThrowIfCancellationRequested();
                     await Task.Yield();
                 }
+
+                var endRealtime = Time.realtimeSinceStartup;
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
@@ -76,10 +189,16 @@ namespace NekoLib.Services
                 var json = request.downloadHandler.text;
                 var result = JsonUtility.FromJson<TimeApiResponse>(json);
 
-                // Parse as UTC to avoid timezone issues
-                if (DateTime.TryParse(result.dateTime, null, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+                if (result == null || string.IsNullOrEmpty(result.dateTime))
                 {
-                    _syncedUtcTime = parsedTime;
+                    Log.Warn("[DateTimeService] TimeAPI.io response missing 'dateTime'.");
+                    return false;
+                }
+
+                // Parse as UTC to avoid timezone issues
+                if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+                {
+                    _syncedUtcTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
                     return true;
                 }
 
@@ -99,9 +218,51 @@ namespace NekoLib.Services
         }
 
         /// <summary>
+        /// Fetches the current time from the HTTP header (Coroutine version).
+        /// </summary>
+        private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(Action<bool, DateTime> onDone)
+        {
+            using var request = UnityWebRequest.Get(HeaderUrl);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.timeout = TimeoutSeconds;
+
+            var startRealtime = Time.realtimeSinceStartup;
+
+            yield return request.SendWebRequest();
+
+            var endRealtime = Time.realtimeSinceStartup;
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Log.Warn($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
+                onDone?.Invoke(false, default);
+                yield break;
+            }
+
+            var header = request.GetResponseHeader("Date");
+            if (string.IsNullOrEmpty(header))
+            {
+                Log.Warn("[DateTimeService] 'Date' header missing from Google response.");
+                onDone?.Invoke(false, default);
+                yield break;
+            }
+
+            // Parse as UTC to avoid timezone issues
+            if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
+            {
+                var adjustedTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
+                onDone?.Invoke(true, adjustedTime);
+                yield break;
+            }
+
+            Log.Warn($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
+            onDone?.Invoke(false, default);
+        }
+
+        /// <summary>
         /// Tries to fetch the current time from the HTTP header.
         /// </summary>
-        private static async Task<bool> TryFetchTimeFromHttpHeader(CancellationToken token = default)
+        private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(HeaderUrl);
             request.downloadHandler = new DownloadHandlerBuffer();
@@ -109,6 +270,7 @@ namespace NekoLib.Services
 
             try
             {
+                var startRealtime = Time.realtimeSinceStartup;
                 var operation = request.SendWebRequest();
 
                 // Wait for completion using cancellation token
@@ -117,6 +279,8 @@ namespace NekoLib.Services
                     token.ThrowIfCancellationRequested();
                     await Task.Yield();
                 }
+
+                var endRealtime = Time.realtimeSinceStartup;
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
@@ -132,9 +296,9 @@ namespace NekoLib.Services
                 }
 
                 // Parse as UTC to avoid timezone issues
-                if (DateTime.TryParse(header, null, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
+                if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
                 {
-                    _syncedUtcTime = dateTime;
+                    _syncedUtcTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
                     return true;
                 }
 
@@ -151,6 +315,25 @@ namespace NekoLib.Services
                 Log.Warn($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Marks the service as synced with the given UTC time and source.
+        /// </summary>
+        private static void MarkSynced(DateTime utcTime, string source)
+        {
+            _syncedUtcTime = utcTime;
+            MarkSynced(source);
+        }
+
+        /// <summary>
+        /// Marks the service as synced using the current value of <see cref="_syncedUtcTime"/>.
+        /// </summary>
+        private static void MarkSynced(string source)
+        {
+            _hasSynced = true;
+            _syncedAtRealtime = Time.realtimeSinceStartup;
+            Log.Info($"[DateTimeService] Synced from {source}: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
         }
 
         [Serializable]

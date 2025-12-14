@@ -1,3 +1,10 @@
+## [1.9.16] - 2025-12-14
+
+### DateTimeService Improvements
+
+- Add fetching coroutine.
+- Adjust DateTimeService time precision after fetching from online sources.
+
 ## [1.9.14] - 2025-12-01
 
 ### Timer Pooling Enhancements
