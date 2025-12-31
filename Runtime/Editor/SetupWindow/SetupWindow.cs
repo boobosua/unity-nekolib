@@ -297,7 +297,26 @@ namespace NekoLib
 
             using (new EditorGUILayout.VerticalScope())
             {
-                EditorGUILayout.LabelField("Git Packages", EditorStyles.boldLabel);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Git Packages", EditorStyles.boldLabel);
+                    if (GUILayout.Button(new GUIContent("Refresh", "Add any new default Git package URLs without deleting the settings asset"), GUILayout.Width(90)))
+                    {
+                        Undo.RecordObject(_pkgSettings, "Refresh Package Defaults");
+                        int added = _pkgSettings.RefreshMissingDefaults();
+                        if (added > 0)
+                        {
+                            EditorUtility.SetDirty(_pkgSettings);
+                            AssetDatabase.SaveAssets();
+                            ShowNotification(new GUIContent($"Added {added} default URL(s)"));
+                        }
+                        else
+                        {
+                            ShowNotification(new GUIContent("No new default URLs"));
+                        }
+                        Repaint();
+                    }
+                }
                 _pkgScroll = EditorGUILayout.BeginScrollView(_pkgScroll, GUILayout.ExpandHeight(true));
                 if (_pkgSettings.Packages.Count == 0)
                 {
