@@ -29,7 +29,7 @@ namespace NekoLib
             {
                 new GitPackage { url = "https://github.com/boobosua/unity-neko-signal.git" },
                 new GitPackage { url = "https://github.com/boobosua/unity-neko-flow.git" },
-                new GitPackage { url = "https://github.com/boobosua/unity-neko-serialize.git" },
+                new GitPackage { url = "https://github.com/boobosua/unity-neko-serializer.git" },
             };
         }
 
