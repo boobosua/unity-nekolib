@@ -6,6 +6,9 @@ using UnityEngine.UIElements;
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements;
 #endif
+#if UNITY_6000_3_OR_NEWER
+using UnityEditor.Toolbars;
+#endif
 
 namespace NekoLib
 {
@@ -18,19 +21,74 @@ namespace NekoLib
         private const string RequestedFromPlayKey = "NekoLib:CPP:RequestedFromPlay";
 
         private static bool installed;
+#if !UNITY_6000_3_OR_NEWER
         private static VisualElement container;
         private static Button clearButton;
         private static Image clearIcon;
+#endif
 
         static ClearPlayerPrefsTool()
         {
+#if !UNITY_6000_3_OR_NEWER
             EditorApplication.delayCall += EnsureInstall;
+#endif
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             EditorApplication.update += OnUpdate;
         }
 
+        internal static void TriggerClearFromToolbar()
+        {
+            OnClearClicked();
+        }
+
+#if UNITY_6000_3_OR_NEWER
+        private static Texture2D unity6000Icon;
+
+        [MainToolbarElement("NekoLib/Clear PlayerPrefs", defaultDockPosition = MainToolbarDockPosition.Left)]
+        public static MainToolbarElement CreateMainToolbarElement()
+        {
+            if (unity6000Icon == null)
+            {
+                unity6000Icon = ToolbarUtils.GetBestIcon(
+                    "d_TreeEditor.Trash",
+                    "TreeEditor.Trash",
+                    "P4_DeletedLocal",
+                    "d_P4_DeletedLocal"
+                );
+            }
+
+            var content = new MainToolbarContent(unity6000Icon)
+            {
+                text = string.Empty,
+                tooltip = "Clear All PlayerPrefs (with confirmation)"
+            };
+
+            var button = new MainToolbarButton(content, TriggerClearFromToolbar);
+            button.name = "NekoLibClearPlayerPrefs";
+
+            button.RegisterCallback<AttachToPanelEvent>(_ => ApplyUnity6000Visibility(button));
+            button.schedule.Execute(() => ApplyUnity6000Visibility(button)).Every(250);
+
+            return button;
+        }
+
+        private static void ApplyUnity6000Visibility(VisualElement ve)
+        // Best-effort: keep in sync with project settings without hard dependencies.
+        {
+            if (ve == null) return;
+            bool hidden = false;
+            try { hidden = NekoLibSettings.GetOrCreate().hideToolbar; } catch { }
+            ve.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
+            ve.SetEnabled(!hidden);
+        }
+#endif
+
         private static void EnsureInstall()
         {
+#if UNITY_6000_3_OR_NEWER
+            // Unity 6.3+ uses MainToolbarElement integration.
+            return;
+#else
             if (installed) return;
             // Respect global HideToolbar preference (default: hidden)
             try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
@@ -40,6 +98,9 @@ namespace NekoLib
                 EditorApplication.delayCall += EnsureInstall;
                 return;
             }
+
+            // Defensive: domain reload / toolbar rebuild can leave old injected elements behind.
+            ToolbarUtils.RemoveAllByName(root, ContainerName);
 
             container = new VisualElement { name = ContainerName };
             container.style.position = Position.Absolute;
@@ -115,10 +176,15 @@ namespace NekoLib
             PositionContainer(root, container);
             ResizeButtonToContainer();
             installed = true;
+#endif
         }
 
         private static void Uninstall()
         {
+#if UNITY_6000_3_OR_NEWER
+            installed = false;
+            return;
+#else
             if (!installed) return;
             installed = false;
             try
@@ -132,10 +198,16 @@ namespace NekoLib
             container = null;
             clearButton = null;
             clearIcon = null;
+#endif
         }
 
         internal static void ApplyPreferenceChange(bool enabled)
         {
+#if UNITY_6000_3_OR_NEWER
+            // Unity 6.3+ uses MainToolbarElement integration; the element will hide itself based on settings.
+            installed = enabled;
+            return;
+#else
             if (enabled)
             {
                 // Attempt install when enabled
@@ -146,10 +218,14 @@ namespace NekoLib
                 // Remove toolbar UI when disabled
                 Uninstall();
             }
+#endif
         }
 
         private static void ResizeButtonToContainer()
         {
+#if UNITY_6000_3_OR_NEWER
+            return;
+#else
             if (container == null || clearButton == null) return;
             var h = container.resolvedStyle.height;
             if (h <= 0) return;
@@ -178,6 +254,7 @@ namespace NekoLib
             clearButton.style.borderTopRightRadius = br;
             clearButton.style.borderBottomLeftRadius = br;
             clearButton.style.borderBottomRightRadius = br;
+#endif
 #endif
         }
 
@@ -316,12 +393,24 @@ namespace NekoLib
         private static void OnUpdate()
         {
             // Keep position in sync in case toolbar contents shift silently
+#if !UNITY_6000_3_OR_NEWER
+            if (installed)
+            {
+                // Self-heal: toolbar root can be rebuilt and drop our VisualElement.
+                if (container == null || container.parent == null)
+                {
+                    installed = false;
+                    EditorApplication.delayCall += EnsureInstall;
+                }
+            }
+
             var root = ToolbarUtils.GetToolbarRoot();
             if (root != null && container != null)
             {
                 PositionContainer(root, container);
                 ResizeButtonToContainer();
             }
+#endif
 
             if (!EditorApplication.isPlaying && !EditorApplication.isCompiling)
             {

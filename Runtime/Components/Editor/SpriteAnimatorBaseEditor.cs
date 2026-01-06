@@ -40,12 +40,14 @@ namespace NekoLib.Components
         private PropertyTree _tree;
 #endif
 
-        protected virtual void OnEnable()
-        {
+
 #if ODIN_INSPECTOR
-            // OdinEditor has its own OnEnable implementation.
-            // Keeping this as a virtual hook for derived editors while still invoking base.
+        protected override void OnEnable()
+        {
             base.OnEnable();
+#else
+    protected virtual void OnEnable()
+    {
 #endif
             _sprites = serializedObject.FindProperty("_sprites");
             _frameRate = serializedObject.FindProperty("_frameRate");
@@ -71,7 +73,7 @@ namespace NekoLib.Components
         }
 
 #if ODIN_INSPECTOR
-        protected virtual void OnDisable()
+        protected override void OnDisable()
         {
             _tree?.Dispose();
             _tree = null;

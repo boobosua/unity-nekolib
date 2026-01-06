@@ -14,17 +14,17 @@ namespace NekoLib.Core
     internal static class TimerPlayerLoopDriver
     {
         // Configuration
-        private const int INITIAL_ACTIVE_CAPACITY = 128;
-        private const int INITIAL_REMOVAL_CAPACITY = 32;
+        private const int DefaultActiveCapacity = 128;
+        private const int DefaultRemovalCapacity = 32;
+        private const int DefaultPoolCapacity = 8;
+        private const int DefaultMaxPoolSize = 128;
 
-        private static readonly List<TimerBase> ActiveTimers = new(INITIAL_ACTIVE_CAPACITY);
-        private static readonly List<TimerBase> ToRemove = new(INITIAL_REMOVAL_CAPACITY);
+        private static readonly List<TimerBase> ActiveTimers = new(DefaultActiveCapacity);
+        private static readonly List<TimerBase> ToRemove = new(DefaultRemovalCapacity);
 
-        // Pooling (disabled by default)
-        private static bool _poolingEnabled = false;
-        private static int _maxPoolSize = 0;
-        private static Stack<Countdown> _countdownPool;
-        private static Stack<Stopwatch> _stopwatchPool;
+        private static readonly Stack<Countdown> _countdownPool = new(DefaultPoolCapacity);
+        private static readonly Stack<Stopwatch> _stopwatchPool = new(DefaultPoolCapacity);
+        private static int _maxPoolSize = DefaultMaxPoolSize;
 
         private static bool _installed;
         private static bool _isUpdating;
@@ -39,7 +39,7 @@ namespace NekoLib.Core
         }
 
         /// <summary>
-        /// Unregisters a timer so it no longer updates.
+        /// Deregisters a timer so it no longer updates.
         /// </summary>
         internal static void Unregister(TimerBase timer)
         {
@@ -50,7 +50,6 @@ namespace NekoLib.Core
                 return;
             }
             if (ActiveTimers.Contains(timer)) ActiveTimers.Remove(timer);
-            if (ToRemove.Contains(timer)) ToRemove.Remove(timer);
         }
 
         private static void MarkForRemoval(TimerBase timer)
@@ -59,19 +58,11 @@ namespace NekoLib.Core
             if (!ToRemove.Contains(timer)) ToRemove.Add(timer);
         }
 
-        /// <summary>
-        /// Enables object pooling for timers with specified maximum pool size.
-        /// </summary>
-        internal static void EnablePooling(int maxPoolSize = 128)
+        internal static void SetMaxPoolSize(int maxPoolSize)
         {
-            if (_poolingEnabled) return;
-
-            _maxPoolSize = Math.Max(16, maxPoolSize); // Minimum 16
-            _countdownPool = new Stack<Countdown>(_maxPoolSize / 4);
-            _stopwatchPool = new Stack<Stopwatch>(_maxPoolSize / 4);
-            _poolingEnabled = true;
-
-            Log.Info($"[TimerPlayerLoopDriver] Pooling enabled with max size: {_maxPoolSize}");
+            // Pooling is always enabled; this only increases the retention cap.
+            if (maxPoolSize <= _maxPoolSize) return;
+            _maxPoolSize = maxPoolSize;
         }
 
         /// <summary>
@@ -79,7 +70,7 @@ namespace NekoLib.Core
         /// </summary>
         internal static Countdown GetCountdown(MonoBehaviour owner, float duration)
         {
-            if (_poolingEnabled && _countdownPool != null && _countdownPool.Count > 0)
+            if (_countdownPool.Count > 0)
             {
                 var cd = _countdownPool.Pop();
                 cd.ReInitialize(owner, duration); // self-registers inside reinitialize
@@ -93,7 +84,7 @@ namespace NekoLib.Core
         /// </summary>
         internal static Stopwatch GetStopwatch(MonoBehaviour owner, Func<bool> stopCondition = null)
         {
-            if (_poolingEnabled && _stopwatchPool != null && _stopwatchPool.Count > 0)
+            if (_stopwatchPool.Count > 0)
             {
                 var sw = _stopwatchPool.Pop();
                 sw.ReInitialize(owner, stopCondition); // self-registers
@@ -103,17 +94,15 @@ namespace NekoLib.Core
         }
 
         /// <summary>
-        /// Returns a timer to the pool for reuse (only if pooling is enabled).
+        /// Returns a timer to the pool for reuse.
         /// </summary>
         internal static void ReturnToPool(TimerBase timer)
         {
-            if (!_poolingEnabled) return;
-
-            if (timer is Countdown countdown && _countdownPool != null && _countdownPool.Count < _maxPoolSize)
+            if (timer is Countdown countdown && _countdownPool.Count < _maxPoolSize)
             {
                 _countdownPool.Push(countdown);
             }
-            else if (timer is Stopwatch stopwatch && _stopwatchPool != null && _stopwatchPool.Count < _maxPoolSize)
+            else if (timer is Stopwatch stopwatch && _stopwatchPool.Count < _maxPoolSize)
             {
                 _stopwatchPool.Push(stopwatch);
             }
@@ -125,12 +114,10 @@ namespace NekoLib.Core
             ActiveTimers.Clear();
             ToRemove.Clear();
 
-            // Reset pooling state on domain reload
-            _poolingEnabled = false;
-            _countdownPool?.Clear();
-            _stopwatchPool?.Clear();
-            _countdownPool = null;
-            _stopwatchPool = null;
+            // Reset pools on domain reload
+            _maxPoolSize = DefaultMaxPoolSize;
+            _countdownPool.Clear();
+            _stopwatchPool.Clear();
 
             _installed = false;
             TryInstall();
@@ -188,7 +175,14 @@ namespace NekoLib.Core
             {
                 var timer = ActiveTimers[i];
 
-                if (timer == null || !timer.IsOwnerValid)
+                if (timer == null)
+                {
+                    ActiveTimers.RemoveAt(i);
+                    i--;
+                    continue;
+                }
+
+                if (!timer.IsOwnerValid)
                 {
                     MarkForRemoval(timer);
                     continue;
@@ -254,10 +248,9 @@ namespace NekoLib.Core
         }
 
         // Diagnostics for editor UI (TimerTrackerWindow)
-        internal static bool IsPoolingEnabled => _poolingEnabled;
         internal static int MaxPoolSize => _maxPoolSize;
-        internal static int CountdownPoolCount => _countdownPool?.Count ?? 0;
-        internal static int StopwatchPoolCount => _stopwatchPool?.Count ?? 0;
+        internal static int CountdownPoolCount => _countdownPool.Count;
+        internal static int StopwatchPoolCount => _stopwatchPool.Count;
         internal static int ActiveTimerCount => ActiveTimers.Count;
 
         [UnityEditor.InitializeOnLoadMethod]
@@ -304,22 +297,6 @@ namespace NekoLib.Core
                 }
             }
             root.subSystemList = filtered.ToArray();
-        }
-
-        [UnityEditor.InitializeOnLoadMethod]
-        private static void EditorInit()
-        {
-            if (!Application.isPlaying)
-            {
-                UnityEditor.EditorApplication.update -= EditorTick;
-                UnityEditor.EditorApplication.update += EditorTick;
-            }
-        }
-
-        private static void EditorTick()
-        {
-            if (Application.isPlaying) return; // runtime handled by PlayerLoop
-            UpdateTimers();
         }
 #endif
     }

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -32,6 +33,33 @@ namespace NekoLib
                 if (found != null) return found;
             }
             return null;
+        }
+
+        public static void RemoveAllByName(VisualElement root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return;
+
+            var matches = new List<VisualElement>(4);
+            CollectByName(root, name, matches);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var ve = matches[i];
+                try
+                {
+                    if (ve != null && ve.parent != null) ve.parent.Remove(ve);
+                }
+                catch { }
+            }
+        }
+
+        private static void CollectByName(VisualElement ve, string name, List<VisualElement> results)
+        {
+            if (ve == null) return;
+            if (ve.name == name) results.Add(ve);
+            for (int i = 0; i < ve.childCount; i++)
+            {
+                CollectByName(ve[i], name, results);
+            }
         }
 
         public static VisualElement GetToolbarRoot()

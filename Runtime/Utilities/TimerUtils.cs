@@ -7,11 +7,13 @@ namespace NekoLib.Utilities
     public static partial class Utils
     {
         /// <summary>
-        /// Enables pooling for Countdown and Stopwatch timers to reduce memory allocations.
+        /// Increases the maximum number of pooled timer instances retained for reuse.
+        /// Pooling is always enabled; this only raises the cap.
         /// </summary>
-        public static void EnableTimerPooling(int maxPoolSize = 128)
+        public static void SetTimerMaxPoolSize(int maxSize)
         {
-            TimerPlayerLoopDriver.EnablePooling(maxPoolSize);
+            if (maxSize <= 0) return;
+            TimerPlayerLoopDriver.SetMaxPoolSize(maxSize);
         }
 
         /// <summary>

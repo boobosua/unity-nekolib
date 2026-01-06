@@ -1,7 +1,7 @@
 using System;
+using NekoLib.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
-using NekoLib.Extensions;
 
 namespace NekoLib.Components
 {
@@ -20,7 +20,7 @@ namespace NekoLib.Components
         [SerializeField] protected bool _playOnAwake = true;
 
         [Tooltip("The speed multiplier for the animation.")]
-        [SerializeField, Min(0.1f)] protected float _speedMultiplier = 1f;
+        [SerializeField] protected float _speedMultiplier = 1f;
 
         [Tooltip("Should the animation use unscaled time?")]
         [SerializeField] protected bool _useUnscaledTime = false;

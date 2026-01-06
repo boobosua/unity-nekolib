@@ -98,7 +98,6 @@ namespace NekoLib.Core
                 EditorGUILayout.Space(2);
 
                 // Handle Pooling tab separately (full-page view)
-                bool poolingEnabled = TimerPlayerLoopDriver.IsPoolingEnabled;
                 if (_selectedTab == 2)
                 {
                     // Prevent visual overlap: reset scroll for pooling page
@@ -688,14 +687,6 @@ namespace NekoLib.Core
             };
             EditorGUILayout.LabelField("Pooling", titleStyle, GUILayout.Height(20));
             EditorGUILayout.Space(4);
-
-            if (!TimerPlayerLoopDriver.IsPoolingEnabled)
-            {
-                // Gray-out look: big info box
-                EditorGUILayout.HelpBox("Pooling is not enabled. Call `TimerConfig.EnablePooling(...)` at startup to use pooling.", MessageType.Info);
-                EditorGUILayout.EndVertical();
-                return;
-            }
 
             // Top summary cards
             EditorGUILayout.BeginHorizontal();

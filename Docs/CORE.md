@@ -106,8 +106,9 @@ sw.Dispose();                          // return to pool if pooling enabled
 Notes:
 
 - All helpers use the PlayerLoop-driven `TimerPlayerLoopDriver` (no MonoBehaviour `Update`).
-- Enable pooling at startup: `Utils.EnableTimerPooling(256);` (namespace `NekoLib.Utilities`).
-- `TimerFactory` and `TimerConfig` were removed; migrate to `Utils.CreateCountdown(...)` / `Utils.CreateStopwatch(...)` and `Utils.EnableTimerPooling(...)`.
+- Timer pooling is enabled by default.
+- Increase the retention cap if needed: `Utils.SetTimerMaxPoolSize(1024);` (namespace `NekoLib.Utilities`).
+- `TimerFactory` and `TimerConfig` were removed; migrate to `Utils.CreateCountdown(...)` / `Utils.CreateStopwatch(...)`.
 - Dispose timers you no longer need to minimize the Active list and leverage pooling.
 
 ### Color Swatch

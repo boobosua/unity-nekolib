@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+#if UNITY_6000_3_OR_NEWER
+using UnityEditor.Toolbars;
+#endif
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements;
 #endif
@@ -34,7 +37,6 @@ namespace NekoLib
         private static VisualElement containerRef;
 
         // Startup scene override (integrated formerly separate tool)
-        private const string PrefStartupPath = "NekoLib:StartupScenePath"; // legacy (EditorPrefs)
         private static string startupScenePath;            // stored path for marked startup scene
         private static bool playSwitched;                  // did we switch on play enter
         private static string originalSceneBeforePlay;     // path to restore after play
@@ -50,7 +52,9 @@ namespace NekoLib
             {
                 RefreshSceneList();
                 // Install on startup unless the global HideToolbar preference is set
+#if !UNITY_6000_3_OR_NEWER
                 try { if (!NekoLibSettings.GetOrCreate().hideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
+#endif
                 LoadStartupPrefs();
                 // Recover persisted session info (domain reload safety)
                 if (string.IsNullOrEmpty(originalSceneBeforePlay))
@@ -70,8 +74,119 @@ namespace NekoLib
             EditorSceneManager.activeSceneChangedInEditMode += (_, __) => UpdateSelectionVisual();
 #endif
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#if !UNITY_6000_3_OR_NEWER
+            EditorApplication.update += LegacySelfHeal;
+#endif
             #endregion
         }
+
+#if UNITY_6000_3_OR_NEWER
+        [MainToolbarElement("NekoLib/Scene Switcher", defaultDockPosition = MainToolbarDockPosition.Left)]
+        public static MainToolbarElement CreateMainToolbarElement()
+        {
+            var iconTex = ToolbarUtils.GetBestIcon(
+                "d_SceneAsset Icon",
+                "SceneAsset Icon",
+                "d_SceneViewFx",
+                "SceneViewFx"
+            );
+
+            var content = new MainToolbarContent(iconTex)
+            {
+                text = string.Empty,
+                tooltip = "Switch active scene (Build Settings)"
+            };
+
+            MainToolbarButton button = null;
+            button = new MainToolbarButton(content, () => ShowUnity6000Menu(button));
+            button.name = "NekoLibSceneSwitcher";
+
+            button.RegisterCallback<AttachToPanelEvent>(_ => ApplyUnity6000Visual(button));
+            button.schedule.Execute(() => ApplyUnity6000Visual(button)).Every(250);
+            return button;
+        }
+
+        private static void ApplyUnity6000Visual(VisualElement button)
+        {
+            bool hidden = false;
+            try { hidden = NekoLibSettings.GetOrCreate().hideToolbar; } catch { }
+            button.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
+            button.SetEnabled(!hidden);
+
+            // Best-effort label update (avoid hard dependency on specific API surface)
+            try
+            {
+                var active = SceneManager.GetActiveScene();
+                var baseDisplay = active.IsValid() && !string.IsNullOrEmpty(active.name) ? active.name : "Scenes";
+                if (HasStartupScene() && active.IsValid() && ScenePathMatchesStartup(active.path))
+                    baseDisplay += " ★";
+
+                var label = button.Q<Label>();
+                if (label != null) label.text = TruncateDisplayName(baseDisplay);
+            }
+            catch { }
+        }
+
+        private static void ShowUnity6000Menu(VisualElement anchor)
+        {
+            // Ensure scene list is up-to-date when opening
+            RefreshSceneList();
+
+            var menu = new GenericDropdownMenu();
+
+            bool hasScenes = sceneNames != null && sceneNames.Length > 0;
+            var activeScene = SceneManager.GetActiveScene();
+            string current = activeScene.name;
+
+            if (!hasScenes)
+            {
+                menu.AddItem("Open Build Settings...", false, OpenBuildSettings);
+                menu.AddItem("Add Active Scene To Build Settings", false, AddActiveSceneToBuild);
+                menu.AddSeparator(string.Empty);
+                // Startup scene mark (integrated tool)
+                AppendStartupMarkItemUnity6000(menu);
+                menu.AddSeparator(string.Empty);
+                menu.AddItem("Refresh", false, RefreshSceneList);
+            }
+            else
+            {
+                for (int i = 0; i < sceneNames.Length; i++)
+                {
+                    string display = sceneNames[i];
+                    if (ScenePathMatchesStartup(scenePaths[i])) display += " ★";
+                    string captured = sceneNames[i];
+                    bool checkedState = captured == current;
+                    menu.AddItem(display, checkedState, () => SwitchToScene(captured));
+                }
+                menu.AddSeparator(string.Empty);
+                menu.AddItem("Open Build Settings...", false, OpenBuildSettings);
+                menu.AddItem("Add Active Scene To Build Settings", false, AddActiveSceneToBuild);
+                menu.AddSeparator(string.Empty);
+                AppendStartupMarkItemUnity6000(menu);
+                menu.AddSeparator(string.Empty);
+                menu.AddItem("Refresh", false, RefreshSceneList);
+            }
+
+            var rect = anchor != null ? anchor.worldBound : new Rect(0, 0, 200, 20);
+            menu.DropDown(rect, anchor, true);
+        }
+
+        private static void AppendStartupMarkItemUnity6000(GenericDropdownMenu menu)
+        {
+            string startupDisplay = StartupSceneName();
+            if (HasStartupScene())
+            {
+                menu.AddItem($"Clear Startup Scene ({startupDisplay})", false, ClearStartupScene);
+            }
+            else
+            {
+                menu.AddItem("Mark Active Scene As Startup", false, MarkActiveSceneAsStartup);
+            }
+
+            bool actAdd = EditorPrefs.GetBool(PrefActivateLoadedAdditive, true);
+            menu.AddItem("Activate Loaded Additive Scenes On Select", actAdd, ToggleActivateLoadedAdditive);
+        }
+#endif
 
         private static void TryInstall()
         {
@@ -80,6 +195,10 @@ namespace NekoLib
             if (initialized) return;
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
+
+            // Defensive: domain reload / toolbar rebuild can leave old injected elements behind.
+            ToolbarUtils.RemoveAllByName(root, "NekoLibSceneSwitcherContainer");
+
             initialized = true;
             EditorApplication.update -= TryInstall;
 
@@ -133,6 +252,20 @@ namespace NekoLib
 #endif
         }
 
+#if !UNITY_6000_3_OR_NEWER
+        private static void LegacySelfHeal()
+        {
+            if (!initialized) return;
+            // Respect global HideToolbar preference
+            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
+
+            if (containerRef != null && containerRef.parent != null) return;
+            initialized = false;
+            containerRef = null;
+            EditorApplication.update += TryInstall;
+        }
+#endif
+
         private static void Uninstall()
         {
             if (!initialized) return;
@@ -156,6 +289,10 @@ namespace NekoLib
 
         internal static void ApplyPreferenceChange(bool enabled)
         {
+#if UNITY_6000_3_OR_NEWER
+            // Unity 6.3+ uses MainToolbarElement integration; element handles visibility.
+            return;
+#else
             if (enabled)
             {
                 if (!initialized)
@@ -165,6 +302,7 @@ namespace NekoLib
             {
                 Uninstall();
             }
+#endif
         }
 
         private static void InstallFallbackDropdown(VisualElement container)
@@ -480,24 +618,60 @@ namespace NekoLib
         // --- Startup Scene Override Logic ---
         private static void LoadStartupPrefs()
         {
-            // Project-scoped PlayMode start scene only
+            // Prefer NekoLibSettings (project-scoped ScriptableObject in Assets/Plugins/NekoLib/Editor)
+            string fromSettings = string.Empty;
+            try
+            {
+                var settings = NekoLibSettings.GetOrCreate();
+                fromSettings = settings != null ? settings.startupScenePath : string.Empty;
+            }
+            catch { }
+
+            if (!string.IsNullOrEmpty(fromSettings))
+            {
+                var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(fromSettings);
+                if (sceneAsset != null)
+                {
+                    startupScenePath = fromSettings;
+                    EditorSceneManager.playModeStartScene = sceneAsset;
+                    return;
+                }
+
+                // Saved scene is no longer valid.
+                startupScenePath = string.Empty;
+                try
+                {
+                    var settings = NekoLibSettings.GetOrCreate();
+                    settings.startupScenePath = string.Empty;
+                    EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
+                }
+                catch { }
+                EditorSceneManager.playModeStartScene = null;
+                return;
+            }
+
+            // Fallback: if user set Unity's PlayMode start scene externally, mirror it into settings.
             var startScene = EditorSceneManager.playModeStartScene;
             if (startScene != null)
             {
                 var startPath = AssetDatabase.GetAssetPath(startScene);
                 startupScenePath = startPath;
+                try
+                {
+                    var settings = NekoLibSettings.GetOrCreate();
+                    if (settings.startupScenePath != startPath)
+                    {
+                        settings.startupScenePath = startPath;
+                        EditorUtility.SetDirty(settings);
+                        AssetDatabase.SaveAssets();
+                    }
+                }
+                catch { }
             }
             else
             {
                 startupScenePath = string.Empty;
-            }
-
-            if (!string.IsNullOrEmpty(startupScenePath) && !System.IO.File.Exists(startupScenePath))
-            {
-                // scene was removed
-                startupScenePath = string.Empty;
-                // Clear Unity start scene
-                EditorSceneManager.playModeStartScene = null;
             }
         }
 
@@ -638,7 +812,7 @@ namespace NekoLib
             {
                 case PlayModeStateChange.ExitingEditMode:
                     if (!HasStartupScene()) { playSwitched = false; SessionState.SetBool(SessionPlaySwitchedKey, false); return; }
-                    if (!System.IO.File.Exists(startupScenePath)) { startupScenePath = string.Empty; EditorPrefs.DeleteKey(PrefStartupPath); playSwitched = false; SessionState.SetBool(SessionPlaySwitchedKey, false); return; }
+                    if (AssetDatabase.LoadAssetAtPath<SceneAsset>(startupScenePath) == null) { startupScenePath = string.Empty; playSwitched = false; SessionState.SetBool(SessionPlaySwitchedKey, false); return; }
                     var active = SceneManager.GetActiveScene();
                     if (string.Equals(active.path, startupScenePath, StringComparison.OrdinalIgnoreCase)) { playSwitched = false; SessionState.SetBool(SessionPlaySwitchedKey, false); return; }
                     originalSceneBeforePlay = active.path;
