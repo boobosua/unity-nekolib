@@ -11,8 +11,7 @@ namespace NekoLib
     [Serializable]
     public class SetupFoldersSettings : ScriptableObject
     {
-        // Store SO under Plugins per request
-        private const string AssetDir = "Assets/Plugins/NekoLib/Setup";
+        private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
         private const string AssetName = "SetupFoldersSettings.asset";
 
         [Serializable]
@@ -68,12 +67,12 @@ namespace NekoLib
         {
             string assetPath = Path.Combine(AssetDir, AssetName).Replace("\\", "/");
             var settings = AssetDatabase.LoadAssetAtPath<SetupFoldersSettings>(assetPath);
+            if (settings != null)
+                return settings;
+
             if (settings == null)
             {
-                // Ensure directory structure under Assets/Plugins/NekoLib/Setup
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins")) AssetDatabase.CreateFolder("Assets", "Plugins");
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins/NekoLib")) AssetDatabase.CreateFolder("Assets/Plugins", "NekoLib");
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins/NekoLib/Setup")) AssetDatabase.CreateFolder("Assets/Plugins/NekoLib", "Setup");
+                EnsureFolders();
 
                 settings = CreateInstance<SetupFoldersSettings>();
                 settings.SetDefaults();
@@ -87,6 +86,22 @@ namespace NekoLib
                 // no-op; fields are hidden via [HideInInspector]
             }
             return settings;
+        }
+
+        private static void EnsureFolders()
+        {
+            EnsureFolder("Assets", "Plugins");
+            EnsureFolder("Assets/Plugins", "NekoLib");
+            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+        }
+
+        private static void EnsureFolder(string parent, string folderName)
+        {
+            string full = parent.EndsWith("/") ? parent + folderName : parent + "/" + folderName;
+            if (AssetDatabase.IsValidFolder(full))
+                return;
+
+            AssetDatabase.CreateFolder(parent, folderName);
         }
 
         private string DeriveInitialNamespaceRoot()

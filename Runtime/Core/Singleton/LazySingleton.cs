@@ -3,6 +3,12 @@ using NekoLib.Extensions;
 using NekoLib.Logger;
 using UnityEngine;
 
+#if ODIN_INSPECTOR
+using BaseBehaviour = Sirenix.OdinInspector.SerializedMonoBehaviour;
+#else
+using BaseBehaviour = UnityEngine.MonoBehaviour;
+#endif
+
 namespace NekoLib.Core
 {
     /// <summary>
@@ -10,7 +16,7 @@ namespace NekoLib.Core
     /// Do not use this if you use multi-threading.
     /// </summary>
     [DisallowMultipleComponent]
-    public abstract class LazySingleton<T> : MonoBehaviour where T : MonoBehaviour
+    public abstract class LazySingleton<T> : BaseBehaviour where T : MonoBehaviour
     {
         private static readonly Lazy<T> s_lazyInstance = new(CreateSingleton);
 

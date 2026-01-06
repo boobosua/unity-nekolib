@@ -10,7 +10,7 @@ namespace NekoLib
     [Serializable]
     public class SetupPackagesSettings : ScriptableObject
     {
-        private const string AssetDir = "Assets/Plugins/NekoLib/Setup";
+        private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
         private const string AssetName = "SetupPackagesSettings.asset";
 
         private static readonly string[] DefaultGitUrls =
@@ -75,11 +75,12 @@ namespace NekoLib
         {
             string assetPath = Path.Combine(AssetDir, AssetName).Replace("\\", "/");
             var settings = AssetDatabase.LoadAssetAtPath<SetupPackagesSettings>(assetPath);
+            if (settings != null)
+                return settings;
+
             if (settings == null)
             {
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins")) AssetDatabase.CreateFolder("Assets", "Plugins");
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins/NekoLib")) AssetDatabase.CreateFolder("Assets/Plugins", "NekoLib");
-                if (!AssetDatabase.IsValidFolder("Assets/Plugins/NekoLib/Setup")) AssetDatabase.CreateFolder("Assets/Plugins/NekoLib", "Setup");
+                EnsureFolders();
 
                 settings = CreateInstance<SetupPackagesSettings>();
                 settings.SetDefaults();
@@ -91,6 +92,22 @@ namespace NekoLib
                 // no-op; do not modify existing asset; fields are hidden via [HideInInspector]
             }
             return settings;
+        }
+
+        private static void EnsureFolders()
+        {
+            EnsureFolder("Assets", "Plugins");
+            EnsureFolder("Assets/Plugins", "NekoLib");
+            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+        }
+
+        private static void EnsureFolder(string parent, string folderName)
+        {
+            string full = parent.EndsWith("/") ? parent + folderName : parent + "/" + folderName;
+            if (AssetDatabase.IsValidFolder(full))
+                return;
+
+            AssetDatabase.CreateFolder(parent, folderName);
         }
     }
 }

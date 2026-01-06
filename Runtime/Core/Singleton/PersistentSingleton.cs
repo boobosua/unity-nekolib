@@ -3,6 +3,12 @@ using NekoLib.Logger;
 using NekoLib.Utilities;
 using UnityEngine;
 
+#if ODIN_INSPECTOR
+using BaseBehaviour = Sirenix.OdinInspector.SerializedMonoBehaviour;
+#else
+using BaseBehaviour = UnityEngine.MonoBehaviour;
+#endif
+
 namespace NekoLib.Core
 {
     /// <summary>
@@ -10,7 +16,7 @@ namespace NekoLib.Core
     /// Do not reference the instance in OnDestroy(), OnDisable() or OnApplicationQuit().
     /// </summary>
     [DisallowMultipleComponent]
-    public abstract class PersistentSingleton<T> : MonoBehaviour where T : MonoBehaviour
+    public abstract class PersistentSingleton<T> : BaseBehaviour where T : MonoBehaviour
     {
         private static T s_instance;
         protected static bool s_applicationIsQuitting = false;
@@ -33,7 +39,6 @@ namespace NekoLib.Core
 
                 if (s_instance != null && s_instance.gameObject != null)
                 {
-                    // Debug.Log($"Returning existing instance of {typeof(T).Name.Colorize(Palette.Lavender)}.");
                     return s_instance;
                 }
 
@@ -45,7 +50,6 @@ namespace NekoLib.Core
                 if (allInstances.Length == 1)
                 {
                     s_instance = allInstances[0];
-                    // Debug.Log($"Using existing instance of {typeof(T).Name.Colorize(Palette.Lavender)}.");
                 }
                 else if (allInstances.Length == 0)
                 {
@@ -60,7 +64,6 @@ namespace NekoLib.Core
                 }
                 else
                 {
-                    // Debug.LogWarning($"Found multiple instances of {typeof(T).Name.Colorize(Palette.GoldenAmber)}. This is not allowed.");
                     s_instance = allInstances[0]; // Fallback to the first found instance.
 
                     for (int i = 1; i < allInstances.Length; i++)

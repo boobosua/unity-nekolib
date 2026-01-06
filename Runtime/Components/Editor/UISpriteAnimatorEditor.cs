@@ -22,14 +22,24 @@ namespace NekoLib.Components
         protected override void DrawAdditionalProperties()
         {
             EditorGUILayout.LabelField("UI Specific", EditorStyles.boldLabel);
+
+#if ODIN_INSPECTOR
+            DrawOdinUnityProperty("_preserveAspect");
+            DrawOdinUnityProperty("_pauseWhenInvisible");
+#else
             EditorGUILayout.PropertyField(_preserveAspect);
             EditorGUILayout.PropertyField(_pauseWhenInvisible);
+#endif
 
             // Only show Canvas Group field when Pause When Invisible is enabled
             if (_pauseWhenInvisible.boolValue)
             {
                 EditorGUI.indentLevel++;
+#if ODIN_INSPECTOR
+                DrawOdinUnityProperty("_canvasGroup");
+#else
                 EditorGUILayout.PropertyField(_canvasGroup, new UnityEngine.GUIContent("Canvas Group", "Optional Canvas Group to check for visibility (alpha > 0)"));
+#endif
                 EditorGUI.indentLevel--;
             }
         }

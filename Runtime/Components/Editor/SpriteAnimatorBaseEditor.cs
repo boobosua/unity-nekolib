@@ -3,10 +3,19 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector.Editor;
+#endif
+
 namespace NekoLib.Components
 {
     [CustomEditor(typeof(SpriteAnimatorBase), true)]
-    public class SpriteAnimatorEditorBase : Editor
+    public class SpriteAnimatorEditorBase :
+#if ODIN_INSPECTOR
+        OdinEditor
+#else
+        Editor
+#endif
     {
         private const string TabSessionKey = "NekoLib.SpriteAnimatorEditorBase.Tab";
         private SerializedProperty _sprites;
@@ -27,8 +36,17 @@ namespace NekoLib.Components
         private int _selectedTab = 0; // 0: Settings, 1: Events
         private static GUIStyle _foldoutNoFocusStyle;
 
+#if ODIN_INSPECTOR
+        private PropertyTree _tree;
+#endif
+
         protected virtual void OnEnable()
         {
+#if ODIN_INSPECTOR
+            // OdinEditor has its own OnEnable implementation.
+            // Keeping this as a virtual hook for derived editors while still invoking base.
+            base.OnEnable();
+#endif
             _sprites = serializedObject.FindProperty("_sprites");
             _frameRate = serializedObject.FindProperty("_frameRate");
             _loopMode = serializedObject.FindProperty("_loopMode");
@@ -44,11 +62,59 @@ namespace NekoLib.Components
             CacheCurrentSprites();
             CacheCurrentLoopMode();
             SyncEventFoldoutsSize();
+
+#if ODIN_INSPECTOR
+            _tree?.Dispose();
+            _tree = PropertyTree.Create(serializedObject);
+            _tree.DrawMonoScriptObjectField = false;
+#endif
         }
+
+#if ODIN_INSPECTOR
+        protected virtual void OnDisable()
+        {
+            _tree?.Dispose();
+            _tree = null;
+            base.OnDisable();
+        }
+
+        protected void DrawOdinUnityProperty(string unityPath)
+        {
+            if (_tree == null)
+            {
+                _tree = PropertyTree.Create(serializedObject);
+                _tree.DrawMonoScriptObjectField = false;
+            }
+
+            var property = _tree.GetPropertyAtUnityPath(unityPath);
+            property?.Draw();
+        }
+
+        protected void DrawOdinUnityPropertyPath(string unityPropertyPath)
+        {
+            if (_tree == null)
+            {
+                _tree = PropertyTree.Create(serializedObject);
+                _tree.DrawMonoScriptObjectField = false;
+            }
+
+            var property = _tree.GetPropertyAtUnityPath(unityPropertyPath);
+            property?.Draw();
+        }
+#endif
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+
+#if ODIN_INSPECTOR
+            if (_tree == null)
+            {
+                _tree = PropertyTree.Create(serializedObject);
+                _tree.DrawMonoScriptObjectField = false;
+            }
+            _tree.UpdateTree();
+#endif
 
             // Improve hover responsiveness by repainting on mouse move
             if (Event.current.type == EventType.MouseMove)
@@ -97,7 +163,12 @@ namespace NekoLib.Components
 
             if (serializedObject.hasModifiedProperties)
             {
+#if ODIN_INSPECTOR
+                _tree.ApplyChanges();
+                _tree.InvokeDelayedActions();
+#else
                 serializedObject.ApplyModifiedProperties();
+#endif
                 CheckForSpriteChanges();
                 CheckForLoopModeChanges();
             }
@@ -106,13 +177,22 @@ namespace NekoLib.Components
         private void DrawAnimationSettings()
         {
 
+#if ODIN_INSPECTOR
+            DrawOdinUnityProperty("_sprites");
+            DrawOdinUnityProperty("_frameRate");
+#else
             EditorGUILayout.PropertyField(_sprites);
             EditorGUILayout.PropertyField(_frameRate);
+#endif
 
             // Check for loop mode changes before drawing the property
             SpriteAnimatorBase.LoopMode currentLoopMode = (SpriteAnimatorBase.LoopMode)_loopMode.enumValueIndex;
             EditorGUI.BeginChangeCheck();
+#if ODIN_INSPECTOR
+            DrawOdinUnityProperty("_loopMode");
+#else
             EditorGUILayout.PropertyField(_loopMode);
+#endif
             if (EditorGUI.EndChangeCheck())
             {
                 // Loop mode changed, check if we need to clear events
@@ -127,10 +207,17 @@ namespace NekoLib.Components
                 _previousLoopMode = newLoopMode;
             }
 
+#if ODIN_INSPECTOR
+            DrawOdinUnityProperty("_playOnAwake");
+            DrawOdinUnityProperty("_speedMultiplier");
+            DrawOdinUnityProperty("_useUnscaledTime");
+            DrawOdinUnityProperty("_startAtRandomFrame");
+#else
             EditorGUILayout.PropertyField(_playOnAwake);
             EditorGUILayout.PropertyField(_speedMultiplier);
             EditorGUILayout.PropertyField(_useUnscaledTime);
             EditorGUILayout.PropertyField(_startAtRandomFrame);
+#endif
         }
 
         protected virtual void DrawAdditionalProperties()
@@ -268,7 +355,11 @@ namespace NekoLib.Components
                     int prevIndent = EditorGUI.indentLevel;
                     EditorGUI.indentLevel = 0; // minimize left padding for cleaner look
                     // Unity Event
+#if ODIN_INSPECTOR
+                    DrawOdinUnityPropertyPath(unityEvent.propertyPath);
+#else
                     EditorGUILayout.PropertyField(unityEvent, new GUIContent("OnFrame"));
+#endif
                     EditorGUI.indentLevel = prevIndent;
                 }
 
@@ -391,7 +482,11 @@ namespace NekoLib.Components
             // Show OnAnimationComplete only for Once; warn if misconfigured otherwise
             if (currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
             {
+#if ODIN_INSPECTOR
+                DrawOdinUnityPropertyPath(_onAnimationComplete.propertyPath);
+#else
                 EditorGUILayout.PropertyField(_onAnimationComplete);
+#endif
             }
             else
             {
@@ -400,7 +495,11 @@ namespace NekoLib.Components
                 if (hasAC)
                 {
                     EditorGUILayout.HelpBox("OnAnimationComplete events detected but won't be called unless LoopMode is 'Once'. Consider removing them.", MessageType.Warning);
+#if ODIN_INSPECTOR
+                    DrawOdinUnityPropertyPath(_onAnimationComplete.propertyPath);
+#else
                     EditorGUILayout.PropertyField(_onAnimationComplete);
+#endif
                     if (GUILayout.Button("Clear OnAnimationComplete Events"))
                     {
                         ClearUnityEvent(_onAnimationComplete);
@@ -413,7 +512,11 @@ namespace NekoLib.Components
             if (currentLoopMode == SpriteAnimatorBase.LoopMode.Loop ||
                 currentLoopMode == SpriteAnimatorBase.LoopMode.PingPong)
             {
+#if ODIN_INSPECTOR
+                DrawOdinUnityPropertyPath(_onLoopComplete.propertyPath);
+#else
                 EditorGUILayout.PropertyField(_onLoopComplete);
+#endif
             }
             else if (currentLoopMode == SpriteAnimatorBase.LoopMode.Once)
             {
@@ -424,7 +527,11 @@ namespace NekoLib.Components
                 if (hasEvents)
                 {
                     EditorGUILayout.HelpBox("OnLoopComplete events detected but won't be called in 'Once' mode. Consider removing them.", MessageType.Warning);
+#if ODIN_INSPECTOR
+                    DrawOdinUnityPropertyPath(_onLoopComplete.propertyPath);
+#else
                     EditorGUILayout.PropertyField(_onLoopComplete);
+#endif
 
                     if (GUILayout.Button("Clear OnLoopComplete Events"))
                     {
