@@ -530,6 +530,23 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>
+        /// Checks if the read-only list is null or empty.
+        /// </summary>
+        public static bool IsNullOrEmpty<T>(this IReadOnlyList<T> list)
+        {
+            return list == null || list.Count == 0;
+        }
+
+        /// <summary>
+        /// Checks if the collection is null or empty.
+        /// </summary>
+        public static bool IsNullOrEmpty<T>(this ICollection<T> collection)
+        {
+            return collection == null || collection.Count == 0;
+        }
+
+
+        /// <summary>
         /// Returns a string representation of a list.
         /// Does not work on nested lists or list that is nested in other structures.
         /// </summary>
