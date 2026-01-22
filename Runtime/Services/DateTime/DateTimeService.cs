@@ -22,12 +22,6 @@ namespace NekoLib.Services
         private static bool _hasSynced;
         private static bool _isFetching;
 
-        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, float requestStartRealtime, float requestEndRealtime)
-        {
-            var rttSeconds = Mathf.Max(0f, requestEndRealtime - requestStartRealtime);
-            return serverUtcTime.AddSeconds(rttSeconds * 0.5f);
-        }
-
         /// <summary>
         /// Fetches the current time from the server (Coroutine version).
         /// </summary>
@@ -45,18 +39,6 @@ namespace NekoLib.Services
                 var success = false;
                 var utcTime = default(DateTime);
 
-                yield return TryFetchTimeFromTimeApiCoroutine((ok, time) =>
-                {
-                    success = ok;
-                    utcTime = time;
-                });
-
-                if (success)
-                {
-                    MarkSynced(utcTime, "TimeAPI.io");
-                    yield break;
-                }
-
                 yield return TryFetchTimeFromHttpHeaderCoroutine((ok, time) =>
                 {
                     success = ok;
@@ -66,6 +48,18 @@ namespace NekoLib.Services
                 if (success)
                 {
                     MarkSynced(utcTime, "Google header");
+                    yield break;
+                }
+
+                yield return TryFetchTimeFromTimeApiCoroutine((ok, time) =>
+                {
+                    success = ok;
+                    utcTime = time;
+                });
+
+                if (success)
+                {
+                    MarkSynced(utcTime, "TimeAPI.io");
                     yield break;
                 }
 
@@ -92,15 +86,15 @@ namespace NekoLib.Services
             {
                 _syncedUtcTime = DateTime.UtcNow;
 
-                if (await TryFetchTimeFromTimeApiAsync(token))
-                {
-                    MarkSynced("TimeAPI.io");
-                    return;
-                }
-
                 if (await TryFetchTimeFromHttpHeaderAsync(token))
                 {
                     MarkSynced("Google header");
+                    return;
+                }
+
+                if (await TryFetchTimeFromTimeApiAsync(token))
+                {
+                    MarkSynced("TimeAPI.io");
                     return;
                 }
 
@@ -315,6 +309,15 @@ namespace NekoLib.Services
                 Log.Warn($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Applies latency compensation to the given server UTC time.
+        /// </summary>
+        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, float requestStartRealtime, float requestEndRealtime)
+        {
+            var rttSeconds = Mathf.Max(0f, requestEndRealtime - requestStartRealtime);
+            return serverUtcTime.AddSeconds(rttSeconds * 0.5f);
         }
 
         /// <summary>

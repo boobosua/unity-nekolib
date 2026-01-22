@@ -40,14 +40,13 @@ namespace NekoLib.Services
             }
             catch (OperationCanceledException)
             {
-                IsOnline = false;
+                SetIsOnline(false);
                 return false;
             }
 
             bool isOnline = request.result == UnityWebRequest.Result.Success;
-            IsOnline = isOnline;
 
-            OnConnectionUpdate?.Invoke(isOnline);
+            SetIsOnline(isOnline);
             return isOnline;
         }
 
@@ -91,6 +90,14 @@ namespace NekoLib.Services
             {
                 Log.Info("[NetworkService] Internet monitoring cancelled.");
             }
+        }
+
+        private static void SetIsOnline(bool isOnline)
+        {
+            if (IsOnline == isOnline) return;
+
+            IsOnline = isOnline;
+            OnConnectionUpdate?.Invoke(isOnline);
         }
 
         /// <summary>
