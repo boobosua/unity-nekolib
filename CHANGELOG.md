@@ -1,9 +1,9 @@
 ## [1.9.16] - 2025-12-14
 
-### DateTimeService Improvements
+### TimeService Improvements
 
 - Add fetching coroutine.
-- Adjust DateTimeService time precision after fetching from online sources.
+- Adjust TimeService time precision after fetching from online sources.
 
 ## [1.9.14] - 2025-12-01
 
@@ -93,7 +93,7 @@
 
 ### Network & DateTime Services
 
-- Convert DateTimeManager to DateTimeService with static API for easy access.
+- Convert DateTimeManager to TimeService with static API for easy access.
 - Convert NetworkManager to NetworkService with static API for easy access.
 - Add more debug logs for both services.
 

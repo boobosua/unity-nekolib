@@ -4,21 +4,29 @@ Singleton services for networking and time management.
 
 ## DateTime Services
 
-### DateTimeService
+### TimeService
 
-Server-synchronized time service with fallback to system time.
+Server-synchronized time service.
+
+If you define `NEKO_TIME_DEBUG` in Scripting Define Symbols, `TimeService.Now`/`UtcNow` will behave like `DateTime.Now`/`DateTime.UtcNow` for local debugging.
+
+Without `NEKO_TIME_DEBUG`, `TimeService.Now`/`UtcNow` fall back to `DateTime.Now`/`DateTime.UtcNow` until a successful sync.
+
+Time drift tracking uses `Time.realtimeSinceStartupAsDouble` when available (Unity 2020.2+ / Unity 6+) for improved precision.
+
+Time sync attempts multiple HTTP "Date" header endpoints before falling back to a time API.
 
 ```csharp
 // Sync with server
-await DateTimeService.FetchTimeFromServerAsync();
+bool synced = await TimeService.FetchTimeFromServerTask();
 
 // Get current time (server-synced)
-DateTime utcNow = DateTimeService.UtcNow;
-DateTime localNow = DateTimeService.Now;
+DateTime utcNow = TimeService.UtcNow;
+DateTime localNow = TimeService.Now;
 
 // Time period checks
-bool isStartOfWeek = DateTimeService.IsTodayStartOfWeek;
-bool isStartOfMonth = DateTimeService.IsTodayStartOfMonth;
+bool isStartOfWeek = TimeService.IsTodayStartOfWeek;
+bool isStartOfMonth = TimeService.IsTodayStartOfMonth;
 ```
 
 #### Usage Example
@@ -26,21 +34,14 @@ bool isStartOfMonth = DateTimeService.IsTodayStartOfMonth;
 ```csharp
 async void Start()
 {
-    try
-    {
-        await DateTimeService.FetchTimeFromServerAsync();
-        Debug.Log($"Server time synced: {DateTimeService.Now}");
-    }
-    catch (OperationCanceledException)
-    {
-        Debug.Log("Time sync cancelled");
-    }
+    bool synced = await TimeService.FetchTimeFromServerTask();
+    Debug.Log($"Server time synced: {synced} ({TimeService.Now})");
 }
 
 void CheckDailyRewards()
 {
     var lastLogin = DateTime.Parse(PlayerPrefs.GetString("LastLogin"));
-    var now = DateTimeService.Now;
+    var now = TimeService.Now;
 
     if (now.Date > lastLogin.Date)
     {
@@ -56,9 +57,14 @@ void CheckDailyRewards()
 
 Centralized network management service with static API for easy access.
 
+Internet checks try multiple endpoints to avoid relying on a single domain that may be blocked in some regions.
+
 ```csharp
 // Check internet connection once
 bool hasInternet = await NetworkService.FetchInternetConnectionAsync();
+
+// Coroutine version
+StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(ok => Debug.Log($"Online: {ok}")));
 
 // Start monitoring internet connection
 NetworkService.StartMonitoring();

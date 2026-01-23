@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using NekoLib.Extensions;
@@ -10,8 +11,14 @@ namespace NekoLib.Services
     public static class NetworkService
     {
         private const float ConnectionMonitorIntervalSeconds = 5f;
-        private const string PingUrl = "https://google.com";
         private const int RequestTimeoutSeconds = 5;
+
+        private static readonly string[] PingUrls =
+        {
+            "https://www.google.com",
+            "https://www.cloudflare.com",
+            "https://www.microsoft.com",
+        };
 
         public static event Action<bool> OnConnectionUpdate;
 
@@ -20,31 +27,65 @@ namespace NekoLib.Services
         private static CancellationTokenSource _connectionMonitoringCts;
 
         /// <summary>
+        /// Checks internet connection using Coroutine.
+        /// </summary>
+        public static IEnumerator FetchInternetConnectionCoroutine(Action<bool> onDone)
+        {
+            var isOnline = false;
+
+            for (var i = 0; i < PingUrls.Length; i++)
+            {
+                using var request = UnityWebRequest.Head(PingUrls[i]);
+                request.timeout = RequestTimeoutSeconds;
+
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    isOnline = true;
+                    break;
+                }
+            }
+
+            SetIsOnline(isOnline);
+            onDone?.Invoke(isOnline);
+        }
+
+        /// <summary>
         /// Checks internet connection asynchronously using Task.
         /// </summary>
         public static async Task<bool> FetchInternetConnectionAsync(CancellationToken token = default)
         {
-            using var request = UnityWebRequest.Get(PingUrl);
-            request.timeout = RequestTimeoutSeconds; // Add timeout to prevent hanging
+            var isOnline = false;
 
-            try
+            for (var i = 0; i < PingUrls.Length; i++)
             {
-                var operation = request.SendWebRequest();
+                using var request = UnityWebRequest.Head(PingUrls[i]);
+                request.timeout = RequestTimeoutSeconds;
 
-                // Wait for completion using cancellation token with proper delay.
-                while (!operation.isDone)
+                try
                 {
-                    token.ThrowIfCancellationRequested();
-                    await Task.Delay(10, token);
+                    var operation = request.SendWebRequest();
+
+                    while (!operation.isDone)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        await Task.Delay(10, token);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    request.Abort();
+                    SetIsOnline(false);
+                    return false;
+                }
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    isOnline = true;
+                    break;
                 }
             }
-            catch (OperationCanceledException)
-            {
-                SetIsOnline(false);
-                return false;
-            }
-
-            bool isOnline = request.result == UnityWebRequest.Result.Success;
 
             SetIsOnline(isOnline);
             return isOnline;

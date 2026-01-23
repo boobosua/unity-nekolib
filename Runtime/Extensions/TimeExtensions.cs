@@ -129,7 +129,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeUntilNow(this DateTime time)
         {
-            return DateTimeService.Now - time;
+            return TimeService.Now - time;
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeUntilNowUtc(this DateTime time)
         {
-            return DateTimeService.UtcNow - time;
+            return TimeService.UtcNow - time;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double SecondsUntilNow(this DateTime time)
         {
-            var now = DateTimeService.Now;
+            var now = TimeService.Now;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
@@ -162,7 +162,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double SecondsUntilNowUtc(this DateTime time)
         {
-            var now = DateTimeService.UtcNow;
+            var now = TimeService.UtcNow;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
@@ -231,7 +231,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeFromNow(this DateTime time)
         {
-            return time - DateTimeService.Now;
+            return time - TimeService.Now;
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static TimeSpan TimeFromNowUtc(this DateTime time)
         {
-            return time - DateTimeService.UtcNow;
+            return time - TimeService.UtcNow;
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double SecondsFromNow(this DateTime time)
         {
-            var now = DateTimeService.Now;
+            var now = TimeService.Now;
             var diff = (time - now).TotalSeconds;
 
             if (diff < 0)
@@ -264,7 +264,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double SecondsFromNowUtc(this DateTime time)
         {
-            var now = DateTimeService.UtcNow;
+            var now = TimeService.UtcNow;
             var diff = (time - now).TotalSeconds;
 
             if (diff < 0)
@@ -332,7 +332,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double AbsoluteSecondsDifference(this DateTime time)
         {
-            var now = DateTimeService.Now;
+            var now = TimeService.Now;
             return Math.Abs((now - time).TotalSeconds);
         }
 
@@ -341,7 +341,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static double AbsoluteSecondsDifferenceUtc(this DateTime time)
         {
-            var now = DateTimeService.UtcNow;
+            var now = TimeService.UtcNow;
             return Math.Abs((now - time).TotalSeconds);
         }
 
@@ -409,7 +409,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static bool IsToday(this DateTime time)
         {
-            return time.Date == DateTimeService.Today;
+            return time.Date == TimeService.Today;
         }
 
         /// <summary>
@@ -417,7 +417,7 @@ namespace NekoLib.Extensions
         /// </summary>
         public static bool IsTodayUtc(this DateTime time)
         {
-            return time.Date == DateTimeService.TodayUtc;
+            return time.Date == TimeService.TodayUtc;
         }
 
         #endregion

@@ -11,26 +11,77 @@ using UnityEngine.Networking;
 
 namespace NekoLib.Services
 {
-    public static class DateTimeService
+    public static class TimeService
     {
+        // When defined, TimeService behaves like System.DateTime for easier local debugging.
+        // Suggested Scripting Define Symbol: NEKO_TIME_DEBUG
+        private static bool UseSystemTime
+        {
+            get
+            {
+#if NEKO_TIME_DEBUG
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
+
         private const string PrimaryUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
-        private const string HeaderUrl = "https://www.google.com";
         private const int TimeoutSeconds = 5;
 
+        private static readonly string[] HeaderUrls =
+        {
+            "https://www.google.com",
+            "https://www.cloudflare.com",
+            "https://www.microsoft.com",
+        };
+
         private static DateTime _syncedUtcTime;
-        private static float _syncedAtRealtime;
+        private static double _syncedAtRealtime;
         private static bool _hasSynced;
         private static bool _isFetching;
+        private static bool _hasLoggedUnsyncedWarning;
+
+        private static double GetRealtimeSinceStartup()
+        {
+#if UNITY_2020_2_OR_NEWER
+            return Time.realtimeSinceStartupAsDouble;
+#else
+            return Time.realtimeSinceStartup;
+#endif
+        }
 
         /// <summary>
         /// Fetches the current time from the server (Coroutine version).
         /// </summary>
-        public static IEnumerator FetchTimeFromServerCoroutine()
+        public static IEnumerator FetchTimeFromServerCoroutine(Action<bool> onDone)
         {
-            if (_hasSynced || _isFetching) yield break;
+            if (UseSystemTime)
+            {
+                onDone?.Invoke(true);
+                yield break;
+            }
+
+            if (_hasSynced)
+            {
+                onDone?.Invoke(true);
+                yield break;
+            }
+
+            if (_isFetching)
+            {
+                while (_isFetching)
+                {
+                    yield return null;
+                }
+
+                onDone?.Invoke(_hasSynced);
+                yield break;
+            }
 
             _isFetching = true;
-            Log.Info("[DateTimeService] Starting time sync (coroutine)...");
+            Log.Info("[TimeService] Starting time sync (coroutine)...");
 
             try
             {
@@ -47,7 +98,8 @@ namespace NekoLib.Services
 
                 if (success)
                 {
-                    MarkSynced(utcTime, "Google header");
+                    MarkSynced(utcTime, "HTTP Date header");
+                    onDone?.Invoke(true);
                     yield break;
                 }
 
@@ -60,11 +112,13 @@ namespace NekoLib.Services
                 if (success)
                 {
                     MarkSynced(utcTime, "TimeAPI.io");
+                    onDone?.Invoke(true);
                     yield break;
                 }
 
                 _hasSynced = false;
-                Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+                Log.Warn("[TimeService] Failed to sync from all sources. Time remains unsynced.");
+                onDone?.Invoke(false);
             }
             finally
             {
@@ -74,13 +128,29 @@ namespace NekoLib.Services
 
         /// <summary>
         /// Fetches the current time from the server.
+        /// Returns true if the service successfully synced from an online source.
         /// </summary>
-        public static async Task FetchTimeFromServerAsync(CancellationToken token = default)
+        public static async Task<bool> FetchTimeFromServerAsync(CancellationToken token = default)
         {
-            if (_hasSynced || _isFetching) return;
+            if (UseSystemTime)
+                return true;
+
+            if (_hasSynced)
+                return true;
+
+            if (_isFetching)
+            {
+                while (_isFetching)
+                {
+                    token.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
+
+                return _hasSynced;
+            }
 
             _isFetching = true;
-            Log.Info("[DateTimeService] Starting time sync (async)...");
+            Log.Info("[TimeService] Starting time sync (async)...");
 
             try
             {
@@ -88,18 +158,24 @@ namespace NekoLib.Services
 
                 if (await TryFetchTimeFromHttpHeaderAsync(token))
                 {
-                    MarkSynced("Google header");
-                    return;
+                    MarkSynced("HTTP Date header");
+                    return true;
                 }
 
                 if (await TryFetchTimeFromTimeApiAsync(token))
                 {
                     MarkSynced("TimeAPI.io");
-                    return;
+                    return true;
                 }
 
                 _hasSynced = false;
-                Log.Warn($"[DateTimeService] Failed to sync from all sources. Using fallback {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}.");
+                Log.Warn("[TimeService] Failed to sync from all sources. Time remains unsynced.");
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                Log.Warn("[TimeService] Time sync was cancelled.");
+                return false;
             }
             finally
             {
@@ -116,15 +192,15 @@ namespace NekoLib.Services
             request.timeout = TimeoutSeconds;
             request.downloadHandler = new DownloadHandlerBuffer();
 
-            var startRealtime = Time.realtimeSinceStartup;
+            var startRealtime = GetRealtimeSinceStartup();
 
             yield return request.SendWebRequest();
 
-            var endRealtime = Time.realtimeSinceStartup;
+            var endRealtime = GetRealtimeSinceStartup();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Log.Warn($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
                 onDone?.Invoke(false, default);
                 yield break;
             }
@@ -134,7 +210,7 @@ namespace NekoLib.Services
 
             if (result == null || string.IsNullOrEmpty(result.dateTime))
             {
-                Log.Warn("[DateTimeService] TimeAPI.io response missing 'dateTime'.");
+                Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
                 onDone?.Invoke(false, default);
                 yield break;
             }
@@ -147,7 +223,7 @@ namespace NekoLib.Services
                 yield break;
             }
 
-            Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
+            Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
             onDone?.Invoke(false, default);
         }
 
@@ -162,7 +238,7 @@ namespace NekoLib.Services
 
             try
             {
-                var startRealtime = Time.realtimeSinceStartup;
+                var startRealtime = GetRealtimeSinceStartup();
                 var operation = request.SendWebRequest();
 
                 // Wait for completion using cancellation token
@@ -172,11 +248,11 @@ namespace NekoLib.Services
                     await Task.Yield();
                 }
 
-                var endRealtime = Time.realtimeSinceStartup;
+                var endRealtime = GetRealtimeSinceStartup();
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Log.Warn($"[DateTimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
+                    Log.Warn($"[TimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
@@ -185,7 +261,7 @@ namespace NekoLib.Services
 
                 if (result == null || string.IsNullOrEmpty(result.dateTime))
                 {
-                    Log.Warn("[DateTimeService] TimeAPI.io response missing 'dateTime'.");
+                    Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
                     return false;
                 }
 
@@ -196,17 +272,18 @@ namespace NekoLib.Services
                     return true;
                 }
 
-                Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Log.Warn("[DateTimeService] TimeAPI.io request was cancelled.");
+                request.Abort();
+                Log.Warn("[TimeService] TimeAPI.io request was cancelled.");
                 return false;
             }
             catch (Exception e)
             {
-                Log.Warn($"[DateTimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
         }
@@ -216,19 +293,43 @@ namespace NekoLib.Services
         /// </summary>
         private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(Action<bool, DateTime> onDone)
         {
-            using var request = UnityWebRequest.Get(HeaderUrl);
-            request.downloadHandler = new DownloadHandlerBuffer();
+            for (var i = 0; i < HeaderUrls.Length; i++)
+            {
+                var completed = false;
+                var success = false;
+                var utcTime = default(DateTime);
+
+                yield return TryFetchTimeFromHttpHeaderCoroutine(HeaderUrls[i], (ok, time) =>
+                {
+                    success = ok;
+                    utcTime = time;
+                    completed = true;
+                });
+
+                if (completed && success)
+                {
+                    onDone?.Invoke(true, utcTime);
+                    yield break;
+                }
+            }
+
+            onDone?.Invoke(false, default);
+        }
+
+        private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(string url, Action<bool, DateTime> onDone)
+        {
+            using var request = UnityWebRequest.Head(url);
             request.timeout = TimeoutSeconds;
 
-            var startRealtime = Time.realtimeSinceStartup;
+            var startRealtime = GetRealtimeSinceStartup();
 
             yield return request.SendWebRequest();
 
-            var endRealtime = Time.realtimeSinceStartup;
+            var endRealtime = GetRealtimeSinceStartup();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Log.Warn($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] HTTP header request error ({url.Colorize(Swatch.GA)}): {request.error.Colorize(Swatch.GA)}.");
                 onDone?.Invoke(false, default);
                 yield break;
             }
@@ -236,12 +337,11 @@ namespace NekoLib.Services
             var header = request.GetResponseHeader("Date");
             if (string.IsNullOrEmpty(header))
             {
-                Log.Warn("[DateTimeService] 'Date' header missing from Google response.");
+                Log.Warn($"[TimeService] 'Date' header missing from response ({url.Colorize(Swatch.GA)}).");
                 onDone?.Invoke(false, default);
                 yield break;
             }
 
-            // Parse as UTC to avoid timezone issues
             if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
             {
                 var adjustedTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
@@ -249,7 +349,7 @@ namespace NekoLib.Services
                 yield break;
             }
 
-            Log.Warn($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
+            Log.Warn($"[TimeService] Failed to parse 'Date' header ({url.Colorize(Swatch.GA)}): {header.Colorize(Swatch.GA)}.");
             onDone?.Invoke(false, default);
         }
 
@@ -258,55 +358,64 @@ namespace NekoLib.Services
         /// </summary>
         private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(CancellationToken token = default)
         {
-            using var request = UnityWebRequest.Get(HeaderUrl);
-            request.downloadHandler = new DownloadHandlerBuffer();
+            for (var i = 0; i < HeaderUrls.Length; i++)
+            {
+                if (await TryFetchTimeFromHttpHeaderAsync(HeaderUrls[i], token))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(string url, CancellationToken token)
+        {
+            using var request = UnityWebRequest.Head(url);
             request.timeout = TimeoutSeconds;
 
             try
             {
-                var startRealtime = Time.realtimeSinceStartup;
+                var startRealtime = GetRealtimeSinceStartup();
                 var operation = request.SendWebRequest();
 
-                // Wait for completion using cancellation token
                 while (!operation.isDone)
                 {
                     token.ThrowIfCancellationRequested();
                     await Task.Yield();
                 }
 
-                var endRealtime = Time.realtimeSinceStartup;
+                var endRealtime = GetRealtimeSinceStartup();
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Log.Warn($"[DateTimeService] Google request error: {request.error.Colorize(Swatch.GA)}.");
+                    Log.Warn($"[TimeService] HTTP header request error ({url.Colorize(Swatch.GA)}): {request.error.Colorize(Swatch.GA)}.");
                     return false;
                 }
 
                 var header = request.GetResponseHeader("Date");
                 if (string.IsNullOrEmpty(header))
                 {
-                    Log.Warn("[DateTimeService] 'Date' header missing from Google response.");
+                    Log.Warn($"[TimeService] 'Date' header missing from response ({url.Colorize(Swatch.GA)}).");
                     return false;
                 }
 
-                // Parse as UTC to avoid timezone issues
                 if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
                 {
                     _syncedUtcTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
                     return true;
                 }
 
-                Log.Warn($"[DateTimeService] Failed to parse 'Date' header: {header.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] Failed to parse 'Date' header ({url.Colorize(Swatch.GA)}): {header.Colorize(Swatch.GA)}.");
                 return false;
             }
             catch (OperationCanceledException)
             {
-                Log.Warn("[DateTimeService] Google request was cancelled.");
+                request.Abort();
+                Log.Warn($"[TimeService] HTTP header request was cancelled ({url.Colorize(Swatch.GA)}).");
                 return false;
             }
             catch (Exception e)
             {
-                Log.Warn($"[DateTimeService] Google request failed: {e.Message.Colorize(Swatch.GA)}.");
+                Log.Warn($"[TimeService] HTTP header request failed ({url.Colorize(Swatch.GA)}): {e.Message.Colorize(Swatch.GA)}.");
                 return false;
             }
         }
@@ -314,10 +423,10 @@ namespace NekoLib.Services
         /// <summary>
         /// Applies latency compensation to the given server UTC time.
         /// </summary>
-        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, float requestStartRealtime, float requestEndRealtime)
+        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, double requestStartRealtime, double requestEndRealtime)
         {
-            var rttSeconds = Mathf.Max(0f, requestEndRealtime - requestStartRealtime);
-            return serverUtcTime.AddSeconds(rttSeconds * 0.5f);
+            var rttSeconds = Math.Max(0d, requestEndRealtime - requestStartRealtime);
+            return serverUtcTime.AddSeconds(rttSeconds * 0.5d);
         }
 
         /// <summary>
@@ -335,8 +444,8 @@ namespace NekoLib.Services
         private static void MarkSynced(string source)
         {
             _hasSynced = true;
-            _syncedAtRealtime = Time.realtimeSinceStartup;
-            Log.Info($"[DateTimeService] Synced from {source}: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
+            _syncedAtRealtime = GetRealtimeSinceStartup();
+            Log.Info($"[TimeService] Synced from {source}: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
         }
 
         [Serializable]
@@ -352,13 +461,22 @@ namespace NekoLib.Services
         {
             get
             {
-                if (!_hasSynced)
+                if (UseSystemTime)
                 {
-                    // Log.Warn("[DateTimeService] Getting time before server sync. Using System.DateTime.".Colorize(Swatch.VR));
                     return DateTime.UtcNow;
                 }
 
-                var drift = Time.realtimeSinceStartup - _syncedAtRealtime;
+                if (!_hasSynced)
+                {
+                    if (!_hasLoggedUnsyncedWarning)
+                    {
+                        _hasLoggedUnsyncedWarning = true;
+                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
+                    }
+                    return DateTime.UtcNow;
+                }
+
+                var drift = GetRealtimeSinceStartup() - _syncedAtRealtime;
                 return _syncedUtcTime.AddSeconds(drift);
             }
         }
@@ -366,7 +484,28 @@ namespace NekoLib.Services
         /// <summary>
         /// Gets the current server time in local timezone.
         /// </summary>
-        public static DateTime Now => UtcNow.ToLocalTime();
+        public static DateTime Now
+        {
+            get
+            {
+                if (UseSystemTime)
+                {
+                    return DateTime.Now;
+                }
+
+                if (!_hasSynced)
+                {
+                    if (!_hasLoggedUnsyncedWarning)
+                    {
+                        _hasLoggedUnsyncedWarning = true;
+                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.Now).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
+                    }
+                    return DateTime.Now;
+                }
+
+                return UtcNow.ToLocalTime();
+            }
+        }
 
         /// <summary>
         /// Gets today's date (midnight) in server time.
