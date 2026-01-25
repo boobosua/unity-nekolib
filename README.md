@@ -42,7 +42,7 @@ https://github.com/boobosua/unity-nekolib.git
 
 NekoLib is part of a suite of Unity packages:
 
-- **[NekoSerialize](https://github.com/boobosua/unity-neko-serialize)**: Save/load system (Newtonsoft.Json)
+- **[NekoSerializer](https://github.com/boobosua/unity-neko-serializer)**: Serialization system (Newtonsoft.Json)
 - **[NekoSignal](https://github.com/boobosua/unity-neko-signal)**: Event/signal system
 
 ---

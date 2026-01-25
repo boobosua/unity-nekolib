@@ -1,3 +1,11 @@
+## [1.9.22] - 2026-01-26
+
+### Pooling Feature
+
+- Add PrefabPool class to manage pooling of prefab instances.
+- Add IPoolable interface for lifecycle hooks on pooled objects.
+- Add PoolableBehaviour base class for pooled objects to self-manage their lifecycle without holding pool references.
+
 ## [1.9.16] - 2025-12-14
 
 ### TimeService Improvements

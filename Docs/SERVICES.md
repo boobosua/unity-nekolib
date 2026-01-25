@@ -17,12 +17,18 @@ Time drift tracking uses `Time.realtimeSinceStartupAsDouble` when available (Uni
 Time sync attempts multiple HTTP "Date" header endpoints before falling back to a time API.
 
 ```csharp
-// Sync with server
-bool synced = await TimeService.FetchTimeFromServerTask();
+// Sync with server (async)
+bool synced = await TimeService.FetchTimeFromServerAsync();
+
+// Sync with server (coroutine)
+StartCoroutine(TimeService.FetchTimeFromServerCoroutine(ok => Debug.Log($"Synced: {ok}")));
 
 // Get current time (server-synced)
 DateTime utcNow = TimeService.UtcNow;
 DateTime localNow = TimeService.Now;
+
+// Check if TimeService has successfully synced
+bool hasSynced = TimeService.HasSynced;
 
 // Time period checks
 bool isStartOfWeek = TimeService.IsTodayStartOfWeek;
@@ -34,7 +40,7 @@ bool isStartOfMonth = TimeService.IsTodayStartOfMonth;
 ```csharp
 async void Start()
 {
-    bool synced = await TimeService.FetchTimeFromServerTask();
+    bool synced = await TimeService.FetchTimeFromServerAsync();
     Debug.Log($"Server time synced: {synced} ({TimeService.Now})");
 }
 
@@ -62,6 +68,9 @@ Internet checks try multiple endpoints to avoid relying on a single domain that 
 ```csharp
 // Check internet connection once
 bool hasInternet = await NetworkService.FetchInternetConnectionAsync();
+
+// Current state (updated after checks / monitoring)
+bool isOnline = NetworkService.IsOnline;
 
 // Coroutine version
 StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(ok => Debug.Log($"Online: {ok}")));
