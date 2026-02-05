@@ -1,3 +1,10 @@
+## [2.0.0] - 2026-02-05
+
+### Major Update: NetworkService Overhaul
+
+- Refactor NetworkService to improve reliability and performance.
+- Introduce ConnectionStatus enum to represent network connectivity states.
+
 ## [1.9.22] - 2026-01-26
 
 ### Pooling Feature

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NekoLib.Core;
 using NekoLib.Extensions;
 using NekoLib.Logger;
+using NekoLib.Utilities;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -13,13 +14,11 @@ namespace NekoLib.Services
 {
     public static class TimeService
     {
-        // When defined, TimeService behaves like System.DateTime for easier local debugging.
-        // Suggested Scripting Define Symbol: NEKO_TIME_DEBUG
         private static bool UseSystemTime
         {
             get
             {
-#if NEKO_TIME_DEBUG
+#if NEKO_TIME_SERVICE_DEBUG
                 return true;
 #else
                 return false;
@@ -43,18 +42,7 @@ namespace NekoLib.Services
         private static bool _isFetching;
         private static bool _hasLoggedUnsyncedWarning;
 
-        private static double GetRealtimeSinceStartup()
-        {
-#if UNITY_2020_2_OR_NEWER
-            return Time.realtimeSinceStartupAsDouble;
-#else
-            return Time.realtimeSinceStartup;
-#endif
-        }
-
-        /// <summary>
-        /// Fetches the current time from the server (Coroutine version).
-        /// </summary>
+        /// <summary>Fetches the current time from the server (coroutine).</summary>
         public static IEnumerator FetchTimeFromServerCoroutine(Action<bool> onDone)
         {
             if (UseSystemTime)
@@ -126,10 +114,7 @@ namespace NekoLib.Services
             }
         }
 
-        /// <summary>
-        /// Fetches the current time from the server.
-        /// Returns true if the service successfully synced from an online source.
-        /// </summary>
+        /// <summary>Fetches the current time from the server (async).</summary>
         public static async Task<bool> FetchTimeFromServerAsync(CancellationToken token = default)
         {
             if (UseSystemTime)
@@ -183,9 +168,83 @@ namespace NekoLib.Services
             }
         }
 
-        /// <summary>
-        /// Fetches the current time from the TimeAPI.io service (Coroutine version).
-        /// </summary>
+        /// <summary>Gets the current UTC time.</summary>
+        public static DateTime UtcNow
+        {
+            get
+            {
+                if (UseSystemTime)
+                {
+                    return DateTime.UtcNow;
+                }
+
+                if (!_hasSynced)
+                {
+                    if (!_hasLoggedUnsyncedWarning)
+                    {
+                        _hasLoggedUnsyncedWarning = true;
+                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
+                    }
+                    return DateTime.UtcNow;
+                }
+
+                var drift = GetRealtimeSinceStartup() - _syncedAtRealtime;
+                return _syncedUtcTime.AddSeconds(drift);
+            }
+        }
+
+        /// <summary>Gets the current server time in local timezone.</summary>
+        public static DateTime Now
+        {
+            get
+            {
+                if (UseSystemTime)
+                {
+                    return DateTime.Now;
+                }
+
+                if (!_hasSynced)
+                {
+                    if (!_hasLoggedUnsyncedWarning)
+                    {
+                        _hasLoggedUnsyncedWarning = true;
+                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.Now).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
+                    }
+                    return DateTime.Now;
+                }
+
+                return UtcNow.ToLocalTime();
+            }
+        }
+
+        /// <summary>Gets today's date (midnight) in server time.</summary>
+        public static DateTime TodayUtc => UtcNow.Date;
+
+        /// <summary>Gets today's date (midnight) in local timezone.</summary>
+        public static DateTime Today => Now.Date;
+
+        /// <summary>Gets whether today (local time) is the start of the week (Monday).</summary>
+        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
+
+        /// <summary>Gets whether today (UTC) is the start of the week (Monday).</summary>
+        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
+
+        /// <summary>Gets whether today (local time) is the start of the month.</summary>
+        public static bool IsTodayStartOfMonth => Today.Day == 1;
+
+        /// <summary>Gets whether today (UTC) is the start of the month.</summary>
+        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
+
+        /// <summary>Gets tomorrow (00:00:00) from current local time.</summary>
+        public static DateTime NextDay => Today.AddDays(1);
+
+        /// <summary>Gets tomorrow (00:00:00) from current UTC time.</summary>
+        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
+
+        /// <summary>Gets whether the service has successfully synced with a time server.</summary>
+        public static bool HasSynced => _hasSynced;
+
+        /// <summary>Fetches the current time from the TimeAPI.io service (coroutine).</summary>
         private static IEnumerator TryFetchTimeFromTimeApiCoroutine(Action<bool, DateTime> onDone)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
@@ -205,31 +264,37 @@ namespace NekoLib.Services
                 yield break;
             }
 
-            var json = request.downloadHandler.text;
-            var result = JsonUtility.FromJson<TimeApiResponse>(json);
-
-            if (result == null || string.IsNullOrEmpty(result.dateTime))
+            try
             {
-                Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
+                var json = request.downloadHandler.text;
+                var result = JsonUtility.FromJson<TimeApiResponse>(json);
+
+                if (result == null || string.IsNullOrEmpty(result.dateTime))
+                {
+                    Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
+                    onDone?.Invoke(false, default);
+                    yield break;
+                }
+
+                // Parse as UTC to avoid timezone issues
+                if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+                {
+                    var adjustedTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
+                    onDone?.Invoke(true, adjustedTime);
+                    yield break;
+                }
+
+                Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
                 onDone?.Invoke(false, default);
-                yield break;
             }
-
-            // Parse as UTC to avoid timezone issues
-            if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
+            catch (Exception e)
             {
-                var adjustedTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
-                onDone?.Invoke(true, adjustedTime);
-                yield break;
+                Log.Warn($"[TimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
+                onDone?.Invoke(false, default);
             }
-
-            Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
-            onDone?.Invoke(false, default);
         }
 
-        /// <summary>
-        /// Tries to fetch the current time from the TimeAPI.io service.
-        /// </summary>
+        /// <summary>Tries to fetch the current time from the TimeAPI.io service.</summary>
         private static async Task<bool> TryFetchTimeFromTimeApiAsync(CancellationToken token = default)
         {
             using var request = UnityWebRequest.Get(PrimaryUrl);
@@ -288,9 +353,7 @@ namespace NekoLib.Services
             }
         }
 
-        /// <summary>
-        /// Fetches the current time from the HTTP header (Coroutine version).
-        /// </summary>
+        /// <summary>Fetches the current time from the HTTP header (coroutine).</summary>
         private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(Action<bool, DateTime> onDone)
         {
             for (var i = 0; i < HeaderUrls.Length; i++)
@@ -353,9 +416,7 @@ namespace NekoLib.Services
             onDone?.Invoke(false, default);
         }
 
-        /// <summary>
-        /// Tries to fetch the current time from the HTTP header.
-        /// </summary>
+        /// <summary>Tries to fetch the current time from the HTTP header.</summary>
         private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(CancellationToken token = default)
         {
             for (var i = 0; i < HeaderUrls.Length; i++)
@@ -420,27 +481,21 @@ namespace NekoLib.Services
             }
         }
 
-        /// <summary>
-        /// Applies latency compensation to the given server UTC time.
-        /// </summary>
+        /// <summary>Applies latency compensation to the given server UTC time.</summary>
         private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, double requestStartRealtime, double requestEndRealtime)
         {
             var rttSeconds = Math.Max(0d, requestEndRealtime - requestStartRealtime);
             return serverUtcTime.AddSeconds(rttSeconds * 0.5d);
         }
 
-        /// <summary>
-        /// Marks the service as synced with the given UTC time and source.
-        /// </summary>
+        /// <summary>Marks the service as synced with the given UTC time and source.</summary>
         private static void MarkSynced(DateTime utcTime, string source)
         {
             _syncedUtcTime = utcTime;
             MarkSynced(source);
         }
 
-        /// <summary>
-        /// Marks the service as synced using the current value of <see cref="_syncedUtcTime"/>.
-        /// </summary>
+        /// <summary>Marks the service as synced using the current value of <see cref="_syncedUtcTime"/>.</summary>
         private static void MarkSynced(string source)
         {
             _hasSynced = true;
@@ -454,102 +509,28 @@ namespace NekoLib.Services
             public string dateTime;
         }
 
-        /// <summary>
-        /// Gets the current UTC time.
-        /// </summary>
-        public static DateTime UtcNow
+        private static double GetRealtimeSinceStartup()
         {
-            get
-            {
-                if (UseSystemTime)
-                {
-                    return DateTime.UtcNow;
-                }
-
-                if (!_hasSynced)
-                {
-                    if (!_hasLoggedUnsyncedWarning)
-                    {
-                        _hasLoggedUnsyncedWarning = true;
-                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
-                    }
-                    return DateTime.UtcNow;
-                }
-
-                var drift = GetRealtimeSinceStartup() - _syncedAtRealtime;
-                return _syncedUtcTime.AddSeconds(drift);
-            }
+#if UNITY_2020_2_OR_NEWER
+            return Time.realtimeSinceStartupAsDouble;
+#else
+            return Time.realtimeSinceStartup;
+#endif
         }
 
-        /// <summary>
-        /// Gets the current server time in local timezone.
-        /// </summary>
-        public static DateTime Now
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void EditorSubsystemRegistrationReset()
         {
-            get
-            {
-                if (UseSystemTime)
-                {
-                    return DateTime.Now;
-                }
+            if (!Utils.IsReloadDomainDisabled())
+                return;
 
-                if (!_hasSynced)
-                {
-                    if (!_hasLoggedUnsyncedWarning)
-                    {
-                        _hasLoggedUnsyncedWarning = true;
-                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.Now).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
-                    }
-                    return DateTime.Now;
-                }
-
-                return UtcNow.ToLocalTime();
-            }
+            _syncedUtcTime = default;
+            _syncedAtRealtime = default;
+            _hasSynced = false;
+            _isFetching = false;
+            _hasLoggedUnsyncedWarning = false;
         }
-
-        /// <summary>
-        /// Gets today's date (midnight) in server time.
-        /// </summary>
-        public static DateTime TodayUtc => UtcNow.Date;
-
-        /// <summary>
-        /// Gets today's date (midnight) in local timezone.
-        /// </summary>
-        public static DateTime Today => Now.Date;
-
-        /// <summary>
-        /// Checks if today (local time) is the start of the week (Monday by default).
-        /// </summary>
-        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>
-        /// Checks if today (UTC) is the start of the week (Monday by default).
-        /// </summary>
-        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>
-        /// Checks if today (local time) is the start of the month (1st day).
-        /// </summary>
-        public static bool IsTodayStartOfMonth => Today.Day == 1;
-
-        /// <summary>
-        /// Checks if today (UTC) is the start of the month (1st day).
-        /// </summary>
-        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
-
-        /// <summary>
-        /// Gets tomorrow (00:00:00) from current local time.
-        /// </summary>
-        public static DateTime NextDay => Today.AddDays(1);
-
-        /// <summary>
-        /// Gets tomorrow (00:00:00) from current UTC time.
-        /// </summary>
-        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
-
-        /// <summary>
-        /// Gets whether the service has successfully synced with a time server.
-        /// </summary>
-        public static bool HasSynced => _hasSynced;
+#endif
     }
 }

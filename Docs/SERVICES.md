@@ -8,9 +8,21 @@ Singleton services for networking and time management.
 
 Server-synchronized time service.
 
-If you define `NEKO_TIME_DEBUG` in Scripting Define Symbols, `TimeService.Now`/`UtcNow` will behave like `DateTime.Now`/`DateTime.UtcNow` for local debugging.
+If you define `NEKO_TIME_SERVICE_DEBUG` in Scripting Define Symbols, `TimeService.Now`/`UtcNow` will behave like `DateTime.Now`/`DateTime.UtcNow` for local debugging.
 
-Without `NEKO_TIME_DEBUG`, `TimeService.Now`/`UtcNow` fall back to `DateTime.Now`/`DateTime.UtcNow` until a successful sync.
+Without `NEKO_TIME_SERVICE_DEBUG`, `TimeService.Now`/`UtcNow` fall back to `DateTime.Now`/`DateTime.UtcNow` until a successful sync.
+
+#### NEKO_TIME_SERVICE_DEBUG
+
+Enable it via Unity:
+
+- **Edit → Project Settings → Player → Other Settings → Scripting Define Symbols**
+- Add `NEKO_TIME_SERVICE_DEBUG` for the target platform.
+
+When enabled:
+
+- `FetchTimeFromServerAsync`/`FetchTimeFromServerCoroutine` return success without performing any web requests.
+- `TimeService.UtcNow` returns `DateTime.UtcNow` and `TimeService.Now` returns `DateTime.Now`.
 
 Time drift tracking uses `Time.realtimeSinceStartupAsDouble` when available (Unity 2020.2+ / Unity 6+) for improved precision.
 
@@ -67,13 +79,14 @@ Internet checks try multiple endpoints to avoid relying on a single domain that 
 
 ```csharp
 // Check internet connection once
-bool hasInternet = await NetworkService.FetchInternetConnectionAsync();
+ConnectionStatus status = await NetworkService.FetchInternetConnectionAsync();
 
 // Current state (updated after checks / monitoring)
+ConnectionStatus current = NetworkService.Status;
 bool isOnline = NetworkService.IsOnline;
 
 // Coroutine version
-StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(ok => Debug.Log($"Online: {ok}")));
+StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(s => Debug.Log($"Status: {s}")));
 
 // Start monitoring internet connection
 NetworkService.StartMonitoring();
@@ -94,8 +107,8 @@ NetworkService.Dispose();
 async void Start()
 {
     // Check internet connection once
-    bool isOnline = await NetworkService.FetchInternetConnectionAsync();
-    Debug.Log($"Internet connection: {isOnline}");
+    ConnectionStatus status = await NetworkService.FetchInternetConnectionAsync();
+    Debug.Log($"Internet connection: {status}");
 
     // Start monitoring internet connection
     NetworkService.StartMonitoring();
@@ -104,9 +117,9 @@ async void Start()
     NetworkService.OnConnectionUpdate += OnConnectionUpdate;
 }
 
-private void OnConnectionUpdate(bool isOnline)
+private void OnConnectionUpdate(ConnectionStatus status)
 {
-    if (isOnline)
+    if (status == ConnectionStatus.Online)
     {
         Debug.Log("Internet connection restored!");
         // Handle reconnection logic here
