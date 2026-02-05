@@ -7,225 +7,101 @@ namespace NekoLib.Extensions
 {
     public static class TimerExtensions
     {
-        /// <summary>
-        /// Creates a new Countdown timer owned by this MonoBehaviour.
-        /// </summary>
-        public static Countdown GetCountdown(this MonoBehaviour monoBehaviour, float duration)
+        /// <summary>Gets a <see cref="CountdownBuilder"/> for configuring and creating a <see cref="Countdown"/>.</summary>
+        public static CountdownBuilder GetCountdown(this MonoBehaviour monoBehaviour)
         {
-            if (monoBehaviour == null)
-                throw new ArgumentNullException(nameof(monoBehaviour));
-
-            return TimerPlayerLoopDriver.GetCountdown(monoBehaviour, duration);
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+            return Countdown.Create(monoBehaviour);
         }
 
-        /// <summary>
-        /// Starts a new Countdown timer owned by this MonoBehaviour.
-        /// </summary>
-        public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration)
+        /// <summary>Gets a <see cref="StopwatchBuilder"/> for configuring and creating a <see cref="Stopwatch"/>.</summary>
+        public static StopwatchBuilder GetStopwatch(this MonoBehaviour monoBehaviour)
         {
-            var countdown = GetCountdown(monoBehaviour, duration);
-            countdown.Start();
-            return countdown;
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+            return Stopwatch.Create(monoBehaviour);
         }
 
-        /// <summary>
-        /// Starts a new Countdown timer owned by this MonoBehaviour.
-        /// </summary>
-        public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration, Func<bool> updateWhen)
+        /// <summary>Starts a simple countdown with the specified duration in seconds.</summary>
+        public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration = 1f)
         {
-            var countdown = GetCountdown(monoBehaviour, duration);
-            if (updateWhen != null)
-            {
-                countdown.SetUpdateWhen(updateWhen);
-            }
-            countdown.Start();
-            return countdown;
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+            return Countdown.Create(monoBehaviour).SetDuration(duration).Start();
         }
 
-        /// <summary>
-        /// Creates a new Stopwatch timer owned by this MonoBehaviour.
-        /// </summary>
-        public static Stopwatch GetStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
+        /// <summary>Starts a simple countdown with the specified duration in seconds and update condition.</summary>
+        public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration = 1f, Func<bool> updateWhen = null)
         {
-            if (monoBehaviour == null)
-                throw new ArgumentNullException(nameof(monoBehaviour));
-
-            return TimerPlayerLoopDriver.GetStopwatch(monoBehaviour, stopCondition);
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+            return Countdown.Create(monoBehaviour).SetDuration(duration).SetUpdateWhen(updateWhen).Start();
         }
 
-        /// <summary>
-        /// Starts a new Stopwatch timer owned by this MonoBehaviour.
-        /// </summary>
+        /// <summary>Starts a simple stopwatch with an optional stop condition.</summary>
         public static Stopwatch StartStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
         {
-            var stopwatch = GetStopwatch(monoBehaviour, stopCondition);
-            stopwatch.Start();
-            return stopwatch;
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+
+            var builder = Stopwatch.Create(monoBehaviour);
+            if (stopCondition != null) builder.SetStopCondition(stopCondition);
+
+            return builder.Start();
         }
 
-        /// <summary>
-        /// Invokes the specified action after a delay.
-        /// </summary>
+        /// <summary>Invokes an action after a delay in seconds.</summary>
         public static void InvokeAfterDelay(this MonoBehaviour monoBehaviour, float delay, Action action, bool useUnscaledTime = false)
         {
-            if (monoBehaviour == null)
-                throw new ArgumentNullException(nameof(monoBehaviour));
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
 
             if (delay <= 0f)
             {
-                Log.Warn("InvokeAfterDelay called with non-positive delay. Invoking action immediately.");
                 action?.Invoke();
                 return;
             }
 
-            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, delay);
-
-            if (useUnscaledTime)
-            {
-                countdown.SetUnscaledTime();
-            }
-
-            countdown.OnStop += () =>
-            {
-                try
+            var builder = Countdown.Create(monoBehaviour)
+                .SetDuration(delay)
+                .OnStop(() =>
                 {
-                    action?.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Error invoking action after delay: {ex}");
-                }
-                finally
-                {
-                    countdown?.Dispose();
-                    countdown = null;
-                }
-            };
-
-            countdown.Start();
-        }
-
-        /// <summary>
-        /// Invokes the specified action repeatedly at the given interval.
-        /// </summary>
-        public static IDisposable InvokeEvery(this MonoBehaviour monoBehaviour, float interval, Action action, Func<bool> updateWhen = null, bool useUnscaledTime = false)
-        {
-            if (monoBehaviour == null)
-                throw new ArgumentNullException(nameof(monoBehaviour));
-
-            if (interval <= 0f)
-            {
-                throw new ArgumentException("Interval must be greater than zero.", nameof(interval));
-            }
-
-            if (interval < 0.02f)
-            {
-                Log.Warn("Interval too small for InvokeEvery. Consider using Update() or FixedUpdate() instead.");
-            }
-
-            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, interval);
-
-            if (useUnscaledTime)
-            {
-                countdown.SetUnscaledTime();
-            }
-
-            if (updateWhen != null)
-            {
-                countdown.SetUpdateWhen(updateWhen);
-            }
-
-            countdown.SetLoop();
-
-            countdown.OnLoop += () =>
-            {
-                try
-                {
-                    action?.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Error invoking action on interval: {ex}");
-                }
-            };
-
-            countdown.Start();
-            return countdown;
-        }
-
-        /// <summary>
-        /// Invokes the specified action repeatedly at the given interval in seconds.
-        /// </summary>
-        public static IDisposable InvokeEverySeconds(this MonoBehaviour monoBehaviour, int intervalSeconds, int durationSeconds, Action<int> onTick, Action onStop, Func<bool> updateWhen = null, bool useUnscaledTime = false)
-        {
-            if (monoBehaviour == null)
-                throw new ArgumentNullException(nameof(monoBehaviour));
-
-            if (intervalSeconds <= 0)
-            {
-                throw new ArgumentException("Seconds must be greater than zero.", nameof(intervalSeconds));
-            }
-
-            if (durationSeconds <= 0)
-            {
-                throw new ArgumentException("Duration must be greater than zero.", nameof(durationSeconds));
-            }
-
-            var elapsedSeconds = 0;
-            var countdown = TimerPlayerLoopDriver.GetCountdown(monoBehaviour, intervalSeconds);
-
-            countdown.SetLoop();
-
-            if (useUnscaledTime)
-            {
-                countdown.SetUnscaledTime();
-            }
-
-            if (updateWhen != null)
-            {
-                countdown.SetUpdateWhen(updateWhen);
-            }
-
-            countdown.OnLoop += () =>
-            {
-                elapsedSeconds += intervalSeconds;
-                try
-                {
-                    var tickSeconds = Mathf.Clamp(elapsedSeconds, 0, durationSeconds > 0 ? durationSeconds : int.MaxValue);
-                    onTick?.Invoke(tickSeconds);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Error invoking action on seconds interval: {ex}");
-                }
-                finally
-                {
-                    if (durationSeconds > 0 && elapsedSeconds >= durationSeconds && countdown != null)
+                    try
                     {
-                        countdown.Stop();
+                        action?.Invoke();
                     }
-                }
-            };
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[{nameof(InvokeAfterDelay)}] Action threw: {ex}");
+                    }
+                });
 
-            countdown.OnStop += () =>
-            {
-                try
-                {
-                    onStop?.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Error invoking onStop action: {ex}");
-                }
-                finally
-                {
-                    countdown?.Dispose();
-                    countdown = null;
-                }
-            };
+            builder.SetUnscaledTime(useUnscaledTime);
 
-            countdown.Start();
-            return countdown;
+            builder.Start();
+        }
+
+        /// <summary>Invokes an action repeatedly at specified intervals in seconds.</summary>
+        public static CancelHandler InvokeEvery(this MonoBehaviour monoBehaviour, float interval, Action action, Func<bool> updateWhen = null, bool useUnscaledTime = false)
+        {
+            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
+            if (interval <= 0f) throw new ArgumentException("Interval must be greater than zero.", nameof(interval));
+
+            var builder = Countdown.Create(monoBehaviour)
+                .SetDuration(interval)
+                .SetLoop()
+                .OnLoop(() =>
+                {
+                    try
+                    {
+                        action?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"[{nameof(InvokeEvery)}] Action threw: {ex}");
+                    }
+                });
+
+            if (updateWhen != null) builder.SetUpdateWhen(updateWhen);
+            builder.SetUnscaledTime(useUnscaledTime);
+
+            var cd = builder.Start();
+            return cd.AsCancelHandler();
         }
     }
 }

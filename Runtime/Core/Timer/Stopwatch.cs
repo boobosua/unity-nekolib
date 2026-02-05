@@ -1,67 +1,50 @@
-using System;
-using NekoLib.Extensions;
 using UnityEngine;
 
 namespace NekoLib.Core
 {
-    public class Stopwatch : TimerBase
+    /// <summary>
+    /// A timer that measures elapsed time until stopped.
+    /// </summary>
+    public readonly struct Stopwatch
     {
-        private Func<bool> _stopCondition = null;
+        private readonly int _slot;
+        private readonly int _id;
 
-        /// <summary>
-        /// A timer that counts up until manually stopped or based on a certain predicate.
-        /// </summary>
-        public Stopwatch(MonoBehaviour ownerComponent, Func<bool> stopCondition = null) : base(ownerComponent)
+        internal Stopwatch(int slot, int id)
         {
-            _stopCondition = stopCondition;
+            _slot = slot;
+            _id = id;
         }
 
-        /// <summary>
-        /// Internal method to reinitialize a pooled stopwatch timer.
-        /// </summary>
-        internal void ReInitialize(MonoBehaviour ownerComponent, Func<bool> stopCondition)
+        internal int Slot => _slot;
+        internal int Id => _id;
+
+        /// <summary>Starts building a stopwatch owned by <paramref name="owner"/>.</summary>
+        public static StopwatchBuilder Create(MonoBehaviour owner)
         {
-            ReInitializeBase(ownerComponent);
-            _stopCondition = stopCondition;
+            return new StopwatchBuilder(owner);
         }
 
-        /// <summary>
-        /// Starts the stopwatch.
-        /// </summary>
-        public override void Start()
-        {
-            _elapsedTime = 0f;
-            base.Start();
-        }
+        /// <summary>Returns true while this stopwatch exists (not stopped/cancelled and owner still valid).</summary>
+        public bool IsAlive => TimerPlayerLoopDriver.IsAlive(_slot, _id);
+        /// <summary>Returns true if the stopwatch is currently ticking.</summary>
+        public bool IsRunning => TimerPlayerLoopDriver.IsRunning(_slot, _id);
+        /// <summary>Returns true if the stopwatch exists but is not running.</summary>
+        public bool IsPaused => TimerPlayerLoopDriver.IsPaused(_slot, _id);
 
-        public override void Tick(float deltaTime)
-        {
-            if (!ShouldTick)
-                return;
+        /// <summary>Gets the elapsed time in seconds.</summary>
+        public float ElapsedTime => TimerPlayerLoopDriver.GetStopwatchElapsedTime(_slot, _id);
 
-            if (_stopCondition != null && _stopCondition.Invoke())
-            {
-                base.Stop();
-                return;
-            }
+        /// <summary>Starts the stopwatch.</summary>
+        public void Start() => TimerPlayerLoopDriver.Start(_slot, _id);
+        /// <summary>Pauses the stopwatch.</summary>
+        public void Pause() => TimerPlayerLoopDriver.Pause(_slot, _id);
+        /// <summary>Resumes the stopwatch if paused.</summary>
+        public void Resume() => TimerPlayerLoopDriver.Resume(_slot, _id);
 
-            _elapsedTime += deltaTime;
-            InvokeUpdate(_elapsedTime);
-        }
-
-        /// <summary>
-        /// Stops the stopwatch and returns the elapsed time.
-        /// </summary>
-        public float StopAndGetTime(bool invokeStopEvent = true)
-        {
-            base.Stop(invokeStopEvent);
-            return _elapsedTime.AtLeast(0f);
-        }
-
-        public override void Dispose()
-        {
-            _stopCondition = null;
-            base.Dispose();
-        }
+        /// <summary>Stops the stopwatch and invokes stop callbacks.</summary>
+        public void Stop() => TimerPlayerLoopDriver.Stop(_slot, _id);
+        /// <summary>Cancels the stopwatch without invoking stop callbacks.</summary>
+        public void Cancel() => TimerPlayerLoopDriver.Cancel(_slot, _id);
     }
 }

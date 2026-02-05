@@ -1,246 +1,61 @@
-using System;
-using NekoLib.Extensions;
-using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Core
 {
-    public enum LoopType
-    {
-        None,           // No looping
-        Count,          // Loop a specific number of times
-        Infinite,       // Loop infinitely
-        Condition       // Loop until condition is met
-    }
-
     /// <summary>
-    /// A timer that counts down from a given initial time.
+    /// A timer that counts down from a specified duration to zero.
     /// </summary>
-    public class Countdown : TimerBase
+    public readonly struct Countdown
     {
-        public event Action OnLoop;
+        private readonly int _slot;
+        private readonly int _id;
 
-        private float _totalTime;
-        private LoopType _loopType = LoopType.None;
-        private int _loopCount = 0;
-        private int _currentLoopIteration = 0;
-        private Func<bool> _loopStopCondition = null;
-
-        /// <summary>
-        /// The current progress of the countdown.
-        /// </summary>
-        public float Progress
+        internal Countdown(int slot, int id)
         {
-            get
-            {
-                return _elapsedTime.PercentageOf(_totalTime);
-            }
+            _slot = slot;
+            _id = id;
         }
 
-        /// <summary>
-        /// The inverse progress of the countdown (count up).
-        /// </summary>
-        public float InverseProgress
+        internal int Slot => _slot;
+        internal int Id => _id;
+
+        /// <summary>Starts building a countdown owned by <paramref name="owner"/>.</summary>
+        public static CountdownBuilder Create(MonoBehaviour owner)
         {
-            get
-            {
-                return 1f - Progress;
-            }
+            return new CountdownBuilder(owner);
         }
 
-        /// <summary>
-        /// The current loop iteration (0-based). Only meaningful for count-based looping.
-        /// </summary>
-        public int CurrentLoopIteration => _currentLoopIteration;
+        /// <summary>Returns true while this countdown exists (not stopped/cancelled and owner still valid).</summary>
+        public bool IsAlive => TimerPlayerLoopDriver.IsAlive(_slot, _id);
+        /// <summary>Returns true if the countdown is currently ticking.</summary>
+        public bool IsRunning => TimerPlayerLoopDriver.IsRunning(_slot, _id);
+        /// <summary>Returns true if the countdown exists but is not running.</summary>
+        public bool IsPaused => TimerPlayerLoopDriver.IsPaused(_slot, _id);
 
-        /// <summary>
-        /// Whether the countdown is configured to loop.
-        /// </summary>
-        public bool IsLooping => _loopType != LoopType.None;
+        /// <summary>Gets the remaining time in seconds.</summary>
+        public float RemainingTime => TimerPlayerLoopDriver.GetCountdownRemainingTime(_slot, _id);
+        /// <summary>Gets the configured duration in seconds.</summary>
+        public float TotalTime => TimerPlayerLoopDriver.GetCountdownTotalTime(_slot, _id);
+        /// <summary>Gets the current loop iteration for looping countdowns.</summary>
+        public int CurrentLoopIteration => TimerPlayerLoopDriver.GetCountdownLoopIteration(_slot, _id);
 
-        /// <summary>
-        /// The current loop type being used.
-        /// </summary>
-        public LoopType CurrentLoopType => _loopType;
+        /// <summary>Starts the countdown.</summary>
+        public void Start() => TimerPlayerLoopDriver.Start(_slot, _id);
+        /// <summary>Pauses the countdown.</summary>
+        public void Pause() => TimerPlayerLoopDriver.Pause(_slot, _id);
+        /// <summary>Resumes the countdown if paused.</summary>
+        public void Resume() => TimerPlayerLoopDriver.Resume(_slot, _id);
 
-        /// <summary>
-        /// The current total time for the countdown (may be modified from original).
-        /// </summary>
-        public float TotalTime => _totalTime;
+        /// <summary>Stops the countdown and invokes stop callbacks (if any were registered).</summary>
+        public void Stop() => TimerPlayerLoopDriver.Stop(_slot, _id);
+        /// <summary>Cancels the countdown without invoking stop callbacks.</summary>
+        public void Cancel() => TimerPlayerLoopDriver.Cancel(_slot, _id);
 
-        public string InverseClockFormat
-        {
-            get
-            {
-                return (_totalTime - _elapsedTime).ToClock();
-            }
-        }
-
-        public Countdown(MonoBehaviour ownerComponent, float totalTime = 1f) : base(ownerComponent)
-        {
-            _totalTime = totalTime.AtLeast(0f);
-            _loopType = LoopType.None;
-            _loopCount = 0;
-            _currentLoopIteration = 0;
-            _loopStopCondition = null;
-        }
-
-        /// <summary>
-        /// Internal method to reinitialize a pooled countdown timer.
-        /// </summary>
-        internal void ReInitialize(MonoBehaviour ownerComponent, float totalTime)
-        {
-            ReInitializeBase(ownerComponent);
-            _totalTime = totalTime.AtLeast(0f);
-            _loopType = LoopType.None;
-            _loopCount = 0;
-            _currentLoopIteration = 0;
-            _loopStopCondition = null;
-            OnLoop = null;
-        }
-
-        public override void Start()
-        {
-            _elapsedTime = _totalTime;
-            base.Start();
-        }
-
-        /// <summary>
-        /// Sets the countdown to loop a specific number of times.
-        /// </summary>
-        public void SetLoop(int loopCount = -1)
-        {
-            if (loopCount < -1)
-                throw new ArgumentException("Loop count cannot be less than -1", nameof(loopCount));
-
-            _currentLoopIteration = 0;
-            _loopStopCondition = null; // Clear condition-based looping
-
-            if (loopCount == 0)
-            {
-                _loopType = LoopType.None;
-                _loopCount = 0;
-            }
-            else if (loopCount == -1)
-            {
-                _loopType = LoopType.Infinite;
-                _loopCount = -1;
-            }
-            else
-            {
-                _loopType = LoopType.Count;
-                _loopCount = loopCount;
-            }
-        }
-
-        /// <summary>
-        /// Sets the countdown to loop infinitely until a condition is met.
-        /// </summary>
-        public void SetLoop(Func<bool> stopWhen)
-        {
-            _loopStopCondition = stopWhen ?? throw new ArgumentNullException(nameof(stopWhen));
-            _loopType = LoopType.Condition;
-            _loopCount = 0; // Not used for condition-based looping
-            _currentLoopIteration = 0;
-        }
-
-        /// <summary>
-        /// Extends the countdown by adding time to the total duration.
-        /// </summary>
-        public void ExtendTime(float additionalTime)
-        {
-            if (additionalTime < 0f)
-            {
-                Log.Warn($"[{nameof(Countdown)}] Cannot extend time with {"negative value".Colorize(Swatch.VR)}: {additionalTime.ToString().Colorize(Swatch.SG)}. Operation ignored.");
-                return;
-            }
-
-            _totalTime += additionalTime;
-
-            if (!IsRunning) return;
-            _elapsedTime = (_elapsedTime + additionalTime).AtMost(_totalTime);
-        }
-
-        /// <summary>
-        /// Shortens the countdown by subtracting time from the total duration.
-        /// </summary>
-        public void ShortenTime(float timeToReduce)
-        {
-            if (timeToReduce < 0f)
-            {
-                Log.Warn($"[{nameof(Countdown)}] Cannot reduce time with {"negative value".Colorize(Swatch.VR)}: {timeToReduce.ToString().Colorize(Swatch.SG)}. Operation ignored.");
-                return;
-            }
-
-            _totalTime = (_totalTime - timeToReduce).AtLeast(0f);
-
-            if (!IsRunning) return;
-            _elapsedTime = (_elapsedTime - timeToReduce).AtLeast(0f);
-        }
-
-        /// <summary>
-        /// Sets the total time for the countdown.
-        /// </summary>
-        public void SetTotalTime(float newTotalTime)
-        {
-            _totalTime = newTotalTime.AtLeast(0f);
-            _elapsedTime = _elapsedTime.AtMost(_totalTime);
-        }
-
-        public override void Tick(float deltaTime)
-        {
-            if (!ShouldTick)
-                return;
-
-            if (_elapsedTime <= 0)
-            {
-                // Check if we should continue looping based on the loop type
-                bool shouldContinueLooping = false;
-
-                switch (_loopType)
-                {
-                    case LoopType.None:
-                        shouldContinueLooping = false;
-                        break;
-
-                    case LoopType.Infinite:
-                        shouldContinueLooping = true;
-                        break;
-
-                    case LoopType.Count:
-                        _currentLoopIteration++;
-                        shouldContinueLooping = _currentLoopIteration < _loopCount;
-                        break;
-
-                    case LoopType.Condition:
-                        // Loop until condition returns true
-                        shouldContinueLooping = _loopStopCondition != null && !_loopStopCondition.Invoke();
-                        break;
-                }
-
-                if (shouldContinueLooping)
-                {
-                    OnLoop?.Invoke(); // Signal completion of current loop
-                    _elapsedTime = _totalTime; // Reset timer for next loop
-                }
-                else
-                {
-                    _elapsedTime = 0f;
-                    base.Stop(); // Stop completely - this will invoke OnStop
-                }
-            }
-            else
-            {
-                _elapsedTime -= deltaTime;
-                InvokeUpdate(_elapsedTime);
-            }
-        }
-
-        public override void Dispose()
-        {
-            OnLoop = null;
-            _loopStopCondition = null;
-            base.Dispose();
-        }
+        /// <summary>Adds time in seconds to the remaining time.</summary>
+        public void AddTime(float seconds) => TimerPlayerLoopDriver.AddCountdownTime(_slot, _id, seconds);
+        /// <summary>Reduces remaining time in seconds.</summary>
+        public void ReduceTime(float seconds) => TimerPlayerLoopDriver.ReduceCountdownTime(_slot, _id, seconds);
+        /// <summary>Converts this countdown to a <see cref="CancelHandler"/> for cancelling without invoking stop callbacks.</summary>
+        public CancelHandler AsCancelHandler() => new(_slot, _id);
     }
 }

@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using System.Linq;
 using NekoLib.Extensions;
 using NekoLib.Logger;
 using UnityEditor;
@@ -8,9 +7,11 @@ using UnityEngine;
 
 namespace NekoLib.Core
 {
+    /// <summary>Editor window that displays active countdowns/stopwatches while in Play Mode.</summary>
     public class TimerTrackerWindow : EditorWindow
     {
         [MenuItem("Window/Neko Framework/Timer Tracker")]
+        /// <summary>Opens the Timer Tracker window.</summary>
         public static void ShowWindow()
         {
             GetWindow<TimerTrackerWindow>("Timer Tracker");
@@ -45,9 +46,15 @@ namespace NekoLib.Core
         private Vector2 _scrollPosition;
 
         // Smooth progress animation
-        private readonly Dictionary<TimerBase, float> _smoothProgressValues = new();
+        private readonly Dictionary<ulong, float> _smoothProgressValues = new();
         private const float SMOOTH_SPEED = 5f;
         private bool _wasPlaying = false;
+
+        private readonly List<TimerPlayerLoopDriver.TimerDebugInfo> _allTimers = new(128);
+        private readonly List<TimerPlayerLoopDriver.TimerDebugInfo> _countdowns = new(128);
+        private readonly List<TimerPlayerLoopDriver.TimerDebugInfo> _stopwatches = new(128);
+        private readonly HashSet<ulong> _timerKeys = new();
+        private readonly List<ulong> _keysToRemove = new(64);
 
         private void OnEnable()
         {
@@ -79,19 +86,14 @@ namespace NekoLib.Core
                 EditorGUILayout.Space(4);
 
                 // Get timer data from the global PlayerLoop driver
-                var allTimers = GetAllTimers();
-                var countdowns = allTimers.OfType<Countdown>().ToList();
-                var stopwatches = allTimers.OfType<Stopwatch>().ToList();
+                GetAllTimers(_allTimers);
+                SplitTimers(_allTimers, _countdowns, _stopwatches);
 
                 // Clean up smooth progress values for removed timers
-                var timersToRemove = _smoothProgressValues.Keys.Where(timer => !allTimers.Contains(timer)).ToList();
-                foreach (var timer in timersToRemove)
-                {
-                    _smoothProgressValues.Remove(timer);
-                }
+                CleanupSmoothProgress(_allTimers);
 
                 // Calculate statistics
-                var stats = CalculateStatistics(allTimers);
+                var stats = CalculateStatistics(_allTimers);
 
                 // Draw tabs with better styling
                 _selectedTab = NekoEditorTabBar.Draw(_selectedTab, _tabNames, 24f);
@@ -103,7 +105,7 @@ namespace NekoLib.Core
                     // Prevent visual overlap: reset scroll for pooling page
                     _scrollPosition = Vector2.zero;
 
-                    DrawPoolingFullPage(countdowns.Count, stopwatches.Count);
+                    DrawPoolingFullPage(_countdowns.Count, _stopwatches.Count);
                 }
                 else
                 {
@@ -116,11 +118,11 @@ namespace NekoLib.Core
                     {
                         if (_selectedTab == 0)
                         {
-                            DrawCountdownTable(countdowns);
+                            DrawCountdownTable(_countdowns);
                         }
                         else
                         {
-                            DrawStopwatchTable(stopwatches);
+                            DrawStopwatchTable(_stopwatches);
                         }
                     }
                     finally
@@ -131,7 +133,7 @@ namespace NekoLib.Core
                     EditorGUILayout.EndVertical();
 
                     EditorGUILayout.Space(6);
-                    DrawStatisticsPanel(stats, allTimers.Count);
+                    DrawStatisticsPanel(stats, _allTimers.Count);
                 }
 
                 // Auto-refresh
@@ -147,16 +149,57 @@ namespace NekoLib.Core
             }
         }
 
-        private List<TimerBase> GetAllTimers()
+        private void GetAllTimers(List<TimerPlayerLoopDriver.TimerDebugInfo> results)
         {
-            if (!Application.isPlaying)
-                return new List<TimerBase>();
-
-            // Read directly from the global PlayerLoop driver
-            return TimerPlayerLoopDriver.GetActiveTimersSnapshot();
+            TimerPlayerLoopDriver.GetActiveTimersSnapshot(results);
         }
 
-        private void DrawCountdownTable(List<Countdown> countdowns)
+        private static void SplitTimers(
+            List<TimerPlayerLoopDriver.TimerDebugInfo> allTimers,
+            List<TimerPlayerLoopDriver.TimerDebugInfo> countdowns,
+            List<TimerPlayerLoopDriver.TimerDebugInfo> stopwatches)
+        {
+            countdowns.Clear();
+            stopwatches.Clear();
+
+            for (int i = 0; i < allTimers.Count; i++)
+            {
+                var timer = allTimers[i];
+                if (timer.Kind == TimerPlayerLoopDriver.TimerKind.Countdown)
+                {
+                    countdowns.Add(timer);
+                }
+                else if (timer.Kind == TimerPlayerLoopDriver.TimerKind.Stopwatch)
+                {
+                    stopwatches.Add(timer);
+                }
+            }
+        }
+
+        private void CleanupSmoothProgress(List<TimerPlayerLoopDriver.TimerDebugInfo> allTimers)
+        {
+            _timerKeys.Clear();
+            for (int i = 0; i < allTimers.Count; i++)
+            {
+                _timerKeys.Add(allTimers[i].Key);
+            }
+
+            _keysToRemove.Clear();
+            foreach (var key in _smoothProgressValues.Keys)
+            {
+                if (!_timerKeys.Contains(key))
+                {
+                    _keysToRemove.Add(key);
+                }
+            }
+
+            for (int i = 0; i < _keysToRemove.Count; i++)
+            {
+                _smoothProgressValues.Remove(_keysToRemove[i]);
+            }
+        }
+
+        private void DrawCountdownTable(List<TimerPlayerLoopDriver.TimerDebugInfo> countdowns)
         {
             if (countdowns.Count == 0)
             {
@@ -167,20 +210,17 @@ namespace NekoLib.Core
             // Pagination via utility
             var slice = EditorPagination.Draw(ref _countdownPageState, countdowns.Count, ITEMS_PER_PAGE, HEADER_HEIGHT - 8, "Countdown", "Countdowns");
 
-            // Get items for current slice
-            var pageItems = countdowns.Skip(slice.Start).Take(slice.End - slice.Start).ToList();
-
             // Draw table header
             DrawCountdownTableHeader();
 
             // Draw table rows
-            for (int i = 0; i < pageItems.Count; i++)
+            for (int i = slice.Start; i < slice.End; i++)
             {
-                DrawCountdownTableRow(pageItems[i], i);
+                DrawCountdownTableRow(countdowns[i], i - slice.Start);
             }
         }
 
-        private void DrawStopwatchTable(List<Stopwatch> stopwatches)
+        private void DrawStopwatchTable(List<TimerPlayerLoopDriver.TimerDebugInfo> stopwatches)
         {
             if (stopwatches.Count == 0)
             {
@@ -191,16 +231,13 @@ namespace NekoLib.Core
             // Pagination via utility
             var slice = EditorPagination.Draw(ref _stopwatchPageState, stopwatches.Count, ITEMS_PER_PAGE, HEADER_HEIGHT - 8, "Stopwatch", "Stopwatches");
 
-            // Get items for current slice
-            var pageItems = stopwatches.Skip(slice.Start).Take(slice.End - slice.Start).ToList();
-
             // Draw table header
             DrawStopwatchTableHeader();
 
             // Draw table rows
-            for (int i = 0; i < pageItems.Count; i++)
+            for (int i = slice.Start; i < slice.End; i++)
             {
-                DrawStopwatchTableRow(pageItems[i], i);
+                DrawStopwatchTableRow(stopwatches[i], i - slice.Start);
             }
         }
 
@@ -288,7 +325,7 @@ namespace NekoLib.Core
             DrawHeaderColumn(new Rect(x, headerRect.y, statusWidth, headerRect.height), "Status", headerStyle);
         }
 
-        private void DrawCountdownTableRow(Countdown countdown, int index)
+        private void DrawCountdownTableRow(TimerPlayerLoopDriver.TimerDebugInfo countdown, int index)
         {
             try
             {
@@ -315,11 +352,14 @@ namespace NekoLib.Core
 
                 // Determine timer state for progress bar and status text
                 bool ownerActive = countdown.IsOwnerActiveAndEnabled;
-                // Countdown Progress is remaining/total, so completion is when remaining ~ 0
-                bool reachedEnd = countdown.RemainTime <= 0.0001f || countdown.InverseProgress >= 0.999f;
-                bool manualStopNonLoop = !countdown.IsRunning && ownerActive && !countdown.IsLooping && !reachedEnd;
-                bool isCompleted = !countdown.IsRunning && (reachedEnd || manualStopNonLoop);
-                bool isPaused = !isCompleted && (countdown.IsPausedDueToOwner || (countdown.IsRunning && !ownerActive));
+                float total = countdown.TotalTime;
+                float remaining = countdown.RemainingTime;
+                float progress = total <= 0f ? 1f : Mathf.Clamp01(1f - (remaining / total));
+                float inverseProgress = 1f - progress;
+
+                bool reachedEnd = remaining <= 0.0001f || progress >= 0.999f;
+                bool isCompleted = !countdown.IsRunning && reachedEnd;
+                bool isPaused = !isCompleted && countdown.IsRunning && !ownerActive;
 
                 // Use dimmed text color for content to distinguish from headers
                 Color baseTextColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
@@ -337,26 +377,25 @@ namespace NekoLib.Core
                     statusTextColor = dimmedTextColor;
 
                 // GameObject column
-                DrawGameObjectColumn(new Rect(x, rowRect.y, gameObjectWidth, rowRect.height), countdown, dimmedTextColor);
+                DrawGameObjectColumn(new Rect(x, rowRect.y, gameObjectWidth, rowRect.height), countdown.Owner, countdown.OwnerComponent, dimmedTextColor);
                 x += gameObjectWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Total Time column
                 DrawCenteredText(new Rect(x, rowRect.y, totalTimeWidth, rowRect.height),
-                    FormatTime(countdown.TotalTime), dimmedTextColor, 10);
+                    FormatTime(total), dimmedTextColor, 10);
                 x += totalTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Remaining Time column
-                float remainingTime = countdown.RemainTime;
                 DrawCenteredText(new Rect(x, rowRect.y, currentTimeWidth, rowRect.height),
-                    FormatTime(remainingTime), dimmedTextColor, 10);
+                    FormatTime(remaining), dimmedTextColor, 10);
                 x += currentTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Progress column (ONLY the progress bar gets colored based on timer state)
                 DrawProgressColumn(new Rect(x, rowRect.y, progressWidth, rowRect.height),
-                    countdown.InverseProgress, countdown.Progress, isCompleted, isPaused, countdown.IsRunning, countdown);
+                    inverseProgress, progress, isCompleted, isPaused, countdown.IsRunning, countdown.Key);
                 x += progressWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
@@ -370,7 +409,7 @@ namespace NekoLib.Core
             }
         }
 
-        private void DrawStopwatchTableRow(Stopwatch stopwatch, int index)
+        private void DrawStopwatchTableRow(TimerPlayerLoopDriver.TimerDebugInfo stopwatch, int index)
         {
             try
             {
@@ -396,7 +435,7 @@ namespace NekoLib.Core
                 // Determine timer state for status text
                 bool ownerActive = stopwatch.IsOwnerActiveAndEnabled;
                 bool isCompleted = !stopwatch.IsRunning && stopwatch.IsOwnerValid && ownerActive;
-                bool isPaused = !isCompleted && (stopwatch.IsPausedDueToOwner || (stopwatch.IsRunning && !ownerActive));
+                bool isPaused = !isCompleted && stopwatch.IsRunning && !ownerActive;
 
                 // Use dimmed text color for content to distinguish from headers
                 Color baseTextColor = EditorGUIUtility.isProSkin ? Color.white : Color.black;
@@ -414,13 +453,13 @@ namespace NekoLib.Core
                     statusTextColor = dimmedTextColor;
 
                 // GameObject column
-                DrawGameObjectColumn(new Rect(x, rowRect.y, gameObjectWidth, rowRect.height), stopwatch, dimmedTextColor);
+                DrawGameObjectColumn(new Rect(x, rowRect.y, gameObjectWidth, rowRect.height), stopwatch.Owner, stopwatch.OwnerComponent, dimmedTextColor);
                 x += gameObjectWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
                 // Elapsed Time column
                 DrawCenteredText(new Rect(x, rowRect.y, elapsedTimeWidth, rowRect.height),
-                    FormatTime(stopwatch.RemainTime), dimmedTextColor, 10);
+                    FormatTime(stopwatch.ElapsedTime), dimmedTextColor, 10);
                 x += elapsedTimeWidth;
                 DrawVerticalDivider(x, rowRect.y, rowRect.height);
 
@@ -450,13 +489,12 @@ namespace NekoLib.Core
             EditorGUI.DrawRect(new Rect(x - 1, y, 1, height), BORDER_COLOR);
         }
 
-        private void DrawGameObjectColumn(Rect rect, TimerBase timer, Color textColor)
+        private void DrawGameObjectColumn(Rect rect, GameObject owner, MonoBehaviour ownerComponent, Color textColor)
         {
             var centeredRect = new Rect(rect.x + 8, rect.y, rect.width - 16, rect.height);
 
-            string objectName = timer.Owner != null ? timer.Owner.name : "NULL";
-            string componentName = timer.OwnerComponent != null ?
-                timer.OwnerComponent.GetType().Name : "None";
+            string objectName = owner != null ? owner.name : "NULL";
+            string componentName = ownerComponent != null ? ownerComponent.GetType().Name : "None";
 
             // GameObject name (clickable)
             var objectStyle = new GUIStyle(EditorStyles.linkLabel)
@@ -468,12 +506,12 @@ namespace NekoLib.Core
             };
             objectStyle.normal.textColor = textColor;
 
-            if (timer.Owner != null && GUI.Button(
+            if (owner != null && GUI.Button(
                 new Rect(centeredRect.x, centeredRect.y + 3, centeredRect.width, 14),
                 objectName, objectStyle))
             {
-                EditorGUIUtility.PingObject(timer.Owner);
-                Selection.activeGameObject = timer.Owner;
+                EditorGUIUtility.PingObject(owner);
+                Selection.activeGameObject = owner;
             }
 
             // Component name
@@ -504,29 +542,26 @@ namespace NekoLib.Core
             GUI.Label(rr, text, textStyle);
         }
 
-        private void DrawProgressColumn(Rect rect, float inverseProgress, float normalProgress, bool isCompleted, bool isPaused, bool isRunning, TimerBase timer)
+        private void DrawProgressColumn(Rect rect, float inverseProgress, float normalProgress, bool isCompleted, bool isPaused, bool isRunning, ulong timerKey)
         {
             var progressRect = new Rect(rect.x + 6, rect.y + 4, rect.width - 12, 16);
 
             // Smooth progress animation
             float displayProgress = inverseProgress;
-            if (timer != null && Application.isPlaying)
+            if (Application.isPlaying)
             {
-                if (!_smoothProgressValues.ContainsKey(timer))
-                {
-                    _smoothProgressValues[timer] = inverseProgress;
-                }
+                if (!_smoothProgressValues.ContainsKey(timerKey)) _smoothProgressValues[timerKey] = inverseProgress;
 
-                if (!timer.IsRunning)
+                if (!isRunning)
                 {
-                    _smoothProgressValues[timer] = inverseProgress;
+                    _smoothProgressValues[timerKey] = inverseProgress;
                     displayProgress = inverseProgress;
                 }
                 else
                 {
-                    float currentSmooth = _smoothProgressValues[timer];
+                    float currentSmooth = _smoothProgressValues[timerKey];
                     float newSmooth = Mathf.Lerp(currentSmooth, inverseProgress, Time.unscaledDeltaTime * SMOOTH_SPEED);
-                    _smoothProgressValues[timer] = newSmooth;
+                    _smoothProgressValues[timerKey] = newSmooth;
                     displayProgress = newSmooth;
                 }
             }
@@ -567,24 +602,22 @@ namespace NekoLib.Core
             GUI.Label(pr, progressText, progressTextStyle);
         }
 
-        private string GetTimerStatus(TimerBase timer, bool isCompleted, bool isPaused)
+        private string GetTimerStatus(TimerPlayerLoopDriver.TimerDebugInfo timer, bool isCompleted, bool isPaused)
         {
             if (isCompleted)
                 return "Done";
 
             if (isPaused)
             {
-                if (timer.IsPausedDueToOwner)
-                    return "Owner Off";
-                return "Paused";
+                return "Owner Off";
             }
 
             if (timer.IsRunning)
             {
                 string status = "Running";
                 if (timer.UseUnscaledTime) status += " (Unscaled)";
-                if (timer is Countdown countdown && countdown.IsLooping)
-                    status += $" Loop {countdown.CurrentLoopIteration + 1}";
+                if (timer.Kind == TimerPlayerLoopDriver.TimerKind.Countdown && timer.CurrentLoopIteration > 0)
+                    status += $" Loop {timer.CurrentLoopIteration + 1}";
                 return status;
             }
 
@@ -712,7 +745,7 @@ namespace NekoLib.Core
             EditorGUILayout.EndVertical();
         }
 
-        private TimerStatistics CalculateStatistics(List<TimerBase> timers)
+        private TimerStatistics CalculateStatistics(List<TimerPlayerLoopDriver.TimerDebugInfo> timers)
         {
             var stats = new TimerStatistics();
 
@@ -735,27 +768,24 @@ namespace NekoLib.Core
                 }
 
                 // Paused due to owner disabled/inactive
-                if (timer.IsPausedDueToOwner || (timer.IsRunning && !ownerActive))
+                if (timer.IsRunning && !ownerActive)
                 {
                     stats.Paused++;
                     continue;
                 }
 
                 // Not running here and owner is valid (likely either Paused or Done)
-                if (timer is Stopwatch)
+                if (timer.Kind == TimerPlayerLoopDriver.TimerKind.Stopwatch)
                 {
                     // Stopwatches are considered Done when not running
                     stats.Completed++;
                     continue;
                 }
 
-                if (timer is Countdown cd)
+                if (timer.Kind == TimerPlayerLoopDriver.TimerKind.Countdown)
                 {
-                    // Done if reached end OR manually stopped (non-loop) while owner is active
-                    bool reachedEnd = cd.Progress >= 1.0f || cd.RemainTime <= 0.0001f;
-                    bool manualStopNonLoop = !cd.IsRunning && ownerActive && !cd.IsLooping && !reachedEnd; // treat manual stop as done
-
-                    if (reachedEnd || manualStopNonLoop)
+                    bool reachedEnd = timer.RemainingTime <= 0.0001f;
+                    if (reachedEnd)
                     {
                         stats.Completed++;
                     }
