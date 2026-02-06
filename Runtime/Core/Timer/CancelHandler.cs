@@ -16,9 +16,6 @@ namespace NekoLib.Core
         public bool IsAlive => TimerPlayerLoopDriver.IsAlive(Slot, Id);
 
         /// <summary>Cancels the timer without invoking stop callbacks.</summary>
-        public void Cancel()
-        {
-            TimerPlayerLoopDriver.Cancel(Slot, Id);
-        }
+        public void Cancel() => TimerPlayerLoopDriver.Cancel(Slot, Id);
     }
 }

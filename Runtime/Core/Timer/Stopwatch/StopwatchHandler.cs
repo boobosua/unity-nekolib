@@ -15,6 +15,11 @@ namespace NekoLib.Core
             _stopCondition = stopCondition;
         }
 
+        internal void SetStopCondition(Func<bool> stopCondition)
+        {
+            _stopCondition = stopCondition;
+        }
+
         protected override void OnStartAfter()
         {
             _elapsedTime = 0f;

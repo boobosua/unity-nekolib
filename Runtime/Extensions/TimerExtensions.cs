@@ -7,15 +7,15 @@ namespace NekoLib.Extensions
 {
     public static class TimerExtensions
     {
-        /// <summary>Gets a <see cref="CountdownBuilder"/> for configuring and creating a <see cref="Countdown"/>.</summary>
-        public static CountdownBuilder GetCountdown(this MonoBehaviour monoBehaviour)
+        /// <summary>Gets a <see cref="Countdown"/> for configuring and creating a <see cref="Countdown"/>.</summary>
+        public static Countdown GetCountdown(this MonoBehaviour monoBehaviour)
         {
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
             return Countdown.Create(monoBehaviour);
         }
 
-        /// <summary>Gets a <see cref="StopwatchBuilder"/> for configuring and creating a <see cref="Stopwatch"/>.</summary>
-        public static StopwatchBuilder GetStopwatch(this MonoBehaviour monoBehaviour)
+        /// <summary>Gets a <see cref="Stopwatch"/> for configuring and creating a <see cref="Stopwatch"/>.</summary>
+        public static Stopwatch GetStopwatch(this MonoBehaviour monoBehaviour)
         {
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
             return Stopwatch.Create(monoBehaviour);
@@ -25,14 +25,20 @@ namespace NekoLib.Extensions
         public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration = 1f)
         {
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
-            return Countdown.Create(monoBehaviour).SetDuration(duration).Start();
+
+            var cd = Countdown.Create(monoBehaviour).SetDuration(duration);
+            cd.Start();
+            return cd;
         }
 
         /// <summary>Starts a simple countdown with the specified duration in seconds and update condition.</summary>
         public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration = 1f, Func<bool> updateWhen = null)
         {
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
-            return Countdown.Create(monoBehaviour).SetDuration(duration).SetUpdateWhen(updateWhen).Start();
+
+            var cd = Countdown.Create(monoBehaviour).SetDuration(duration).SetUpdateWhen(updateWhen);
+            cd.Start();
+            return cd;
         }
 
         /// <summary>Starts a simple stopwatch with an optional stop condition.</summary>
@@ -40,10 +46,9 @@ namespace NekoLib.Extensions
         {
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
 
-            var builder = Stopwatch.Create(monoBehaviour);
-            if (stopCondition != null) builder.SetStopCondition(stopCondition);
-
-            return builder.Start();
+            var sw = Stopwatch.Create(monoBehaviour, stopCondition);
+            sw.Start();
+            return sw;
         }
 
         /// <summary>Invokes an action after a delay in seconds.</summary>
@@ -57,7 +62,7 @@ namespace NekoLib.Extensions
                 return;
             }
 
-            var builder = Countdown.Create(monoBehaviour)
+            var cd = Countdown.Create(monoBehaviour)
                 .SetDuration(delay)
                 .OnStop(() =>
                 {
@@ -69,11 +74,10 @@ namespace NekoLib.Extensions
                     {
                         Log.Error($"[{nameof(InvokeAfterDelay)}] Action threw: {ex}");
                     }
-                });
+                })
+                .SetUnscaledTime(useUnscaledTime);
 
-            builder.SetUnscaledTime(useUnscaledTime);
-
-            builder.Start();
+            cd.Start();
         }
 
         /// <summary>Invokes an action repeatedly at specified intervals in seconds.</summary>
@@ -82,7 +86,7 @@ namespace NekoLib.Extensions
             if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
             if (interval <= 0f) throw new ArgumentException("Interval must be greater than zero.", nameof(interval));
 
-            var builder = Countdown.Create(monoBehaviour)
+            var cd = Countdown.Create(monoBehaviour)
                 .SetDuration(interval)
                 .SetLoop()
                 .OnLoop(() =>
@@ -95,12 +99,12 @@ namespace NekoLib.Extensions
                     {
                         Log.Error($"[{nameof(InvokeEvery)}] Action threw: {ex}");
                     }
-                });
+                })
+                .SetUnscaledTime(useUnscaledTime);
 
-            if (updateWhen != null) builder.SetUpdateWhen(updateWhen);
-            builder.SetUnscaledTime(useUnscaledTime);
+            if (updateWhen != null) cd = cd.SetUpdateWhen(updateWhen);
 
-            var cd = builder.Start();
+            cd.Start();
             return cd.AsCancelHandler();
         }
     }

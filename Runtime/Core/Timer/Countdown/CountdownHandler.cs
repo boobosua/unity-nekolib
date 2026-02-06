@@ -32,6 +32,11 @@ namespace NekoLib.Core
             OnLoop = null;
         }
 
+        internal void SetTotalTime(float totalTime)
+        {
+            _totalTime = totalTime.AtLeast(0f);
+        }
+
         internal void SetLoop(int loopCount)
         {
             if (loopCount < -1)
@@ -103,6 +108,12 @@ namespace NekoLib.Core
         protected override void OnStartAfter()
         {
             _elapsedTime = _totalTime;
+
+            if (_elapsedTime <= 0f)
+            {
+                InvokeUpdate(0f);
+                StopInvoke();
+            }
         }
 
         internal override bool Tick(float deltaTime)
