@@ -32,43 +32,56 @@ AudioManager.Instance.PlayMusic(backgroundMusic);
 
 ### Creating Timers
 
-Use the fluent builders exposed via `Utils` in `NekoLib.Utilities`.
+NekoLib timers are PlayerLoop-driven (no coroutines) and come in two flavors:
+
+- `Countdown`: counts down from a duration to 0.
+- `Stopwatch`: counts up until you stop it (or a stop condition triggers).
+
+Both are lightweight `readonly struct` handles in `NekoLib.Core`.
 
 ```csharp
-using NekoLib.Utilities; // namespace for Utils
+using NekoLib.Core;
+using UnityEngine;
 
-// Countdown timer (loops 3 times, only updates when not paused)
-var countdown = Utils.CreateCountdown(this)
-    .SetDuration(10f)
-    .SetLoop(3)
+// Countdown (loops 3 times, only ticks when not paused)
+var countdown = Countdown.Create(this, duration: 10f)
+    .SetLoop(loopCount: 3)
     .SetUpdateWhen(() => !isPaused)
-    .Build();
+    .OnUpdate(remaining => Debug.Log($"Remaining: {remaining:F2}s"))
+    .OnStop(() => Debug.Log("Countdown finished"));
 
-// Stopwatch timer (auto stops when gameIsOver && only updates in active state)
-var stopwatch = Utils.CreateStopwatch(this)
-    .SetStopCondition(() => gameIsOver)
+countdown.Start();
+
+// Stopwatch (stops when gameIsOver, only ticks in active state)
+var stopwatch = Stopwatch.Create(this, stopCondition: () => gameIsOver)
     .SetUpdateWhen(() => isActiveState)
-    .Build();
+    .OnUpdate(elapsed => Debug.Log($"Elapsed: {elapsed:F2}s"))
+    .OnStop(() => Debug.Log("Stopwatch stopped"));
+
+stopwatch.Start();
 ```
 
 ### Timer Control
 
 ```csharp
-// Start and handle events
-countdown.OnStop += () => Debug.Log("Time's up!");
-countdown.Start();
+// State
+bool alive = countdown.IsAlive;
+bool running = countdown.IsRunning;
+bool paused = countdown.IsPaused;
 
-// Monitor progress
-float progress = countdown.Progress; // 0.0 to 1.0
-string timeLeft = countdown.InverseClockFormat; // "MM:SS"
+// Countdown values
+float remaining = countdown.RemainingTime;
+float total = countdown.TotalTime;
+int loopIteration = countdown.CurrentLoopIteration;
 
-// Control timers
+// Control
 countdown.Pause();
 countdown.Resume();
-countdown.Stop();
+countdown.Stop();   // invokes OnStop callbacks
+countdown.Cancel(); // silent (does NOT invoke OnStop callbacks)
 
 // Conditional updates - timer only ticks when condition is true
-timer.SetUpdateWhen(() => player.IsAlive && !game.IsPaused);
+countdown.SetUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
 
 ### Invoke Helpers
@@ -82,34 +95,38 @@ using NekoLib.Extensions;
 this.InvokeAfterDelay(2f, () => Debug.Log("Fired after 2s"));
 this.InvokeAfterDelay(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
 
-// Repeated invoke every interval (returns IDisposable -> Dispose to stop)
-IDisposable handle = this.InvokeEvery(1f, () => Debug.Log("Tick each second"));
-handle.Dispose(); // stops
-
-// Invoke on whole-second ticks for a total duration
-this.InvokeEverySeconds(
-    intervalSeconds: 1,
-    durationSeconds: 10,
-    onTick: sec => Debug.Log($"Tick {sec}s"),
-    onStop: () => Debug.Log("Finished 10s")
+// Repeated invoke every interval (returns CancelHandler -> Cancel to stop silently)
+var handle = this.InvokeEvery(
+    interval: 1f,
+    action: () => Debug.Log("Tick each second"),
+    updateWhen: () => !isPaused,
+    useUnscaledTime: false
 );
 
-// Stopwatch convenience via extensions
-var sw = this.GetStopwatch();          // create
-sw.OnUpdate += t => Debug.Log($"Elapsed: {t:F2}s");
+handle.Cancel(); // stops without invoking stop callbacks
+
+// Builder-style creation helpers
+var cd = this.GetCountdown().SetDuration(3f).OnStop(() => Debug.Log("Done"));
+cd.Start();
+
+var sw = this.GetStopwatch().OnUpdate(t => Debug.Log($"Elapsed: {t:F2}s"));
 sw.Start();
-// ... later
-float elapsed = sw.StopAndGetTime();   // returns seconds
-sw.Dispose();                          // return to pool if pooling enabled
 ```
 
 Notes:
 
-- All helpers use the PlayerLoop-driven `TimerPlayerLoopDriver` (no MonoBehaviour `Update`).
-- Timer pooling is enabled by default.
-- Increase the retention cap if needed: `Utils.SetTimerMaxPoolSize(1024);` (namespace `NekoLib.Utilities`).
-- `TimerFactory` and `TimerConfig` were removed; migrate to `Utils.CreateCountdown(...)` / `Utils.CreateStopwatch(...)`.
-- Dispose timers you no longer need to minimize the Active list and leverage pooling.
+- All helpers use the PlayerLoop-driven driver (no MonoBehaviour `Update`).
+- Timers are pooled internally (default max retained per type is 128).
+- You can prewarm (and raise the max retained size) via `TimerUtils`:
+
+```csharp
+using NekoLib.Utilities;
+
+TimerUtils.PrewarmCountdown(256);
+TimerUtils.PrewarmStopwatch(256);
+```
+
+- In the Editor you can inspect active timers via `Window/Neko Framework/Timer Tracker`.
 
 ### Pooling
 

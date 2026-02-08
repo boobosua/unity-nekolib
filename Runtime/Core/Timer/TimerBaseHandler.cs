@@ -14,7 +14,6 @@ namespace NekoLib.Core
 
         protected MonoBehaviour _ownerComponent;
         internal MonoBehaviour OwnerComponent => _ownerComponent;
-        protected GameObject _owner;
 
         protected float _elapsedTime;
         protected bool _useUnscaledTime;
@@ -29,7 +28,7 @@ namespace NekoLib.Core
 
         internal bool IsRunning { get; private set; }
 
-        internal bool IsOwnerValid => _ownerComponent != null && _owner != null;
+        internal bool IsOwnerValid => _ownerComponent != null;
 
         internal bool ShouldTick
         {
@@ -72,7 +71,6 @@ namespace NekoLib.Core
             if (ownerComponent == null) throw new ArgumentNullException(nameof(ownerComponent));
 
             _ownerComponent = ownerComponent;
-            _owner = ownerComponent.gameObject;
 
             _elapsedTime = 0f;
             _useUnscaledTime = false;
@@ -152,7 +150,6 @@ namespace NekoLib.Core
             OnStop = null;
 
             _ownerComponent = null;
-            _owner = null;
 
             _stopInvoked = false;
 
