@@ -1,6 +1,5 @@
 using System;
 using NekoLib.Core;
-using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -31,16 +30,6 @@ namespace NekoLib.Extensions
             return cd;
         }
 
-        /// <summary>Starts a simple countdown with the specified duration in seconds and update condition.</summary>
-        public static Countdown StartCountdown(this MonoBehaviour monoBehaviour, float duration = 1f, Func<bool> updateWhen = null)
-        {
-            if (monoBehaviour == null) throw new ArgumentNullException(nameof(monoBehaviour));
-
-            var cd = Countdown.Create(monoBehaviour).SetDuration(duration).SetUpdateWhen(updateWhen);
-            cd.Start();
-            return cd;
-        }
-
         /// <summary>Starts a simple stopwatch with an optional stop condition.</summary>
         public static Stopwatch StartStopwatch(this MonoBehaviour monoBehaviour, Func<bool> stopCondition = null)
         {
@@ -64,17 +53,7 @@ namespace NekoLib.Extensions
 
             var cd = Countdown.Create(monoBehaviour)
                 .SetDuration(delay)
-                .OnStop(() =>
-                {
-                    try
-                    {
-                        action?.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"[{nameof(InvokeAfterDelay)}] Action threw: {ex}");
-                    }
-                })
+                .OnStop(action)
                 .SetUnscaledTime(useUnscaledTime);
 
             cd.Start();
@@ -89,17 +68,7 @@ namespace NekoLib.Extensions
             var cd = Countdown.Create(monoBehaviour)
                 .SetDuration(interval)
                 .SetLoop()
-                .OnLoop(() =>
-                {
-                    try
-                    {
-                        action?.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"[{nameof(InvokeEvery)}] Action threw: {ex}");
-                    }
-                })
+                .OnLoop(action)
                 .SetUnscaledTime(useUnscaledTime);
 
             if (updateWhen != null) cd = cd.SetUpdateWhen(updateWhen);

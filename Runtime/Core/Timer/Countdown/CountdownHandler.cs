@@ -105,7 +105,7 @@ namespace NekoLib.Core
             }
         }
 
-        protected override void OnStartAfter()
+        protected override void OnInitialize()
         {
             _elapsedTime = _totalTime;
 
@@ -165,7 +165,6 @@ namespace NekoLib.Core
         internal override void ResetForPool()
         {
             OnLoop = null;
-            _loopStopCondition = null;
 
             _totalTime = 0f;
             _loopType = LoopType.None;

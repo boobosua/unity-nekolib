@@ -1,4 +1,5 @@
 using System;
+using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Core
@@ -28,9 +29,27 @@ namespace NekoLib.Core
 
         internal bool IsRunning { get; private set; }
 
-        internal bool IsOwnerValid => _ownerComponent != null && _ownerComponent.gameObject != null;
+        internal bool IsOwnerValid => _ownerComponent != null && _owner != null;
 
-        internal bool ShouldTick => IsRunning && (_updateWhen == null || _updateWhen.Invoke());
+        internal bool ShouldTick
+        {
+            get
+            {
+                if (!IsRunning) return false;
+                if (_updateWhen == null) return true;
+
+                try
+                {
+                    return _updateWhen.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"[Timer] updateWhen threw; disabling predicate. {ex}");
+                    _updateWhen = null;
+                    return false;
+                }
+            }
+        }
 
         internal bool UseUnscaledTime => _useUnscaledTime;
 
@@ -84,8 +103,11 @@ namespace NekoLib.Core
             _stopInvoked = false;
             IsRunning = true;
 
+            OnInitialize();
+
+            if (!IsRunning) return;
+
             OnStart?.Invoke();
-            OnStartAfter();
         }
 
         internal void Pause() => IsRunning = false;
@@ -115,7 +137,7 @@ namespace NekoLib.Core
 
         protected void InvokeUpdate(float value) => OnUpdate?.Invoke(value);
 
-        protected virtual void OnStartAfter() { }
+        protected virtual void OnInitialize() { }
 
         protected void ClearForPool()
         {

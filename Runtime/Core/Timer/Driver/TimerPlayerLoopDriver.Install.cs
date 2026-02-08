@@ -20,10 +20,18 @@ namespace NekoLib.Core
                 if (sys.type != typeof(Update)) continue;
 
                 var sub = sys.subSystemList;
-                if (sub == null) sub = Array.Empty<PlayerLoopSystem>();
+                sub ??= Array.Empty<PlayerLoopSystem>();
 
+                // Make installation idempotent (Domain Reload can be disabled in Editor).
+                // Remove any existing TimerPlayerLoopDriver hook before inserting.
                 var list = new List<PlayerLoopSystem>(sub.Length + 1);
-                list.AddRange(sub);
+                for (int j = 0; j < sub.Length; j++)
+                {
+                    var s = sub[j];
+                    if (s.type == typeof(TimerPlayerLoopDriver)) continue;
+                    if (s.updateDelegate == UpdateTimers) continue;
+                    list.Add(s);
+                }
 
                 list.Insert(0, new PlayerLoopSystem
                 {

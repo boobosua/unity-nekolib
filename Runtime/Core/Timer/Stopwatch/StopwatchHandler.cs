@@ -20,7 +20,7 @@ namespace NekoLib.Core
             _stopCondition = stopCondition;
         }
 
-        protected override void OnStartAfter()
+        protected override void OnInitialize()
         {
             _elapsedTime = 0f;
         }
