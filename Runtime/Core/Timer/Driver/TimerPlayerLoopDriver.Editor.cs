@@ -66,6 +66,8 @@ namespace NekoLib.Core
         public static int ActiveTimerCount => ActiveTimers.Count;
         public static int CountdownPoolCount => CountdownPool.Count;
         public static int StopwatchPoolCount => StopwatchPool.Count;
+        public static int MaxCountdownPoolSize => _maxCountdownPoolSize;
+        public static int MaxStopwatchPoolSize => _maxStopwatchPoolSize;
         public static int MaxPoolSize => Mathf.Max(_maxCountdownPoolSize, _maxStopwatchPoolSize);
 
         public static TimerDebugInfo[] GetActiveTimersSnapshot()

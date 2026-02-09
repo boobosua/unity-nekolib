@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NekoLib.Logger;
+using NekoLib.Utilities;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
@@ -29,6 +30,8 @@ namespace NekoLib.Core
         private static bool _installed;
         private static bool _isUpdating;
 
+        private static bool _didDefaultCountdownPrewarm;
+
         private struct SlotRecord
         {
             public int Id;
@@ -38,6 +41,26 @@ namespace NekoLib.Core
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         /// <summary>Resets static state on domain reload and (re)installs the driver into the PlayerLoop.</summary>
         private static void InitDomain()
+        {
+            ResetStaticState();
+            TryInstall();
+            EnsureDefaultCountdownPrewarm();
+        }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void InitPlaySession()
+        {
+            if (!Application.isPlaying) return;
+            if (!Utils.IsReloadDomainDisabled()) return;
+
+            ResetStaticState();
+            TryInstall();
+            EnsureDefaultCountdownPrewarm();
+        }
+#endif
+
+        private static void ResetStaticState()
         {
             ActiveTimers.Clear();
             ToRemove.Clear();
@@ -53,7 +76,17 @@ namespace NekoLib.Core
             _installed = false;
             _isUpdating = false;
 
-            TryInstall();
+            _didDefaultCountdownPrewarm = false;
+        }
+
+        private static void EnsureDefaultCountdownPrewarm()
+        {
+            if (_didDefaultCountdownPrewarm) return;
+
+            _didDefaultCountdownPrewarm = true;
+
+            // Silent default prewarm at system activation.
+            PrewarmCountdown(DefaultPoolCapacity);
         }
 
         private static void TryInstall()
