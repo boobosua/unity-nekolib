@@ -2,11 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib.Core
+namespace NekoLib
 {
     /// <summary>
     /// Unified tab bar drawing helper for Neko editor windows.
-    /// Matches reference: flat horizontal bar, blue selected tab, gray others.
     /// </summary>
     public static class NekoEditorTabBar
     {
