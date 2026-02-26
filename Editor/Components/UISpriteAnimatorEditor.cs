@@ -7,40 +7,27 @@ namespace NekoLib.Components
     [CustomEditor(typeof(UISpriteAnimator))]
     public class UISpriteAnimatorEditor : SpriteAnimatorEditorBase
     {
-        private SerializedProperty _preserveAspect;
-        private SerializedProperty _pauseWhenInvisible;
-        private SerializedProperty _canvasGroup;
+        private SerializedProperty _canvasGroups;
 
         protected override void OnEnable()
         {
             base.OnEnable();
-            _preserveAspect = serializedObject.FindProperty("_preserveAspect");
-            _pauseWhenInvisible = serializedObject.FindProperty("_pauseWhenInvisible");
-            _canvasGroup = serializedObject.FindProperty("_canvasGroup");
+            _canvasGroups = serializedObject.FindProperty("_canvasGroups");
         }
+
+        protected override bool HasAdditionalProperties() => true;
 
         protected override void DrawAdditionalProperties()
         {
-            EditorGUILayout.LabelField("UI Specific", EditorStyles.boldLabel);
-
 #if ODIN_INSPECTOR
-            DrawOdinUnityProperty("_preserveAspect");
-            DrawOdinUnityProperty("_pauseWhenInvisible");
+            DrawOdinUnityProperty("_canvasGroups");
 #else
-            EditorGUILayout.PropertyField(_preserveAspect);
-            EditorGUILayout.PropertyField(_pauseWhenInvisible);
+            EditorGUILayout.PropertyField(_canvasGroups);
 #endif
 
-            // Only show Canvas Group field when Pause When Invisible is enabled
-            if (_pauseWhenInvisible.boolValue)
+            if (_canvasGroups == null || _canvasGroups.arraySize == 0)
             {
-                EditorGUI.indentLevel++;
-#if ODIN_INSPECTOR
-                DrawOdinUnityProperty("_canvasGroup");
-#else
-                EditorGUILayout.PropertyField(_canvasGroup, new UnityEngine.GUIContent("Canvas Group", "Optional Canvas Group to check for visibility (alpha > 0)"));
-#endif
-                EditorGUI.indentLevel--;
+                EditorGUILayout.HelpBox("No Canvas Groups assigned. Visibility checks will use only the Image component (enabled + alpha).", MessageType.Info);
             }
         }
     }

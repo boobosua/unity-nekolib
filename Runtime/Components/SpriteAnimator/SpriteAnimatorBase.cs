@@ -1,26 +1,31 @@
 using System;
+using System.Collections.Generic;
 using NekoLib.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace NekoLib.Components
 {
+    public enum SpriteAnimatorLoopMode { Once, Loop, PingPong }
+
     public abstract class SpriteAnimatorBase : MonoBehaviour
     {
+        private const int MaxCatchUpStepsPerUpdate = 8;
+
         [Tooltip("The sprites to animate through.")]
         [SerializeField] protected Sprite[] _sprites;
 
-        [Tooltip("The frame rate of the animation.")]
-        [SerializeField] protected float _frameRate = 12f;
+        [Tooltip("The frame rate of the animation. 0 pauses playback.")]
+        [SerializeField, Min(0f)] protected float _frameRate = 12f;
+
+        [Tooltip("The speed multiplier for the animation. 0 pauses playback.")]
+        [SerializeField, Min(0f)] protected float _speedMultiplier = 1f;
 
         [Tooltip("The loop mode of the animation.")]
-        [SerializeField] protected LoopMode _loopMode = LoopMode.Loop;
+        [SerializeField] protected SpriteAnimatorLoopMode _loopMode = SpriteAnimatorLoopMode.Loop;
 
         [Tooltip("Should the animation play on awake?")]
         [SerializeField] protected bool _playOnAwake = true;
-
-        [Tooltip("The speed multiplier for the animation.")]
-        [SerializeField] protected float _speedMultiplier = 1f;
 
         [Tooltip("Should the animation use unscaled time?")]
         [SerializeField] protected bool _useUnscaledTime = false;
@@ -36,14 +41,12 @@ namespace NekoLib.Components
         public UnityEvent OnAnimationComplete => _onAnimationComplete;
         public UnityEvent OnLoopComplete => _onLoopComplete;
 
-        [SerializeField] protected int _currentFrame = 0;
-        [SerializeField] protected bool _isPlaying = false;
-        [SerializeField] protected bool _isReversed = false;
-
-        public enum LoopMode { Once, Loop, PingPong }
+        protected int _currentFrame = 0;
+        protected bool _isPlaying = false;
+        protected bool _isReversed = false;
 
         [Serializable]
-        public class FrameEvent
+        protected sealed class FrameEvent
         {
             [SerializeField] private int _frameIndex;
             [SerializeField, Space(6)] private UnityEvent _onFrame;
@@ -60,12 +63,22 @@ namespace NekoLib.Components
 
         protected float _frameTimer = 0f;
         protected int _spriteCount;
-        protected float FrameDuration => 1f / (_frameRate * _speedMultiplier);
+        protected float FrameDuration
+        {
+            get
+            {
+                float framesPerSecond = _frameRate * _speedMultiplier;
+                return framesPerSecond > 0f ? 1f / framesPerSecond : float.PositiveInfinity;
+            }
+        }
 
         public bool IsPlaying => _isPlaying;
         public int CurrentFrame => _currentFrame;
         public int FrameCount => _spriteCount;
-        public Sprite[] Sprites => _sprites;
+        public IReadOnlyList<Sprite> Sprites => _sprites;
+
+        [Obsolete("Use Sprites (IReadOnlyList<Sprite>) instead. This exposes the backing array and allows mutation.", false)]
+        public Sprite[] SpritesArray => _sprites;
 
         protected virtual void Awake()
         {
@@ -89,19 +102,34 @@ namespace NekoLib.Components
             if (!ShouldAnimate())
                 return;
 
+            // Treat 0 as paused (eg. designer sets Frame Rate to 0 in the inspector)
+            if (_frameRate <= 0f || _speedMultiplier <= 0f)
+                return;
+
             _frameTimer += _useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
-            if (_frameTimer >= FrameDuration)
+            float frameDuration = FrameDuration;
+
+            if (_frameTimer < frameDuration)
             {
-                _frameTimer -= FrameDuration;
+                return;
+            }
+
+            int catchUpSteps = Mathf.Min((int)(_frameTimer / frameDuration), MaxCatchUpStepsPerUpdate);
+            _frameTimer -= catchUpSteps * frameDuration;
+
+            for (int i = 0; i < catchUpSteps; i++)
+            {
+                if (!_isPlaying)
+                {
+                    break;
+                }
+
                 NextFrame();
             }
         }
 
-        protected virtual bool ShouldAnimate()
-        {
-            return true;
-        }
+        protected abstract bool ShouldAnimate();
 
         protected abstract void SetInitialSprite();
         protected abstract void UpdateSprite();
@@ -138,18 +166,18 @@ namespace NekoLib.Components
         {
             switch (_loopMode)
             {
-                case LoopMode.Once:
+                case SpriteAnimatorLoopMode.Once:
                     _currentFrame = _isReversed ? 0 : _spriteCount - 1;
                     Stop();
                     _onAnimationComplete?.Invoke();
                     break;
 
-                case LoopMode.Loop:
+                case SpriteAnimatorLoopMode.Loop:
                     _currentFrame = _isReversed ? _spriteCount - 1 : 0;
                     _onLoopComplete?.Invoke();
                     break;
 
-                case LoopMode.PingPong:
+                case SpriteAnimatorLoopMode.PingPong:
                     _isReversed = !_isReversed;
                     _currentFrame = _isReversed ? _spriteCount - 2 : 1;
                     _currentFrame = Mathf.Clamp(_currentFrame, 0, _spriteCount - 1);
@@ -176,9 +204,14 @@ namespace NekoLib.Components
             }
         }
 
-        /// <summary>
-        /// Play the animation.
-        /// </summary>
+        /// <summary>Set the loop mode for the animation.</summary>
+        protected void SetLoopMode(SpriteAnimatorLoopMode loopMode)
+        {
+            _loopMode = loopMode;
+        }
+
+
+        /// <summary>Play the animation.</summary>
         public virtual void Play()
         {
             if (_spriteCount == 0)
@@ -197,9 +230,7 @@ namespace NekoLib.Components
             _frameTimer = 0f;
         }
 
-        /// <summary>
-        /// Play the animation in reverse.
-        /// </summary>
+        /// <summary>Play the animation in reverse.</summary>
         public virtual void PlayReverse()
         {
             if (_spriteCount == 0) return;
@@ -213,18 +244,14 @@ namespace NekoLib.Components
             Play();
         }
 
-        /// <summary>
-        /// Stop the animation.
-        /// </summary>
+        /// <summary>Stop the animation.</summary>
         public virtual void Stop()
         {
             _isPlaying = false;
             _frameTimer = 0f;
         }
 
-        /// <summary>
-        /// Restart the animation.
-        /// </summary>
+        /// <summary>Restart the animation.</summary>
         public virtual void Restart()
         {
             _currentFrame = 0;
@@ -234,61 +261,13 @@ namespace NekoLib.Components
             Play();
         }
 
-        /// <summary>
-        /// Set the frame rate of the animation.
-        /// </summary>
+        /// <summary>Set the frame rate of the animation.</summary>
         public void SetFrameRate(float newFrameRate)
         {
-            _frameRate = Mathf.Max(0.1f, newFrameRate);
+            _frameRate = Mathf.Max(0f, newFrameRate);
         }
 
-        /// <summary>
-        /// Set the speed multiplier for the animation.
-        /// </summary>
-        public void SetSpeedMultiplier(float multiplier)
-        {
-            _speedMultiplier = Mathf.Max(0.1f, multiplier);
-        }
-
-        /// <summary>
-        /// Set whether to use unscaled time for the animation.
-        /// </summary>
-        public void SetUseUnscaledTime(bool useUnscaled)
-        {
-            _useUnscaledTime = useUnscaled;
-        }
-
-        /// <summary>
-        /// Set whether to start the animation at a random frame.
-        /// </summary>
-        public void SetStartAtRandomFrame(bool randomStart)
-        {
-            _startAtRandomFrame = randomStart;
-        }
-
-        /// <summary>
-        /// Set the loop mode for the animation.
-        /// </summary>
-        public void SetLoopMode(LoopMode loopMode)
-        {
-            _loopMode = loopMode;
-        }
-
-        /// <summary>
-        /// Set the sprites for the animation.
-        /// </summary>
-        public void SetSprites(Sprite[] newSprites)
-        {
-            _sprites = newSprites;
-            CacheSpritesInfo();
-            _currentFrame = 0;
-            _isReversed = false;
-            UpdateSprite();
-        }
-
-        /// <summary>
-        /// Go to a specific frame in the animation.
-        /// </summary>
+        /// <summary>Go to a specific frame in the animation.</summary>
         public void GoToFrame(int frameIndex)
         {
             if (frameIndex < 0 || frameIndex >= _spriteCount) return;
@@ -298,12 +277,10 @@ namespace NekoLib.Components
             UpdateSprite();
         }
 
-        /// <summary>
-        /// Play the animation once.
-        /// </summary>
+        /// <summary>Play the animation once.</summary>
         public void PlayOneShot()
         {
-            SetLoopMode(LoopMode.Once);
+            SetLoopMode(SpriteAnimatorLoopMode.Once);
             Restart();
         }
     }

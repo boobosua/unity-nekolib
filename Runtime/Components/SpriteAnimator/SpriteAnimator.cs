@@ -1,5 +1,5 @@
-using UnityEngine;
 using NekoLib.Extensions;
+using UnityEngine;
 
 namespace NekoLib.Components
 {
@@ -8,22 +8,6 @@ namespace NekoLib.Components
     public class SpriteAnimator : SpriteAnimatorBase
     {
         private SpriteRenderer _spriteRenderer;
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (!_sprites.IsNullOrEmpty())
-            {
-                if (_sprites[0] != null)
-                {
-                    if (_spriteRenderer == null)
-                        _spriteRenderer = GetComponent<SpriteRenderer>();
-
-                    _spriteRenderer.sprite = _sprites[0];
-                }
-            }
-        }
-#endif
 
         protected override void Awake()
         {
@@ -37,6 +21,11 @@ namespace NekoLib.Components
             {
                 _spriteRenderer.sprite = _sprites[0];
             }
+        }
+
+        protected override bool ShouldAnimate()
+        {
+            return _spriteRenderer.enabled && _spriteRenderer.color.a > 0f;
         }
 
         protected override void UpdateSprite()
