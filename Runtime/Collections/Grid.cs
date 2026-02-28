@@ -8,9 +8,7 @@ using UnityEngine;
 
 namespace NekoLib.Collections
 {
-    /// <summary>
-    /// Lightweight, cache-friendly 2D grid backed by a flat array.
-    /// </summary>
+    /// <summary>Lightweight, cache-friendly 2D grid backed by a flat array.</summary>
     [DebuggerDisplay("Grid<{typeof(T).Name}>({Width}x{Height})")]
 #if ODIN_INSPECTOR
     [Sirenix.OdinInspector.DrawWithUnity]
@@ -41,18 +39,14 @@ namespace NekoLib.Collections
             Fill(fillValue);
         }
 
-        /// <summary>
-        /// Fast, unchecked indexer. Ensure x/y are valid before using.
-        /// </summary>
+        /// <summary>Fast, unchecked indexer. Ensure x/y are valid before using.</summary>
         public ref T this[int x, int y]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _data[x + (y * _width)];
         }
 
-        /// <summary>
-        /// Fast, unchecked indexer. Ensure pos is valid before using.
-        /// </summary>
+        /// <summary>Fast, unchecked indexer. Ensure pos is valid before using.</summary>
         public ref T this[Vector2Int vector]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -154,9 +148,7 @@ namespace NekoLib.Collections
             return grid;
         }
 
-        /// <summary>
-        /// Iterate over every cell by ref, allowing in-place modification.
-        /// </summary>
+        /// <summary>Iterate over every cell by ref, allowing in-place modification.</summary>
         public delegate void RefAction(int x, int y, ref T value);
 
         public void ForEach(RefAction action)

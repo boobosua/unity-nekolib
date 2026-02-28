@@ -8,9 +8,7 @@ namespace NekoLib.Extensions
 {
     public static class StringExtensions
     {
-        /// <summary>
-        /// Parses a string with comma as decimal separator to float.
-        /// </summary>
+        /// <summary>Parses a string with comma as decimal separator to float.</summary>
         public static float ParseFloatWithComma(this string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -32,9 +30,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Non-throwing version of ParseFloatWithComma.
-        /// </summary>
+        /// <summary>Non-throwing version of ParseFloatWithComma.</summary>
         public static bool TryParseFloatWithComma(this string input, out float result)
         {
             result = 0f;
@@ -49,27 +45,21 @@ namespace NekoLib.Extensions
             return float.TryParse(standardizedInput, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
         }
 
-        /// <summary>
-        /// Formats a number directly as percentage (25 → 25%).
-        /// </summary>
+        /// <summary>Formats a number directly as percentage (25 → 25%).</summary>
         public static string AsExactPercent(this float value, int decimalPlaces = 0)
         {
             var format = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "0";
             return value.ToString(format) + "%";
         }
 
-        /// <summary>
-        /// Converts floating value to percentage string (0.5f → 50%).
-        /// </summary>
+        /// <summary>Converts floating value to percentage string (0.5f → 50%).</summary>
         public static string AsPercent(this float value, int decimalPlaces = 0)
         {
             var format = decimalPlaces > 0 ? "0." + new string('#', decimalPlaces) : "0";
             return (value * 100).ToString(format) + "%";
         }
 
-        /// <summary>
-        /// Removes all spaces from string. Null-safe.
-        /// </summary>
+        /// <summary>Removes all spaces from string. Null-safe.</summary>
         public static string WithoutSpaces(this string str)
         {
             if (string.IsNullOrEmpty(str))
@@ -79,9 +69,7 @@ namespace NekoLib.Extensions
 
         private static readonly Regex s_uppercaseSplitRegex = new(@"(?<!^)(?=[A-Z])", RegexOptions.Compiled);
 
-        /// <summary>
-        /// Splits camelCase/PascalCase by inserting spaces before uppercase letters.
-        /// </summary>
+        /// <summary>Splits camelCase/PascalCase by inserting spaces before uppercase letters.</summary>
         public static string SplitCamelCase(this string str)
         {
             if (string.IsNullOrEmpty(str))
@@ -105,9 +93,7 @@ namespace NekoLib.Extensions
             "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"
         };
 
-        /// <summary>
-        /// Formats large numbers into short, readable format (1000 → 1K, 1000000 → 1M).
-        /// </summary>
+        /// <summary>Formats large numbers into short, readable format (1000 → 1K, 1000000 → 1M).</summary>
         public static string ToShortFormat(this decimal value, int decimalPlaces = 1)
         {
             if (decimalPlaces < 0)
@@ -148,25 +134,19 @@ namespace NekoLib.Extensions
             return (isNegative ? "-" : "") + formattedValue + s_units[unitIndex];
         }
 
-        /// <summary>
-        /// Formats large numbers into short, readable format. Long overload.
-        /// </summary>
+        /// <summary>Formats large numbers into short, readable format. Long overload.</summary>
         public static string ToShortFormat(this long value, int decimalPlaces = 1)
         {
             return ToShortFormat((decimal)value, decimalPlaces);
         }
 
-        /// <summary>
-        /// Formats large numbers into short, readable format. Int overload.
-        /// </summary>
+        /// <summary>Formats large numbers into short, readable format. Int overload.</summary>
         public static string ToShortFormat(this int value, int decimalPlaces = 1)
         {
             return ToShortFormat((decimal)value, decimalPlaces);
         }
 
-        /// <summary>
-        /// Formats large numbers with alphabetic suffixes (1000 → 1a, 1000000 → 1b).
-        /// </summary>
+        /// <summary>Formats large numbers with alphabetic suffixes (1000 → 1a, 1000000 → 1b).</summary>
         public static string ToShortABCFormat(this decimal value, int decimalPlaces = 1)
         {
             if (decimalPlaces < 0)
@@ -204,25 +184,19 @@ namespace NekoLib.Extensions
             return (isNegative ? "-" : "") + formattedValue + s_alphaUnits[unitIndex];
         }
 
-        /// <summary>
-        /// Formats large numbers with alphabetic suffixes. Long overload.
-        /// </summary>
+        /// <summary>Formats large numbers with alphabetic suffixes. Long overload.</summary>
         public static string ToShortABCFormat(this long value, int decimalPlaces = 1)
         {
             return ToShortABCFormat((decimal)value, decimalPlaces);
         }
 
-        /// <summary>
-        /// Formats large numbers with alphabetic suffixes. Int overload.
-        /// </summary>
+        /// <summary>Formats large numbers with alphabetic suffixes. Int overload.</summary>
         public static string ToShortABCFormat(this int value, int decimalPlaces = 1)
         {
             return ToShortABCFormat((decimal)value, decimalPlaces);
         }
 
-        /// <summary>
-        /// Converts a string to the specified enum type.
-        /// </summary>
+        /// <summary>Converts a string to the specified enum type.</summary>
         public static T ToEnum<T>(this string value) where T : struct, Enum
         {
             if (Enum.TryParse<T>(value, out var result))
@@ -231,9 +205,7 @@ namespace NekoLib.Extensions
             throw new ArgumentException($"Unable to parse '{value}' as {typeof(T).Name}");
         }
 
-        /// <summary>
-        /// Converts a string to the specified enum type, or returns a default value if the conversion fails.
-        /// </summary>
+        /// <summary>Converts a string to the specified enum type, or returns a default value if the conversion fails.</summary>
         public static T ToEnumOrDefault<T>(this string value, T defaultValue = default) where T : struct, Enum
         {
             if (string.IsNullOrWhiteSpace(value))

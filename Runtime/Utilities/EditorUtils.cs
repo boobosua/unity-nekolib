@@ -14,8 +14,8 @@ namespace NekoLib.Utilities
     {
 #if UNITY_EDITOR
         /// <summary>
-        /// Finds all *.asset files of type T in the given directory.
-        /// Only works on Unity Editor.
+        /// Finds all *.asset files of type T in the given directory. 
+        /// Only works on Unity Editor. 
         /// Use a path starting at "Assets/asset-folder/".
         /// </summary>
         public static T[] FindAllAssets<T>(string directoryPath) where T : UnityEngine.Object
@@ -38,7 +38,7 @@ namespace NekoLib.Utilities
                     string filePath = file;
                     try
                     {
-                        T asset = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(filePath);
+                        T asset = AssetDatabase.LoadAssetAtPath<T>(filePath);
                         if (asset != null)
                         {
                             assets.Add(asset);
@@ -69,9 +69,7 @@ namespace NekoLib.Utilities
             }
         }
 
-        /// <summary>
-        /// Draws an annulus (ring) gizmo in the Scene view.
-        /// </summary>
+        /// <summary>Draws an annulus (ring) gizmo in the Scene view.</summary>
         public static void DrawAnnulusGizmo(Vector3 center, float innerRadius, float outerRadius, Vector3 up = default, Color color = default, int segments = 36)
         {
             if (color == default) color = Swatch.ME;
@@ -112,9 +110,7 @@ namespace NekoLib.Utilities
             }
         }
 
-        /// <summary>
-        /// Draws a circle gizmo in the Scene view.
-        /// </summary>
+        /// <summary>Draws a circle gizmo in the Scene view.</summary>
         public static void DrawCircleGizmo(Vector3 center, float radius, Vector3 up = default, Color color = default, int segments = 64)
         {
             if (color == default) color = Swatch.ME;
@@ -144,9 +140,7 @@ namespace NekoLib.Utilities
             }
         }
 
-        /// <summary>
-        /// Checks if the reload domain is disabled in the editor.
-        /// </summary>
+        /// <summary>Checks if the reload domain is disabled in the editor.</summary>
         public static bool IsReloadDomainDisabled()
         {
             return EditorSettings.enterPlayModeOptionsEnabled &&

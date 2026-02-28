@@ -9,9 +9,7 @@ namespace NekoLib.Extensions
 {
     public static class CoroutineExtensions
     {
-        /// <summary>
-        /// Starts multiple coroutines in sequence, one after another.
-        /// </summary>
+        /// <summary>Starts multiple coroutines in sequence, one after another.</summary>
         public static Coroutine StartCoroutineSequence(this MonoBehaviour mono, params IEnumerator[] coroutines)
         {
             if (mono == null) throw new ArgumentNullException(nameof(mono));
@@ -19,9 +17,7 @@ namespace NekoLib.Extensions
             return mono.StartCoroutine(ExecuteSequence(coroutines));
         }
 
-        /// <summary>
-        /// Starts a coroutine after a specified delay.
-        /// </summary>
+        /// <summary>Starts a coroutine after a specified delay.</summary>
         public static Coroutine StartCoroutineDelayed(this MonoBehaviour mono, IEnumerator coroutine, float delay)
         {
             if (mono == null) throw new ArgumentNullException(nameof(mono));
@@ -29,9 +25,7 @@ namespace NekoLib.Extensions
             return mono.StartCoroutine(DelayedExecution(coroutine, delay));
         }
 
-        /// <summary>
-        /// Starts a coroutine when a condition becomes true.
-        /// </summary>
+        /// <summary>Starts a coroutine when a condition becomes true.</summary>
         public static Coroutine StartCoroutineWhen(this MonoBehaviour mono, IEnumerator coroutine, Func<bool> condition)
         {
             if (mono == null) throw new ArgumentNullException(nameof(mono));
@@ -40,9 +34,7 @@ namespace NekoLib.Extensions
             return mono.StartCoroutine(ConditionalExecution(coroutine, condition));
         }
 
-        /// <summary>
-        /// Starts multiple coroutines in parallel.
-        /// </summary>
+        /// <summary>Starts multiple coroutines in parallel.</summary>
         public static Coroutine StartCoroutineParallel(this MonoBehaviour mono, params IEnumerator[] coroutines)
         {
             if (mono == null) throw new ArgumentNullException(nameof(mono));
@@ -50,9 +42,7 @@ namespace NekoLib.Extensions
             return mono.StartCoroutine(ExecuteParallel(mono, coroutines));
         }
 
-        /// <summary>
-        /// Executes a sequence of coroutines one after another.
-        /// </summary>
+        /// <summary>Executes a sequence of coroutines one after another.</summary>
         private static IEnumerator ExecuteSequence(IEnumerator[] coroutines)
         {
             foreach (var coroutine in coroutines)
@@ -61,9 +51,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Executes a sequence of coroutines in parallel.
-        /// </summary>
+        /// <summary>Executes a sequence of coroutines in parallel.</summary>
         private static IEnumerator ExecuteParallel(MonoBehaviour mono, IEnumerator[] coroutines)
         {
             var runningCoroutines = new Coroutine[coroutines.Length];
@@ -79,27 +67,21 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Executes a coroutine after a specified delay.
-        /// </summary>
+        /// <summary>Executes a coroutine after a specified delay.</summary>
         private static IEnumerator DelayedExecution(IEnumerator coroutine, float delay)
         {
             yield return Utils.GetWaitForSeconds(delay);
             yield return coroutine;
         }
 
-        /// <summary>
-        /// Executes a coroutine when a specified condition is met.
-        /// </summary>
+        /// <summary>Executes a coroutine when a specified condition is met.</summary>
         private static IEnumerator ConditionalExecution(IEnumerator coroutine, Func<bool> condition)
         {
             yield return new WaitUntil(condition);
             yield return coroutine;
         }
 
-        /// <summary>
-        /// Converts a Coroutine to a Task for await support.
-        /// </summary>
+        /// <summary>Converts a Coroutine to a Task for await support.</summary>
         public static Task AsTask(this Coroutine coroutine, MonoBehaviour mono)
         {
             if (coroutine == null) return Task.CompletedTask;
@@ -110,9 +92,7 @@ namespace NekoLib.Extensions
             return tcs.Task;
         }
 
-        /// <summary>
-        /// Converts an IEnumerator to a Task for await support.
-        /// </summary>
+        /// <summary>Converts an IEnumerator to a Task for await support.</summary>
         public static Task AsTask(this IEnumerator coroutine, MonoBehaviour mono)
         {
             if (coroutine == null) return Task.CompletedTask;
@@ -123,9 +103,7 @@ namespace NekoLib.Extensions
             return tcs.Task;
         }
 
-        /// <summary>
-        /// Waits for a Coroutine to complete and sets the TaskCompletionSource result.
-        /// </summary>
+        /// <summary>Waits for a Coroutine to complete and sets the TaskCompletionSource result.</summary>
         private static IEnumerator WaitForCoroutine(Coroutine coroutine, TaskCompletionSource<bool> tcs, CancellationToken cancellationToken)
         {
             while (!coroutine.Equals(null) && !cancellationToken.IsCancellationRequested)
@@ -143,9 +121,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Runs multiple coroutines concurrently.
-        /// </summary>
+        /// <summary>Runs multiple coroutines concurrently.</summary>
         public static Task WhenAll(this MonoBehaviour mono, params IEnumerator[] routines)
         {
             if (routines.IsNullOrEmpty())
@@ -159,9 +135,7 @@ namespace NekoLib.Extensions
             return Task.WhenAll(tasks);
         }
 
-        /// <summary>
-        /// Runs multiple coroutines and returns when any completes.
-        /// </summary>
+        /// <summary>Runs multiple coroutines and returns when any completes.</summary>
         public static Task<Task> WhenAny(this MonoBehaviour mono, params IEnumerator[] routines)
         {
             if (routines.IsNullOrEmpty())
@@ -175,9 +149,7 @@ namespace NekoLib.Extensions
             return Task.WhenAny(tasks);
         }
 
-        /// <summary>
-        /// Converts an IEnumerator coroutine to a Task for await support.
-        /// </summary>
+        /// <summary>Converts an IEnumerator coroutine to a Task for await support.</summary>
         private static IEnumerator WaitForRoutine(IEnumerator routine, TaskCompletionSource<bool> tcs, CancellationToken cancellationToken)
         {
             bool hasException = false;

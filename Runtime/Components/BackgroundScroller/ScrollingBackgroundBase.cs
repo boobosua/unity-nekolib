@@ -30,9 +30,7 @@ namespace NekoLib.Components
         protected abstract void ApplyOffset(Vector2 offset);
         protected abstract void ResetOffset();
 
-        /// <summary>
-        /// Starts the scrolling.
-        /// </summary>
+        /// <summary>Starts the scrolling.</summary>
         public void Play()
         {
             _offset = Vector2.zero;
@@ -40,19 +38,13 @@ namespace NekoLib.Components
             _isPlaying = true;
         }
 
-        /// <summary>
-        /// Pauses the scrolling.
-        /// </summary>
+        /// <summary>Pauses the scrolling.</summary>
         public void Pause() => _isPlaying = false;
 
-        /// <summary>
-        /// Resumes the scrolling.
-        /// </summary>
+        /// <summary>Resumes the scrolling.</summary>
         public void Resume() => _isPlaying = true;
 
-        /// <summary>
-        /// Stops the scrolling.
-        /// </summary>
+        /// <summary>Stops the scrolling.</summary>
         public void Stop()
         {
             _isPlaying = false;
@@ -60,24 +52,16 @@ namespace NekoLib.Components
             ResetOffset();
         }
 
-        /// <summary>
-        /// Sets the scrolling speed.
-        /// </summary>
+        /// <summary>Sets the scrolling speed.</summary>
         public void SetSpeed(Vector2 newSpeed) => _speed = newSpeed;
 
-        /// <summary>
-        /// Sets the scrolling speed.
-        /// </summary>
+        /// <summary>Sets the scrolling speed.</summary>
         public void SetSpeed(float x, float y) => _speed = new Vector2(x, y);
 
-        /// <summary>
-        /// Sets the scrolling speed.
-        /// </summary>
+        /// <summary>Sets the scrolling speed.</summary>
         public void SetSpeedX(float x) => _speed = new Vector2(x, _speed.y);
 
-        /// <summary>
-        /// Sets the scrolling speed.
-        /// </summary>
+        /// <summary>Sets the scrolling speed.</summary>
         public void SetSpeedY(float y) => _speed = new Vector2(_speed.x, y);
 
         public Vector2 Speed => _speed;

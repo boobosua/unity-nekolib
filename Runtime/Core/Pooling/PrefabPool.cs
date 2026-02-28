@@ -7,7 +7,7 @@ using UnityEngine.Pool;
 namespace NekoLib.Pooling
 {
     /// <summary>
-    /// Generic prefab pool for IPoolable MonoBehaviour instances.
+    /// Generic prefab pool for IPoolable MonoBehaviour instances. 
     /// Handles spawning, despawning, and pooling logic.
     /// </summary>
     public sealed class PrefabPool<T> : IPoolReleaser where T : MonoBehaviour, IPoolable

@@ -9,9 +9,7 @@ namespace NekoLib.Extensions
 {
     public static class TransformExtensions
     {
-        /// <summary>
-        /// Destroys all child objects of the specified transform.
-        /// </summary>
+        /// <summary>Destroys all child objects of the specified transform.</summary>
         public static void Clear(this Transform transform)
         {
             if (transform.childCount == 0) return;
@@ -30,9 +28,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Gets all direct children of this transform.
-        /// </summary>
+        /// <summary>Gets all direct children of this transform.</summary>
         public static Transform[] GetChildren(this Transform transform, bool includeInactive = false)
         {
             if (includeInactive)
@@ -62,9 +58,7 @@ namespace NekoLib.Extensions
         [Obsolete("Use Clear() instead.")]
         public static void DestroyChildren(this Transform transform) => Clear(transform);
 
-        /// <summary>
-        /// Sets orbit position around a target using specific angles. Use this for manual/static positioning.
-        /// </summary>
+        /// <summary>Sets orbit position around a target using specific angles. Use this for manual/static positioning.</summary>
         public static void SetOrbitRotation(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance)
         {
             if (target == null)
@@ -76,9 +70,7 @@ namespace NekoLib.Extensions
             transform.LookAt(target);
         }
 
-        /// <summary>
-        /// Sets orbit position around a target position using specific angles. Use this for manual/static positioning.
-        /// </summary>
+        /// <summary>Sets orbit position around a target position using specific angles. Use this for manual/static positioning.</summary>
         public static void SetOrbitRotation(this Transform transform, Vector3 targetPosition, float horizontalAngle, float verticalAngle, float distance)
         {
             // Calculate orbital position
@@ -89,9 +81,7 @@ namespace NekoLib.Extensions
             transform.position = targetPosition + offset;
         }
 
-        /// <summary>
-        /// Sets orbit position with clamped vertical angles to prevent flipping.
-        /// </summary>
+        /// <summary>Sets orbit position with clamped vertical angles to prevent flipping.</summary>
         public static void SetOrbitRotationClamped(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance, float minVerticalAngle = -80f, float maxVerticalAngle = 80f)
         {
             if (target == null)
@@ -103,9 +93,7 @@ namespace NekoLib.Extensions
             SetOrbitRotation(transform, target, horizontalAngle, verticalAngle, distance);
         }
 
-        /// <summary>
-        /// Updates orbit position with automatic rotation. Call this in Update() for continuous motion.
-        /// </summary>
+        /// <summary>Updates orbit position with automatic rotation. Call this in Update() for continuous motion.</summary>
         public static void OrbitAround(this Transform transform, Transform target, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
         {
             if (target == null)
@@ -130,9 +118,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Updates orbit position with automatic rotation around a target position. Call this in Update() for continuous motion.
-        /// </summary>
+        /// <summary>Updates orbit position with automatic rotation around a target position. Call this in Update() for continuous motion.</summary>
         public static void OrbitAround(this Transform transform, Vector3 targetPosition, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
         {
             currentAngle += speed * Time.deltaTime;
@@ -151,9 +137,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Rotates this transform around a point in world space.
-        /// </summary>
+        /// <summary>Rotates this transform around a point in world space.</summary>
         public static void RotateAround(this Transform transform, Vector3 center, Vector3 axis, float degrees)
         {
             var offset = transform.position - center;
@@ -162,9 +146,7 @@ namespace NekoLib.Extensions
             transform.Rotate(axis, degrees, Space.World);
         }
 
-        /// <summary>
-        /// Makes transform look at target in 2D (Z-axis rotation only).
-        /// </summary>
+        /// <summary>Makes transform look at target in 2D (Z-axis rotation only).</summary>
         public static void LookAt2D(this Transform transform, Vector2 target)
         {
             Vector2 direction = ((Vector2)transform.position).DirectionTo(target);
@@ -172,9 +154,7 @@ namespace NekoLib.Extensions
             transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
 
-        /// <summary>
-        /// Makes transform look at target in 2D with offset angle.
-        /// </summary>
+        /// <summary>Makes transform look at target in 2D with offset angle.</summary>
         public static void LookAt2D(this Transform transform, Vector2 target, float angleOffset)
         {
             var direction = ((Vector2)transform.position).DirectionTo(target);
@@ -182,9 +162,7 @@ namespace NekoLib.Extensions
             transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
 
-        /// <summary>
-        /// Makes transform look at another transform in 2D.
-        /// </summary>
+        /// <summary>Makes transform look at another transform in 2D.</summary>
         public static void LookAt2D(this Transform transform, Transform target)
         {
             if (target == null)
@@ -195,9 +173,7 @@ namespace NekoLib.Extensions
             transform.LookAt2D(target.position);
         }
 
-        /// <summary>
-        /// Makes transform look at another transform in 2D with offset angle.
-        /// </summary>
+        /// <summary>Makes transform look at another transform in 2D with offset angle.</summary>
         public static void LookAt2D(this Transform transform, Transform target, float angleOffset)
         {
             if (target == null)
@@ -208,9 +184,7 @@ namespace NekoLib.Extensions
             transform.LookAt2D(target.position, angleOffset);
         }
 
-        /// <summary>
-        /// Gets distance to another transform.
-        /// </summary>
+        /// <summary>Gets distance to another transform.</summary>
         public static float DistanceTo(this Transform transform, Transform other)
         {
             if (other == null)
@@ -220,9 +194,7 @@ namespace NekoLib.Extensions
             return transform.position.DistanceTo(other.position);
         }
 
-        /// <summary>
-        /// Gets direction to another transform.
-        /// </summary>
+        /// <summary>Gets direction to another transform.</summary>
         public static Vector3 DirectionTo(this Transform transform, Transform other)
         {
             if (other == null)
@@ -233,9 +205,7 @@ namespace NekoLib.Extensions
             return transform.position.DirectionTo(other.position);
         }
 
-        /// <summary>
-        /// Checks if transform is within range of another transform.
-        /// </summary>
+        /// <summary>Checks if transform is within range of another transform.</summary>
         public static bool InRangeOf(this Transform transform, Transform other, float range)
         {
             if (other == null)
@@ -246,27 +216,21 @@ namespace NekoLib.Extensions
             return transform.position.InRangeOf(other.position, range);
         }
 
-        /// <summary>
-        /// Resets transform to default values (position: zero, rotation: identity, scale: one).
-        /// </summary>
+        /// <summary>Resets transform to default values (position: zero, rotation: identity, scale: one).</summary>
         public static void ResetTransform(this Transform transform)
         {
             transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             transform.localScale = Vector3.one;
         }
 
-        /// <summary>
-        /// Resets local transform to default values.
-        /// </summary>
+        /// <summary>Resets local transform to default values.</summary>
         public static void ResetLocalTransform(this Transform transform)
         {
             transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             transform.localScale = Vector3.one;
         }
 
-        /// <summary>
-        /// Gets all child GameObjects that are in the specified layer mask.
-        /// </summary>
+        /// <summary>Gets all child GameObjects that are in the specified layer mask.</summary>
         public static GameObject[] GetChildrenInLayer(this Transform transform, LayerMask layerMask, bool includeInactive = false)
         {
             var results = new List<GameObject>();
@@ -284,9 +248,7 @@ namespace NekoLib.Extensions
             return results.ToArray();
         }
 
-        /// <summary>
-        /// Gets all child GameObjects in the specified layer mask, including nested children.
-        /// </summary>
+        /// <summary>Gets all child GameObjects in the specified layer mask, including nested children.</summary>
         public static GameObject[] GetChildrenInLayerRecursive(this Transform transform, LayerMask layerMask, bool includeInactive = false)
         {
             var results = new List<GameObject>();
@@ -294,9 +256,7 @@ namespace NekoLib.Extensions
             return results.ToArray();
         }
 
-        /// <summary>
-        /// Gets all child GameObjects in the specified layer mask, including nested children.
-        /// </summary>  
+        /// <summary>Gets all child GameObjects in the specified layer mask, including nested children.</summary>
         private static void GetChildrenInLayerRecursiveInternal(Transform transform, LayerMask layerMask, bool includeInactive, List<GameObject> results)
         {
             int childCount = transform.childCount;

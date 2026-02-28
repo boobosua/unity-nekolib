@@ -7,9 +7,7 @@ namespace NekoLib.Extensions
 {
     public static class AnimatorExtensions
     {
-        /// <summary>
-        /// Get the length of an animation clip by name.
-        /// </summary>
+        /// <summary>Get the length of an animation clip by name.</summary>
         public static float GetAnimationLength(this Animator animator, string animName)
         {
             if (animator == null || animator.runtimeAnimatorController == null) return 0f;
@@ -23,9 +21,7 @@ namespace NekoLib.Extensions
             return 0f;
         }
 
-        /// <summary>
-        /// Get the length of an animation clip by hash.
-        /// </summary>
+        /// <summary>Get the length of an animation clip by hash.</summary>
         public static float GetAnimationLength(this Animator animator, int animHash)
         {
             if (animator == null || animator.runtimeAnimatorController == null) return 0f;
@@ -39,9 +35,7 @@ namespace NekoLib.Extensions
             return 0f;
         }
 
-        /// <summary>
-        /// Get the current progress of the animation in the specified layer (0 to 1).
-        /// </summary>
+        /// <summary>Get the current progress of the animation in the specified layer (0 to 1).</summary>
         public static float GetCurrentAnimationProgress(this Animator animator, int layerIndex = 0)
         {
             if (animator == null) return 0f;
@@ -50,9 +44,7 @@ namespace NekoLib.Extensions
             return stateInfo.normalizedTime % 1f;
         }
 
-        /// <summary>
-        /// Get the remaining time of the current animation in the specified layer.
-        /// </summary>
+        /// <summary>Get the remaining time of the current animation in the specified layer.</summary>
         public static float GetCurrentAnimationRemainingTime(this Animator animator, int layerIndex = 0)
         {
             if (animator == null) return 0f;
@@ -62,63 +54,49 @@ namespace NekoLib.Extensions
             return stateInfo.length * (1f - progress);
         }
 
-        /// <summary>
-        /// Check if the animator is currently playing a specific animation by name.
-        /// </summary>
+        /// <summary>Check if the animator is currently playing a specific animation by name.</summary>
         public static bool IsPlayingAnimation(this Animator animator, string animName, int layerIndex = 0)
         {
             if (animator == null) return false;
             return animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(animName);
         }
 
-        /// <summary>
-        /// Check if the animator is currently playing a specific animation by hash.
-        /// </summary>
+        /// <summary>Check if the animator is currently playing a specific animation by hash.</summary>
         public static bool IsPlayingAnimation(this Animator animator, int animHash, int layerIndex = 0)
         {
             if (animator == null) return false;
             return animator.GetCurrentAnimatorStateInfo(layerIndex).shortNameHash == animHash;
         }
 
-        /// <summary>
-        /// Play an animation and wait for it to complete.
-        /// </summary>
+        /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, string stateName, int layerIndex = 0)
         {
             animator.Play(stateName, layerIndex);
             yield return WaitForAnimation(animator, stateName, layerIndex);
         }
 
-        /// <summary>
-        /// Play an animation and wait for it to complete.
-        /// </summary>
+        /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, int stateHash, int layerIndex = 0)
         {
             animator.Play(stateHash, layerIndex);
             yield return WaitForAnimation(animator, stateHash, layerIndex);
         }
 
-        /// <summary>
-        /// Cross-fade to an animation and wait for it to complete.
-        /// </summary>
+        /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, string stateName, float transitionDuration, int layerIndex = 0)
         {
             animator.CrossFade(stateName, transitionDuration, layerIndex);
             yield return WaitForAnimation(animator, stateName, layerIndex);
         }
 
-        /// <summary>
-        /// Cross-fade to an animation and wait for it to complete.
-        /// </summary>
+        /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, int stateHash, float transitionDuration, int layerIndex = 0)
         {
             animator.CrossFade(stateHash, transitionDuration, layerIndex);
             yield return WaitForAnimation(animator, stateHash, layerIndex);
         }
 
-        /// <summary>
-        /// Coroutine to wait for an animation to complete.
-        /// </summary>
+        /// <summary>Coroutine to wait for an animation to complete.</summary>
         public static IEnumerator WaitForAnimation(Animator animator, string stateName, int layerIndex = 0)
         {
             yield return new WaitForEndOfFrame();
@@ -143,9 +121,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>
-        /// Coroutine to wait for an animation to complete.
-        /// </summary>
+        /// <summary>Coroutine to wait for an animation to complete.</summary>
         public static IEnumerator WaitForAnimation(Animator animator, int stateHash, int layerIndex = 0)
         {
             yield return new WaitForEndOfFrame();

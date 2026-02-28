@@ -2,14 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using NekoLib.Logger;
 using UnityEditor;
 using UnityEngine;
 
 namespace NekoLib.Collections
 {
     /// <summary>
-    /// Property drawer for Grid<T> that shows a pagination UI where each page is a row of the grid.
-    /// Works for common primitive types, strings, enums, and UnityEngine.Object references.
+    /// Property drawer for Grid<T> that shows a pagination UI where each page is a row of the grid. 
+    /// Works for common primitive types, strings, enums, and UnityEngine.Object references. 
     /// Unknown types are displayed read-only via ToString().
     /// </summary>
     [CustomPropertyDrawer(typeof(Grid<>), true)]
@@ -194,7 +195,7 @@ namespace NekoLib.Collections
                         catch (Exception ex)
                         {
                             CreationErrors[key] = ex.Message;
-                            Debug.LogException(ex);
+                            Log.Exception(ex);
                         }
                     }
                 }
@@ -476,7 +477,7 @@ namespace NekoLib.Collections
             {
                 if (!TrySetCell(gridObj, gridType, elemType, x, y, newValue))
                 {
-                    Debug.LogWarning($"Grid drawer: failed to set value at ({x},{y})");
+                    Log.Warn($"Grid drawer: failed to set value at ({x},{y})");
                 }
                 property.serializedObject.Update();
                 property.serializedObject.ApplyModifiedProperties();
@@ -536,7 +537,7 @@ namespace NekoLib.Collections
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+                Log.Exception(e);
                 return null;
             }
         }

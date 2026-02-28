@@ -7,9 +7,7 @@ namespace NekoLib.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>
-        /// Returns the angle of a Vector3 in degrees.
-        /// </summary>
+        /// <summary>Returns the angle of a Vector3 in degrees.</summary>
         public static float GetAngleFromVector(Vector3 vector3)
         {
             var radian = Mathf.Atan2(vector3.y, vector3.x);
@@ -17,9 +15,7 @@ namespace NekoLib.Utilities
             return degrees;
         }
 
-        /// <summary>
-        /// Returns a random rotation based on the specified axis and ranges for each axis.
-        /// </summary>
+        /// <summary>Returns a random rotation based on the specified axis and ranges for each axis.</summary>
         public static Quaternion GetRandomRotation(Axis axis, Vector2 xRange = default, Vector2 yRange = default, Vector2 zRange = default)
         {
             // If ranges not specified, default to 0-360

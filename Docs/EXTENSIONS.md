@@ -204,6 +204,8 @@ MyEnum safeEnum = 999.ToEnumOrDefault(MyEnum.Default);
 ### CollectionExtensions
 
 ```csharp
+using NekoLib.Logger;
+
 // Array operations
 T randomItem = array.Rand();
 int randomIndex = array.RandIndex();
@@ -249,11 +251,11 @@ bool contains = grid.Contains(42);    // linear scan over contiguous buffer
 // IndexOf returns (x,y) tuple and throws if not found
 var pos = grid.IndexOf(42);            // (int x, int y)
 // Safe variants
-if (grid.TryIndexOf(42, out var foundPos)) Debug.Log(foundPos);
+if (grid.TryIndexOf(42, out var foundPos)) Log.Info(foundPos);
 
 // Last occurrence helpers
 var last = grid.LastIndexOf(42);
-if (grid.TryLastIndexOf(42, out var lastPos)) Debug.Log(lastPos);
+if (grid.TryLastIndexOf(42, out var lastPos)) Log.Info(lastPos);
 
 int first = grid.First();              // element at (0,0)
 int lastElem = grid.Last();            // element at (width-1,height-1)
@@ -282,6 +284,22 @@ double hours = pastTime.HoursUntilNow(); // 2.0
 // DateTime manipulation
 DateTime newDate = original.WithDate(year: 2024);
 DateTime newTime = original.WithTime(hour: 9, minute: 0);
+```
+
+### TMPTextExtensions
+
+```csharp
+// Set to "HH:MM:SS" from seconds
+tmpText.SetClockHHMMSS(3661);        // "01:01:01"
+tmpText.SetClockHHMMSS(3661f);
+tmpText.SetClockHHMMSS(3661d);
+
+// Set to "MM:SS" from seconds
+tmpText.SetClockMMSS(125);           // "02:05"
+
+// Readable duration (spacing optional)
+tmpText.SetReadableTime(93784);      // "1d 2h 3m" (default spacing)
+tmpText.SetReadableTime(93784, useSpacing: false); // "1d2h3m"
 ```
 
 ### CoroutineExtensions
@@ -317,6 +335,8 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 ### TimerExtensions
 
 ```csharp
+using NekoLib.Logger;
+
 // Create / start countdowns
 Countdown cd = this.GetCountdown(10f);
 Countdown started = this.StartCountdown(5f);
@@ -327,9 +347,9 @@ Stopwatch sw = this.GetStopwatch();
 Stopwatch running = this.StartStopwatch();
 
 // Delayed and repeated actions
-this.InvokeAfterDelay(2f, () => Debug.Log("Delayed"), useUnscaledTime: true);
-IDisposable every = this.InvokeEvery(1f, () => Debug.Log("Tick"));
-IDisposable secondsTicker = this.InvokeEverySeconds(1, 5, secs => Debug.Log($"Ticked {secs}s"), () => Debug.Log("Done"));
+this.InvokeAfterDelay(2f, () => Log.Info("Delayed"), useUnscaledTime: true);
+IDisposable every = this.InvokeEvery(1f, () => Log.Info("Tick"));
+IDisposable secondsTicker = this.InvokeEverySeconds(1, 5, secs => Log.Info($"Ticked {secs}s"), () => Log.Info("Done"));
 ```
 
 ### SerializeExtensions
@@ -343,9 +363,11 @@ MyObject restored = json.Deserialize<MyObject>();
 ### TaskExtensions
 
 ```csharp
+using NekoLib.Logger;
+
 // Fire-and-forget tasks
 myAsyncTask.Forget();
-myAsyncTask.Forget(ex => Debug.LogError($"Task failed: {ex}"));
+myAsyncTask.Forget(ex => Log.Error($"Task failed: {ex}"));
 
 // Convert Task to Coroutine using YieldTask
 IEnumerator WebRequestExample()
@@ -353,7 +375,7 @@ IEnumerator WebRequestExample()
     // Use Task in coroutine
     Task<string> webTask = FetchDataAsync();
     yield return new YieldTask(webTask);
-    Debug.Log($"Got data: {webTask.Result}");
+    Log.Info($"Got data: {webTask.Result}");
 
     // Or use AsCoroutine extension
     yield return AnotherAsyncOperation().AsCoroutine();

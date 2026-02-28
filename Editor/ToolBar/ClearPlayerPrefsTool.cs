@@ -3,11 +3,14 @@ using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using NekoLib.Logger;
+
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements;
 #endif
 #if UNITY_6000_3_OR_NEWER
 using UnityEditor.Toolbars;
+using NekoLib.Logger;
 #endif
 
 namespace NekoLib
@@ -433,7 +436,7 @@ namespace NekoLib
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to clear PlayerPrefs: {ex}");
+                Log.Error($"Failed to clear PlayerPrefs: {ex}");
             }
         }
 

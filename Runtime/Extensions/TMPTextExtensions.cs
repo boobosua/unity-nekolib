@@ -31,6 +31,39 @@ namespace NekoLib.Extensions
             SetClockHHMMSS(text, (int)totalSeconds);
         }
 
+        /// <summary>Sets text to "HH:MM:SS" from seconds.</summary>
+        public static void SetClockHHMMSS(this TMP_Text text, double totalSeconds)
+        {
+            SetClockHHMMSS(text, (int)totalSeconds);
+        }
+
+        /// <summary>Sets text to "MM:SS" from seconds.</summary>
+        public static void SetClockMMSS(this TMP_Text text, int totalSeconds)
+        {
+            if (text == null) return;
+
+            if (totalSeconds < 0) totalSeconds = 0;
+
+            int totalMinutes = totalSeconds / MinutesPerHour;
+            int seconds = totalSeconds - (totalMinutes * MinutesPerHour);
+
+            int minutes = totalMinutes % MinutesPerHour;
+
+            text.SetText("{0:00}:{1:00}", minutes, seconds);
+        }
+
+        /// <summary>Sets text to "MM:SS" from seconds.</summary>
+        public static void SetClockMMSS(this TMP_Text text, float totalSeconds)
+        {
+            SetClockMMSS(text, (int)totalSeconds);
+        }
+
+        /// <summary>Sets text to "MM:SS" from seconds.</summary>
+        public static void SetClockMMSS(this TMP_Text text, double totalSeconds)
+        {
+            SetClockMMSS(text, (int)totalSeconds);
+        }
+
         /// <summary>Sets text to readable duration like "2d 3h 45m" (spacing optional).</summary>
         public static void SetReadableTime(this TMP_Text text, int totalSeconds, bool useSpacing = true)
         {
@@ -70,6 +103,12 @@ namespace NekoLib.Extensions
 
         /// <summary>Sets text to readable duration like "2d 3h 45m" (spacing optional).</summary>
         public static void SetReadableTime(this TMP_Text text, float totalSeconds, bool useSpacing = true)
+        {
+            SetReadableTime(text, (int)totalSeconds, useSpacing);
+        }
+
+        /// <summary>Sets text to readable duration like "2d 3h 45m" (spacing optional).</summary>
+        public static void SetReadableTime(this TMP_Text text, double totalSeconds, bool useSpacing = true)
         {
             SetReadableTime(text, (int)totalSeconds, useSpacing);
         }

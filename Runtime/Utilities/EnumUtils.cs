@@ -9,18 +9,14 @@ namespace NekoLib.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>
-        /// Get a random enum value.
-        /// </summary>
+        /// <summary>Get a random enum value.</summary>
         public static T GetRandomEnum<T>() where T : Enum
         {
             var values = Enum.GetValues(typeof(T));
             return (T)values.GetValue(Random.Range(0, values.Length));
         }
 
-        /// <summary>
-        /// Get a random enum value excluding specific ones.
-        /// </summary>
+        /// <summary>Get a random enum value excluding specific ones.</summary>
         public static T GetRandomEnum<T>(params T[] excludeEnums) where T : Enum
         {
             var allEnums = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
@@ -37,17 +33,13 @@ namespace NekoLib.Utilities
             return availableEnums[Random.Range(0, availableEnums.Length)];
         }
 
-        /// <summary>
-        /// Get count of enum values.
-        /// </summary>
+        /// <summary>Get count of enum values.</summary>
         public static int CountEnum<T>() where T : Enum
         {
             return Enum.GetValues(typeof(T)).Length;
         }
 
-        /// <summary>
-        /// Get all enum values excluding specific ones.
-        /// </summary>
+        /// <summary>Get all enum values excluding specific ones.</summary>
         public static T[] AllEnum<T>(params T[] excludeEnums) where T : Enum
         {
             var allEnums = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
@@ -59,9 +51,7 @@ namespace NekoLib.Utilities
             return allEnums.Where(value => !excludeSet.Contains(value)).ToArray();
         }
 
-        /// <summary>
-        /// Iterates over all enum values and applies the given action.
-        /// </summary>
+        /// <summary>Iterates over all enum values and applies the given action.</summary>
         public static void ForEnum<T>(Action<T> action) where T : Enum
         {
             var values = Enum.GetValues(typeof(T));

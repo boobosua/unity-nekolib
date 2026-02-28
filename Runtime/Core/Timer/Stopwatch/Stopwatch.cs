@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace NekoLib.Core
 {
-    /// <summary>
-    /// A timer that measures elapsed time until stopped.
-    /// </summary>
+    /// <summary>A timer that measures elapsed time until stopped.</summary>
     public readonly struct Stopwatch
     {
         private readonly int _slot;

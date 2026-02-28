@@ -8,9 +8,7 @@ namespace NekoLib.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>
-        /// Returns 'true' if we touched or hovering on Unity UI element.
-        /// </summary>
+        /// <summary>Returns 'true' if we touched or hovering on Unity UI element.</summary>
         public static bool IsPointerOverUI(LayerMask layer)
         {
             var eventSystemRaycastResults = GetEventSystemRaycastResults();
@@ -27,9 +25,7 @@ namespace NekoLib.Utilities
             return false;
         }
 
-        /// <summary>
-        /// Gets all event system raycast results of current mouse or touch position.
-        /// </summary>
+        /// <summary>Gets all event system raycast results of current mouse or touch position.</summary>
         private static List<RaycastResult> GetEventSystemRaycastResults()
         {
             if (EventSystem.current == null)

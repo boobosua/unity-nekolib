@@ -8,9 +8,7 @@ namespace NekoLib.Extensions
 {
     public static class TaskExtensions
     {
-        /// <summary>
-        /// Extension method to safely ignore a Task and handle exceptions.
-        /// </summary>
+        /// <summary>Extension method to safely ignore a Task and handle exceptions.</summary>
         public static void Forget(this Task task, Action<Exception> onException = null)
         {
             // Handle synchronously completed tasks immediately
@@ -29,9 +27,7 @@ namespace NekoLib.Extensions
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
 
-        /// <summary>
-        /// Handles exceptions by invoking the provided callback or logging them.
-        /// </summary>
+        /// <summary>Handles exceptions by invoking the provided callback or logging them.</summary>
         private static void HandleException(Exception ex, Action<Exception> onException)
         {
             // Skip logging OperationCanceledException

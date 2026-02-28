@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
+using NekoLib.Logger;
 
 namespace NekoLib
 {
@@ -277,11 +278,11 @@ namespace NekoLib
                 if (r == null || !r.IsCompleted) continue;
                 if (r.Status == StatusCode.Success)
                 {
-                    Debug.Log($"Install succeeded: {k}");
+                    Log.Info($"Install succeeded: {k}");
                 }
                 else
                 {
-                    Debug.LogError($"Install failed: {k} => {r.Error?.message}");
+                    Log.Error($"Install failed: {k} => {r.Error?.message}");
                 }
                 _pendingAdds.Remove(k);
                 // ensure UPM state reflects latest
@@ -366,12 +367,12 @@ namespace NekoLib
                                         if (SetupPackagesTool.ValidatePackageIdentifier(pkg.url, out bool isGit, out string err) && isGit)
                                         {
                                             BeginAddPackage(pkg.url);
-                                            Debug.Log($"Install requested: {pkg.url}");
+                                            Log.Info($"Install requested: {pkg.url}");
                                             // UI disables via isInstalling
                                         }
                                         else
                                         {
-                                            Debug.LogError(string.IsNullOrEmpty(err) ? "Configured URL is not a valid Git URL." : err);
+                                            Log.Error(string.IsNullOrEmpty(err) ? "Configured URL is not a valid Git URL." : err);
                                         }
                                     }
                                     GUI.enabled = oldEn;

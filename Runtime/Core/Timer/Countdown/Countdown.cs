@@ -3,9 +3,7 @@ using UnityEngine;
 
 namespace NekoLib.Core
 {
-    /// <summary>
-    /// A timer that counts down from a specified duration to zero.
-    /// </summary>
+    /// <summary>A timer that counts down from a specified duration to zero.</summary>
     public readonly struct Countdown
     {
         private readonly int _slot;

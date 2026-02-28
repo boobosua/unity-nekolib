@@ -6,9 +6,7 @@ namespace NekoLib.Core
     public static class Swatch
     {
         #region Gray Colors
-        /// <summary>
-        /// Dark Gray Color (Gray).
-        /// </summary>
+        /// <summary>Dark Gray Color (Gray).</summary>
         public static Color DG
         {
             get
@@ -17,9 +15,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Medium Gray Color (Gray).
-        /// </summary>
+        /// <summary>Medium Gray Color (Gray).</summary>
         public static Color MG
         {
             get
@@ -28,9 +24,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Pale Gray Color (Gray).
-        /// </summary>
+        /// <summary>Pale Gray Color (Gray).</summary>
         public static Color PG
         {
             get
@@ -41,9 +35,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Yellow Colors
-        /// <summary>
-        /// Golden Amber Color (Yellow).
-        /// </summary>
+        /// <summary>Golden Amber Color (Yellow).</summary>
         public static Color GA
         {
             get
@@ -52,9 +44,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Sunny Gold Color (Yellow).
-        /// </summary>
+        /// <summary>Sunny Gold Color (Yellow).</summary>
         public static Color SG
         {
             get
@@ -63,9 +53,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Vivid Yellow Color (Yellow).
-        /// </summary>
+        /// <summary>Vivid Yellow Color (Yellow).</summary>
         public static Color VY
         {
             get
@@ -74,9 +62,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Cream Gold Color (Yellow).
-        /// </summary>
+        /// <summary>Cream Gold Color (Yellow).</summary>
         public static Color CG
         {
             get
@@ -87,9 +73,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Red Colors
-        /// <summary>
-        /// Candy Red Color (Red).
-        /// </summary>
+        /// <summary>Candy Red Color (Red).</summary>
         public static Color CR
         {
             get
@@ -98,9 +82,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Coral Color (Red).
-        /// </summary>
+        /// <summary>Coral Color (Red).</summary>
         public static Color CO
         {
             get
@@ -109,9 +91,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Vibrant Red Color (Red).
-        /// </summary>
+        /// <summary>Vibrant Red Color (Red).</summary>
         public static Color VR
         {
             get
@@ -122,9 +102,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Green Colors
-        /// <summary>
-        /// Deep Emerald Color (Green).
-        /// </summary>
+        /// <summary>Deep Emerald Color (Green).</summary>
         public static Color DE
         {
             get
@@ -133,9 +111,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Light Emerald Color (Green).
-        /// </summary>
+        /// <summary>Light Emerald Color (Green).</summary>
         public static Color LE
         {
             get
@@ -144,9 +120,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Mint Emerald Color (Green).
-        /// </summary>
+        /// <summary>Mint Emerald Color (Green).</summary>
         public static Color ME
         {
             get
@@ -157,9 +131,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Blue Colors
-        /// <summary>
-        /// Azure Teal Color (Blue).
-        /// </summary>
+        /// <summary>Azure Teal Color (Blue).</summary>
         public static Color AT
         {
             get
@@ -168,9 +140,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Vibrant Cyan Color (Blue).
-        /// </summary>
+        /// <summary>Vibrant Cyan Color (Blue).</summary>
         public static Color VC
         {
             get
@@ -179,9 +149,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Aqua Cyan Color (Blue).
-        /// </summary>
+        /// <summary>Aqua Cyan Color (Blue).</summary>
         public static Color AC
         {
             get
@@ -192,9 +160,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Purple Colors
-        /// <summary>
-        /// Royal Purple Color (Purple).
-        /// </summary>
+        /// <summary>Royal Purple Color (Purple).</summary>
         public static Color RP
         {
             get
@@ -203,9 +169,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Amethyst Color (Purple).
-        /// </summary>
+        /// <summary>Amethyst Color (Purple).</summary>
         public static Color AM
         {
             get
@@ -214,9 +178,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Lavender Color (Purple).
-        /// </summary>
+        /// <summary>Lavender Color (Purple).</summary>
         public static Color LA
         {
             get
@@ -227,9 +189,7 @@ namespace NekoLib.Core
         #endregion
 
         #region Orange Colors
-        /// <summary>
-        /// Burnt Orange Color (Orange).
-        /// </summary>
+        /// <summary>Burnt Orange Color (Orange).</summary>
         public static Color BO
         {
             get
@@ -238,9 +198,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Pumpkin Orange Color (Orange).
-        /// </summary>
+        /// <summary>Pumpkin Orange Color (Orange).</summary>
         public static Color PO
         {
             get
@@ -249,9 +207,7 @@ namespace NekoLib.Core
             }
         }
 
-        /// <summary>
-        /// Light Orange Color (Orange).
-        /// </summary>
+        /// <summary>Light Orange Color (Orange).</summary>
         public static Color LO
         {
             get

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NekoLib.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
+using NekoLib.Logger;
 
 namespace NekoLib.Components
 {
@@ -216,7 +217,7 @@ namespace NekoLib.Components
         {
             if (_spriteCount == 0)
             {
-                Debug.LogWarning("No sprites assigned to " + GetType().Name + " on " + gameObject.name);
+                Log.Warn("No sprites assigned to " + GetType().Name + " on " + gameObject.name);
                 return;
             }
 

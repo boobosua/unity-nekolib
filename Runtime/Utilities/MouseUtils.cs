@@ -7,19 +7,14 @@ namespace NekoLib.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>
-        /// Detect whether the cursor is focused on the game window or not.
-        /// </summary>
+        /// <summary>Detect whether the cursor is focused on the game window or not.</summary>
         public static bool IsMouseInGameWindow()
         {
             Vector3 mp = Input.mousePosition;
             return !(0 > mp.x || 0 > mp.y || Screen.width < mp.x || Screen.height < mp.y);
         }
 
-        /// <summary>
-        /// Returns the world position of the mouse cursor in 2D.
-        /// Designed for orthographic cameras. For perspective cameras, use GetMousePosition3D.
-        /// </summary>
+        /// <summary>Returns the world position of the mouse cursor in 2D. Designed for orthographic cameras. For perspective cameras, use GetMousePosition3D.</summary>
         public static Vector2 GetMousePosition2D(Camera camera = null)
         {
             var cam = camera == null ? Camera.main : camera;
@@ -33,9 +28,7 @@ namespace NekoLib.Utilities
             return cam.ScreenToWorldPoint(mousePos);
         }
 
-        /// <summary>
-        /// Returns the world position of the mouse cursor in 3D at a specified distance from the camera.
-        /// </summary>
+        /// <summary>Returns the world position of the mouse cursor in 3D at a specified distance from the camera.</summary>
         /// <param name="distance">Distance from camera in world units</param>
         public static Vector3 GetMousePosition3D(float distance = 10f, Camera camera = null)
         {
@@ -50,9 +43,7 @@ namespace NekoLib.Utilities
             return cam.ScreenToWorldPoint(mousePos);
         }
 
-        /// <summary>
-        /// Returns the 3D position of the mouse cursor from a raycast.
-        /// </summary>
+        /// <summary>Returns the 3D position of the mouse cursor from a raycast.</summary>
         public static Vector3 GetMousePosition3DFromRaycast(int layerMask = Physics.DefaultRaycastLayers)
         {
             Ray ray = GetMouseRay();
@@ -65,9 +56,7 @@ namespace NekoLib.Utilities
             return Vector3.zero;
         }
 
-        /// <summary>
-        /// Returns the mouse ray.
-        /// </summary>
+        /// <summary>Returns the mouse ray.</summary>
         public static Ray GetMouseRay(Camera camera = null)
         {
             var cam = camera != null ? camera : Camera.main;
