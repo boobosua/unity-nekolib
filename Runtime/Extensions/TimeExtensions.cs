@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using NekoLib.Logger;
 using NekoLib.Services;
+using UnityEngine;
 
 namespace NekoLib.Extensions
 {
@@ -15,15 +16,17 @@ namespace NekoLib.Extensions
 
         #region Time to String Formatting
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
-        public static string ToClock(this float time)
+        public static string ToClock(this float time, bool useCeiling = true)
         {
-            return TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss");
+            var totalSeconds = useCeiling ? Mathf.CeilToInt(time) : Mathf.FloorToInt(time);
+            return TimeSpan.FromSeconds(totalSeconds).ToString(@"hh\:mm\:ss");
         }
 
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
-        public static string ToClock(this double time)
+        public static string ToClock(this double time, bool useCeiling = true)
         {
-            return TimeSpan.FromSeconds(time).ToString(@"hh\:mm\:ss");
+            var totalSeconds = useCeiling ? Math.Ceiling(time) : Math.Floor(time);
+            return TimeSpan.FromSeconds(totalSeconds).ToString(@"hh\:mm\:ss");
         }
 
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
@@ -33,15 +36,17 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>Converts time in seconds to MM:SS format.</summary>
-        public static string ToShortClock(this float time)
+        public static string ToShortClock(this float time, bool useCeiling = true)
         {
-            return TimeSpan.FromSeconds(time).ToString(@"mm\:ss");
+            var totalSeconds = useCeiling ? Mathf.CeilToInt(time) : Mathf.FloorToInt(time);
+            return TimeSpan.FromSeconds(totalSeconds).ToString(@"mm\:ss");
         }
 
         /// <summary>Converts time in seconds to MM:SS format.</summary>
-        public static string ToShortClock(this double time)
+        public static string ToShortClock(this double time, bool useCeiling = true)
         {
-            return TimeSpan.FromSeconds(time).ToString(@"mm\:ss");
+            var totalSeconds = useCeiling ? Math.Ceiling(time) : Math.Floor(time);
+            return TimeSpan.FromSeconds(totalSeconds).ToString(@"mm\:ss");
         }
 
         /// <summary>Converts time in seconds to MM:SS format.</summary>
@@ -91,13 +96,21 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>Converts seconds to readable format.</summary>
-        public static string ToReadableFormat(this double seconds, bool useSpacing = true)
+        public static string ToReadableFormat(this double seconds, bool useSpacing = true, bool useCeiling = true)
         {
-            return TimeSpan.FromSeconds(seconds).ToReadableFormat(useSpacing);
+            var totalSeconds = useCeiling ? Math.Ceiling(seconds) : Math.Floor(seconds);
+            return TimeSpan.FromSeconds(totalSeconds).ToReadableFormat(useSpacing);
         }
 
         /// <summary>Converts seconds to readable format.</summary>
-        public static string ToReadableFormat(this float seconds, bool useSpacing = true)
+        public static string ToReadableFormat(this float seconds, bool useSpacing = true, bool useCeiling = true)
+        {
+            var totalSeconds = useCeiling ? Mathf.CeilToInt(seconds) : Mathf.FloorToInt(seconds);
+            return TimeSpan.FromSeconds(totalSeconds).ToReadableFormat(useSpacing);
+        }
+
+        /// <summary>Converts seconds to readable format.</summary>
+        public static string ToReadableFormat(this int seconds, bool useSpacing = true)
         {
             return TimeSpan.FromSeconds(seconds).ToReadableFormat(useSpacing);
         }

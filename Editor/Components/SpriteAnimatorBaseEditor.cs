@@ -27,13 +27,11 @@ namespace NekoLib.Components
         private SerializedProperty _useUnscaledTime;
         private SerializedProperty _startAtRandomFrame;
         private SerializedProperty _frameEvents;
-        private SerializedProperty _onAnimationComplete;
-        private SerializedProperty _onLoopComplete;
+        private SerializedProperty _onCycleComplete;
 
         private Sprite[] _previousSprites;
         private int _selectedFrameToAdd = 0;
         private List<bool> _eventFoldouts = new();
-        private SpriteAnimatorLoopMode _previousLoopMode;
         private int _selectedTab = 0; // 0: Settings, 1: Events
         private static GUIStyle _foldoutNoFocusStyle;
         private static readonly GUIContent RemoveEventContent = new("×");
@@ -67,12 +65,10 @@ namespace NekoLib.Components
             _useUnscaledTime = serializedObject.FindProperty("_useUnscaledTime");
             _startAtRandomFrame = serializedObject.FindProperty("_startAtRandomFrame");
             _frameEvents = serializedObject.FindProperty("_frameEvents");
-            _onAnimationComplete = serializedObject.FindProperty("_onAnimationComplete");
-            _onLoopComplete = serializedObject.FindProperty("_onLoopComplete");
+            _onCycleComplete = serializedObject.FindProperty("_onCycleComplete");
 
             _selectedTab = SessionState.GetInt(TabSessionKey, 0);
             CacheCurrentSprites();
-            CacheCurrentLoopMode();
             SyncEventFoldoutsSize();
 
 #if ODIN_INSPECTOR
@@ -174,6 +170,7 @@ namespace NekoLib.Components
             bool changed;
 #if ODIN_INSPECTOR
             changed = _tree.ApplyChanges();
+            changed |= serializedObject.ApplyModifiedProperties();
             _tree.InvokeDelayedActions();
 #else
             changed = serializedObject.ApplyModifiedProperties();
@@ -182,7 +179,6 @@ namespace NekoLib.Components
             if (changed)
             {
                 CheckForSpriteChanges();
-                CheckForLoopModeChanges();
             }
         }
 
@@ -199,27 +195,11 @@ namespace NekoLib.Components
             EditorGUILayout.PropertyField(_speedMultiplier);
 #endif
 
-            // Check for loop mode changes before drawing the property
-            SpriteAnimatorLoopMode currentLoopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
-            EditorGUI.BeginChangeCheck();
 #if ODIN_INSPECTOR
             DrawOdinUnityProperty("_loopMode");
 #else
             EditorGUILayout.PropertyField(_loopMode);
 #endif
-            if (EditorGUI.EndChangeCheck())
-            {
-                // Loop mode changed, check if we need to clear events
-                SpriteAnimatorLoopMode newLoopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
-                if ((currentLoopMode == SpriteAnimatorLoopMode.Loop ||
-                     currentLoopMode == SpriteAnimatorLoopMode.PingPong) &&
-                    newLoopMode == SpriteAnimatorLoopMode.Once)
-                {
-                    ClearUnityEvent(_onLoopComplete);
-
-                }
-                _previousLoopMode = newLoopMode;
-            }
 
 #if ODIN_INSPECTOR
             DrawOdinUnityProperty("_playOnAwake");
@@ -273,6 +253,8 @@ namespace NekoLib.Components
                 SerializedProperty frameEvent = _frameEvents.GetArrayElementAtIndex(i);
                 SerializedProperty frameIndex = frameEvent.FindPropertyRelative("_frameIndex");
                 int frame = frameIndex.intValue;
+
+                _usedFrames.Add(frame);
 
                 if (_frameCount.ContainsKey(frame))
                 {
@@ -355,12 +337,7 @@ namespace NekoLib.Components
                 {
                     int prevIndent = EditorGUI.indentLevel;
                     EditorGUI.indentLevel = 0; // minimize left padding for cleaner look
-                    // Unity Event
-#if ODIN_INSPECTOR
-                    DrawOdinUnityPropertyPath(unityEvent.propertyPath);
-#else
                     EditorGUILayout.PropertyField(unityEvent, OnFrameContent);
-#endif
                     EditorGUI.indentLevel = prevIndent;
                 }
 
@@ -492,70 +469,7 @@ namespace NekoLib.Components
         private void DrawEvents()
         {
             EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
-
-            SpriteAnimatorLoopMode currentLoopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
-
-            // Show OnAnimationComplete only for Once; warn if misconfigured otherwise
-            if (currentLoopMode == SpriteAnimatorLoopMode.Once)
-            {
-#if ODIN_INSPECTOR
-                DrawOdinUnityPropertyPath(_onAnimationComplete.propertyPath);
-#else
-                EditorGUILayout.PropertyField(_onAnimationComplete);
-#endif
-            }
-            else
-            {
-                SerializedProperty acCalls = _onAnimationComplete.FindPropertyRelative("m_PersistentCalls.m_Calls");
-                bool hasAC = acCalls != null && acCalls.arraySize > 0;
-                if (hasAC)
-                {
-                    EditorGUILayout.HelpBox("OnAnimationComplete events detected but won't be called unless LoopMode is 'Once'. Consider removing them.", MessageType.Warning);
-#if ODIN_INSPECTOR
-                    DrawOdinUnityPropertyPath(_onAnimationComplete.propertyPath);
-#else
-                    EditorGUILayout.PropertyField(_onAnimationComplete);
-#endif
-                    if (GUILayout.Button("Clear OnAnimationComplete Events"))
-                    {
-                        ClearUnityEvent(_onAnimationComplete);
-
-                    }
-                }
-            }
-
-            // Show onLoopComplete with context
-            if (currentLoopMode == SpriteAnimatorLoopMode.Loop ||
-                currentLoopMode == SpriteAnimatorLoopMode.PingPong)
-            {
-#if ODIN_INSPECTOR
-                DrawOdinUnityPropertyPath(_onLoopComplete.propertyPath);
-#else
-                EditorGUILayout.PropertyField(_onLoopComplete);
-#endif
-            }
-            else if (currentLoopMode == SpriteAnimatorLoopMode.Once)
-            {
-                // Check if OnLoopComplete has any events
-                SerializedProperty persistentCalls = _onLoopComplete.FindPropertyRelative("m_PersistentCalls.m_Calls");
-                bool hasEvents = persistentCalls != null && persistentCalls.arraySize > 0;
-
-                if (hasEvents)
-                {
-                    EditorGUILayout.HelpBox("OnLoopComplete events detected but won't be called in 'Once' mode. Consider removing them.", MessageType.Warning);
-#if ODIN_INSPECTOR
-                    DrawOdinUnityPropertyPath(_onLoopComplete.propertyPath);
-#else
-                    EditorGUILayout.PropertyField(_onLoopComplete);
-#endif
-
-                    if (GUILayout.Button("Clear OnLoopComplete Events"))
-                    {
-                        ClearUnityEvent(_onLoopComplete);
-
-                    }
-                }
-            }
+            EditorGUILayout.PropertyField(_onCycleComplete);
         }
 
 
@@ -628,40 +542,6 @@ namespace NekoLib.Components
             }
         }
 
-        private void CacheCurrentLoopMode()
-        {
-            _previousLoopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
-        }
-
-        private void CheckForLoopModeChanges()
-        {
-            SpriteAnimatorLoopMode currentLoopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
-
-            if (currentLoopMode != _previousLoopMode)
-            {
-                // Clear OnLoopComplete events when changing from Loop/PingPong to Once
-                if ((_previousLoopMode == SpriteAnimatorLoopMode.Loop ||
-                     _previousLoopMode == SpriteAnimatorLoopMode.PingPong) &&
-                    currentLoopMode == SpriteAnimatorLoopMode.Once)
-                {
-                    ClearUnityEvent(_onLoopComplete);
-
-                }
-
-                // Cache the new loop mode
-                _previousLoopMode = currentLoopMode;
-            }
-        }
-
-        private void ClearUnityEvent(SerializedProperty unityEventProperty)
-        {
-            // Clear all persistent calls from the UnityEvent
-            SerializedProperty persistentCalls = unityEventProperty.FindPropertyRelative("m_PersistentCalls.m_Calls");
-            if (persistentCalls != null)
-            {
-                persistentCalls.arraySize = 0;
-            }
-        }
     }
 }
 #endif

@@ -1,4 +1,3 @@
-using NekoLib.Extensions;
 using UnityEngine;
 
 namespace NekoLib.Components

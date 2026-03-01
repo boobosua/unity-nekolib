@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
 using NekoLib.Extensions;
+using NekoLib.Logger;
 using UnityEngine;
 using UnityEngine.Events;
-using NekoLib.Logger;
 
 namespace NekoLib.Components
 {
@@ -11,6 +10,22 @@ namespace NekoLib.Components
 
     public abstract class SpriteAnimatorBase : MonoBehaviour
     {
+        [Serializable]
+        protected sealed class FrameEvent
+        {
+            [SerializeField] private int _frameIndex;
+            [SerializeField, Space(6)] private UnityEvent _onFrame;
+
+            public int FrameIndex => _frameIndex;
+            public UnityEvent OnFrame => _onFrame;
+
+            public FrameEvent(int frameIndex)
+            {
+                _frameIndex = frameIndex;
+                _onFrame = new UnityEvent();
+            }
+        }
+
         private const int MaxCatchUpStepsPerUpdate = 8;
 
         [Tooltip("The sprites to animate through.")]
@@ -36,31 +51,13 @@ namespace NekoLib.Components
 
         [SerializeField] protected FrameEvent[] _frameEvents;
 
-        [SerializeField] protected UnityEvent _onAnimationComplete;
-        [SerializeField] protected UnityEvent _onLoopComplete;
+        [SerializeField] protected UnityEvent _onCycleComplete;
 
-        public UnityEvent OnAnimationComplete => _onAnimationComplete;
-        public UnityEvent OnLoopComplete => _onLoopComplete;
+        public UnityEvent OnCycleComplete => _onCycleComplete;
 
         protected int _currentFrame = 0;
         protected bool _isPlaying = false;
         protected bool _isReversed = false;
-
-        [Serializable]
-        protected sealed class FrameEvent
-        {
-            [SerializeField] private int _frameIndex;
-            [SerializeField, Space(6)] private UnityEvent _onFrame;
-
-            public int FrameIndex => _frameIndex;
-            public UnityEvent OnFrame => _onFrame;
-
-            public FrameEvent(int frameIndex)
-            {
-                _frameIndex = frameIndex;
-                _onFrame = new UnityEvent();
-            }
-        }
 
         protected float _frameTimer = 0f;
         protected int _spriteCount;
@@ -76,10 +73,6 @@ namespace NekoLib.Components
         public bool IsPlaying => _isPlaying;
         public int CurrentFrame => _currentFrame;
         public int FrameCount => _spriteCount;
-        public IReadOnlyList<Sprite> Sprites => _sprites;
-
-        [Obsolete("Use Sprites (IReadOnlyList<Sprite>) instead. This exposes the backing array and allows mutation.", false)]
-        public Sprite[] SpritesArray => _sprites;
 
         protected virtual void Awake()
         {
@@ -131,7 +124,6 @@ namespace NekoLib.Components
         }
 
         protected abstract bool ShouldAnimate();
-
         protected abstract void SetInitialSprite();
         protected abstract void UpdateSprite();
 
@@ -170,19 +162,19 @@ namespace NekoLib.Components
                 case SpriteAnimatorLoopMode.Once:
                     _currentFrame = _isReversed ? 0 : _spriteCount - 1;
                     Stop();
-                    _onAnimationComplete?.Invoke();
+                    _onCycleComplete?.Invoke();
                     break;
 
                 case SpriteAnimatorLoopMode.Loop:
                     _currentFrame = _isReversed ? _spriteCount - 1 : 0;
-                    _onLoopComplete?.Invoke();
+                    _onCycleComplete?.Invoke();
                     break;
 
                 case SpriteAnimatorLoopMode.PingPong:
                     _isReversed = !_isReversed;
                     _currentFrame = _isReversed ? _spriteCount - 2 : 1;
                     _currentFrame = Mathf.Clamp(_currentFrame, 0, _spriteCount - 1);
-                    _onLoopComplete?.Invoke();
+                    _onCycleComplete?.Invoke();
                     break;
             }
         }
@@ -210,7 +202,6 @@ namespace NekoLib.Components
         {
             _loopMode = loopMode;
         }
-
 
         /// <summary>Play the animation.</summary>
         public virtual void Play()

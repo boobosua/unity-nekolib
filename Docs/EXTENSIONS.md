@@ -20,7 +20,7 @@ gameObject.SetLayer(8);                  // By layer number
 gameObject.SetLayer(LayerMask.GetMask("UI")); // By LayerMask
 
 // Child management
-gameObject.ClearChildTransforms();
+gameObject.ClearChildTransforms(); // Destroy all children (also aliased as DestroyChildren)
 
 // Get children in specific layers
 GameObject[] enemyChildren = gameObject.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
@@ -193,8 +193,8 @@ int clamped = value.AtLeast(10).AtMost(100);
 float clampedFloat = value.AtLeast(0f).AtMost(1f);
 
 // Probability/chance
-bool success = 0.75f.RollChance(); // 75% chance
-bool luckyRoll = 25.RollChance(0, 100); // 25% chance out of 100
+bool success = 0.75f.IsSuccessfulRoll();          // 75% chance (0–1 range)
+bool luckyRoll = 25.IsSuccessfulRoll(0, 100);     // 25% chance out of 100
 
 // Enum conversion
 MyEnum enumValue = 1.ToEnum<MyEnum>();
@@ -290,12 +290,12 @@ DateTime newTime = original.WithTime(hour: 9, minute: 0);
 
 ```csharp
 // Set to "HH:MM:SS" from seconds
-tmpText.SetClockHHMMSS(3661);        // "01:01:01"
-tmpText.SetClockHHMMSS(3661f);
-tmpText.SetClockHHMMSS(3661d);
+tmpText.SetClock(3661);        // "01:01:01"
+tmpText.SetClock(3661f);
+tmpText.SetClock(3661d);
 
 // Set to "MM:SS" from seconds
-tmpText.SetClockMMSS(125);           // "02:05"
+tmpText.SetShortClock(125);           // "02:05"
 
 // Readable duration (spacing optional)
 tmpText.SetReadableTime(93784);      // "1d 2h 3m" (default spacing)
