@@ -1,5 +1,5 @@
 using System.Collections;
-using NekoLib.Core;
+using NekoLib.ColorPalette;
 using NekoLib.Logger;
 using UnityEngine;
 

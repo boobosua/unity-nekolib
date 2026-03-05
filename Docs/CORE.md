@@ -37,24 +37,25 @@ NekoLib timers are PlayerLoop-driven (no coroutines) and come in two flavors:
 - `Countdown`: counts down from a duration to 0.
 - `Stopwatch`: counts up until you stop it (or a stop condition triggers).
 
-Both are lightweight `readonly struct` handles in `NekoLib.Core`.
+Both are lightweight `readonly struct` handles in `NekoLib.Timer`.
 
 ```csharp
-using NekoLib.Core;
+using NekoLib.Timer;
 using UnityEngine;
 
-// Countdown (loops 3 times, only ticks when not paused)
-var countdown = Countdown.Create(this, duration: 10f)
-    .SetLoop(loopCount: 3)
-    .SetUpdateWhen(() => !isPaused)
+// Countdown — loops 3 times, only ticks when not paused
+var countdown = Countdown.Create(this, 10f)
+    .SetLoop(3)
+    .OnUpdateWhen(() => !isPaused)
     .OnUpdate(remaining => Debug.Log($"Remaining: {remaining:F2}s"))
     .OnStop(() => Debug.Log("Countdown finished"));
 
 countdown.Start();
 
-// Stopwatch (stops when gameIsOver, only ticks in active state)
-var stopwatch = Stopwatch.Create(this, stopCondition: () => gameIsOver)
-    .SetUpdateWhen(() => isActiveState)
+// Stopwatch — stops when a condition becomes true
+var stopwatch = Stopwatch.Create(this)
+    .SetStopWhen(() => gameIsOver)
+    .OnUpdateWhen(() => isActiveState)
     .OnUpdate(elapsed => Debug.Log($"Elapsed: {elapsed:F2}s"))
     .OnStop(() => Debug.Log("Stopwatch stopped"));
 
@@ -80,53 +81,33 @@ countdown.Resume();
 countdown.Stop();   // invokes OnStop callbacks
 countdown.Cancel(); // silent (does NOT invoke OnStop callbacks)
 
-// Conditional updates - timer only ticks when condition is true
-countdown.SetUpdateWhen(() => player.IsAlive && !game.IsPaused);
+// Conditional updates — timer only ticks when condition is true
+countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
 
 ### Invoke Helpers
 
-Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Extensions`) that schedule actions via the PlayerLoop timer system — no coroutines required.
+Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Timer`) that schedule actions via the PlayerLoop timer system — no coroutines required.
 
 ```csharp
-using NekoLib.Extensions;
+using NekoLib.Timer;
 
-// Invoke once after a delay (scaled or unscaled time)
-this.InvokeAfterDelay(2f, () => Debug.Log("Fired after 2s"));
-this.InvokeAfterDelay(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
+// Invoke once after a delay; returns a token to cancel before it fires
+TimerToken token = this.CallAfter(2f, () => Debug.Log("Fired after 2s"));
+TimerToken unscaled = this.CallAfter(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
+token.Cancel(); // cancels before it fires — silent, no callbacks
 
-// Repeated invoke every interval (returns CancelHandler -> Cancel to stop silently)
-var handle = this.InvokeEvery(
-    interval: 1f,
-    action: () => Debug.Log("Tick each second"),
-    updateWhen: () => !isPaused,
-    useUnscaledTime: false
-);
+// Repeat every interval; returns a token to stop the loop
+TimerToken ticker = this.CallEvery(1f, () => Debug.Log("Tick each second"));
+TimerToken unscaledTicker = this.CallEvery(1f, () => Debug.Log("Tick"), useUnscaledTime: true);
 
-handle.Cancel(); // stops without invoking stop callbacks
-
-// Builder-style creation helpers
-var cd = this.GetCountdown().SetDuration(3f).OnStop(() => Debug.Log("Done"));
-cd.Start();
-
-var sw = this.GetStopwatch().OnUpdate(t => Debug.Log($"Elapsed: {t:F2}s"));
-sw.Start();
+ticker.Cancel(); // stops the loop without invoking stop callbacks
 ```
 
 Notes:
 
 - All helpers use the PlayerLoop-driven driver (no MonoBehaviour `Update`).
-- Timers are pooled internally (default max retained per type is 128).
-- You can prewarm (and raise the max retained size) via `TimerUtils`:
-
-```csharp
-using NekoLib.Utilities;
-
-TimerUtils.PrewarmCountdown(256);
-TimerUtils.PrewarmStopwatch(256);
-```
-
-- In the Editor you can inspect active timers via `Window/Neko Framework/Timer Tracker`.
+- Active timers can be inspected via `Window > Neko Framework > Timer Tracker`.
 
 ### Pooling
 

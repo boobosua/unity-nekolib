@@ -335,21 +335,16 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 ### TimerExtensions
 
 ```csharp
-using NekoLib.Logger;
+using NekoLib.Timer;
 
-// Create / start countdowns
-Countdown cd = this.GetCountdown(10f);
-Countdown started = this.StartCountdown(5f);
-Countdown conditional = this.StartCountdown(30f, () => isReady);
+// Invoke once after a delay; returns a token to cancel before it fires
+TimerToken token = this.CallAfter(2f, () => Log.Info("Delayed"));
+TimerToken unscaled = this.CallAfter(2f, () => Log.Info("Unscaled"), useUnscaledTime: true);
+token.Cancel(); // cancels before it fires — silent, no callbacks
 
-// Stopwatches
-Stopwatch sw = this.GetStopwatch();
-Stopwatch running = this.StartStopwatch();
-
-// Delayed and repeated actions
-this.InvokeAfterDelay(2f, () => Log.Info("Delayed"), useUnscaledTime: true);
-IDisposable every = this.InvokeEvery(1f, () => Log.Info("Tick"));
-IDisposable secondsTicker = this.InvokeEverySeconds(1, 5, secs => Log.Info($"Ticked {secs}s"), () => Log.Info("Done"));
+// Repeat every interval; returns a token to stop the loop
+TimerToken ticker = this.CallEvery(1f, () => Log.Info("Tick"));
+ticker.Cancel();
 ```
 
 ### SerializeExtensions

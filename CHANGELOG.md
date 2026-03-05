@@ -1,3 +1,15 @@
+## [2.2.0] - 2026-03-05
+
+### Major Update: Timer System Overhaul
+
+- Rearchitect timer internals to a flat ECS-style slot array, replacing the old per-type pool model.
+- Move all timer types and extensions into the `NekoLib.Timer` namespace.
+- Replace `InvokeAfterDelay`, `InvokeEvery`, and `InvokeEverySeconds` with `CallAfter` and `CallEvery`.
+- Replace `CancelHandler` with `TimerToken` readonly struct.
+- Add non-capturing generic overloads to all fluent timer callbacks to reduce allocations.
+- Remove `TimerUtils` prewarm helpers.
+- Overhaul Timer Tracker window with stats bar, smooth progress bars, and editor debug API.
+
 ## [2.0.0] - 2026-02-05
 
 ### Major Update: NetworkService Overhaul

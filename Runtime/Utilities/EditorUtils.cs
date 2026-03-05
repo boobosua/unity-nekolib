@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using NekoLib.Core;
 using NekoLib.Logger;
+using NekoLib.ColorPalette;
+
 
 #if UNITY_EDITOR
 using UnityEditor;

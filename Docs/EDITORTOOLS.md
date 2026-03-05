@@ -111,12 +111,12 @@ Visualises all active **Countdowns** and **Stopwatches** created via the NekoLib
 **Features:**
 
 - Two tabs: **Countdowns** and **Stopwatches**
-- Displays source GameObject, component name, elapsed/remaining time, and a smooth progress bar
-- Color-coded rows: running (blue), completed (green), paused (yellow)
+- Displays source GameObject, component name, elapsed/remaining time, and a smooth progress bar per row
+- Stats bar: **IsAlive** (allocated slots with a valid owner), **Capacity**, **Free Slots**, **Slot Memory** (exact struct sizes via `Unsafe.SizeOf`)
 - Paginated at 20 items per page for large timer counts
 - Clears automatically on exiting Play mode
 
-> Timers are created via the [Timer extensions](EXTENSIONS.md#timerextensions) (`StartCountdown`, `StartStopwatch`, etc.).
+> Timers are created via `Countdown.Create` / `Stopwatch.Create`, or the `CallAfter` / `CallEvery` extension methods on `MonoBehaviour` — see [TimerExtensions](EXTENSIONS.md#timerextensions).
 
 ---
 

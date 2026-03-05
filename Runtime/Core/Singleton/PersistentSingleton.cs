@@ -1,3 +1,4 @@
+using NekoLib.ColorPalette;
 using NekoLib.Extensions;
 using NekoLib.Logger;
 using NekoLib.Utilities;
@@ -9,7 +10,7 @@ using BaseBehaviour = Sirenix.OdinInspector.SerializedMonoBehaviour;
 using BaseBehaviour = UnityEngine.MonoBehaviour;
 #endif
 
-namespace NekoLib.Core
+namespace NekoLib.Singleton
 {
     /// <summary>
     /// DontDestroy singleton can be created and placed in a persistent scene and it will exist across scenes.

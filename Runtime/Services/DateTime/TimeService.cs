@@ -3,7 +3,7 @@ using System.Collections;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using NekoLib.Core;
+using NekoLib.ColorPalette;
 using NekoLib.Extensions;
 using NekoLib.Logger;
 using NekoLib.Utilities;

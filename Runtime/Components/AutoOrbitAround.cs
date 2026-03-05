@@ -1,7 +1,7 @@
-using UnityEngine;
+using NekoLib.ColorPalette;
 using NekoLib.Extensions;
 using NekoLib.Utilities;
-using NekoLib.Core;
+using UnityEngine;
 
 namespace NekoLib
 {

@@ -1,5 +1,7 @@
 using NekoLib.Extensions;
 using UnityEngine;
+using NekoLib.Timer;
+
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -40,7 +42,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            this.InvokeAfterDelay(delay, () => _pool.Despawn(this), false);
+            this.CallAfter(delay, this, target => _pool.Despawn(this), false);
         }
 
         internal void SetPool(IPoolReleaser pool) => _pool = pool;

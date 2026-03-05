@@ -1,6 +1,7 @@
 using System;
 using NekoLib.Extensions;
 using NekoLib.Logger;
+using NekoLib.Timer;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -104,7 +105,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            instance.InvokeAfterDelay(delay, () =>
+            instance.CallAfter(delay, this, target =>
             {
                 if (instance != null)
                 {

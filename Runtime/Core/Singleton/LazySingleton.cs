@@ -1,4 +1,5 @@
 using System;
+using NekoLib.ColorPalette;
 using NekoLib.Extensions;
 using NekoLib.Logger;
 using UnityEngine;
@@ -9,7 +10,7 @@ using BaseBehaviour = Sirenix.OdinInspector.SerializedMonoBehaviour;
 using BaseBehaviour = UnityEngine.MonoBehaviour;
 #endif
 
-namespace NekoLib.Core
+namespace NekoLib.Singleton
 {
     /// <summary>
     /// Lazy singleton automatically creates a new singleton game object when a script uses it.
