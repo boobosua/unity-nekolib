@@ -1,4 +1,5 @@
 using System;
+using NekoLib.Constant;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -39,16 +40,10 @@ namespace NekoLib.Extensions
             return (current - target).sqrMagnitude <= range * range;
         }
 
-        /// <summary>Returns a vector with the same direction but clamped to a maximum magnitude.</summary>
-        public static Vector2 ClampMagnitude(this Vector2 vector, float maxMagnitude)
-        {
-            return Vector2.ClampMagnitude(vector, maxMagnitude);
-        }
-
         /// <summary>Returns a vector with the specified magnitude in the same direction. Returns zero vector if original vector is zero.</summary>
         public static Vector2 WithMagnitude(this Vector2 vector, float magnitude)
         {
-            return vector.sqrMagnitude > 0.0001f ? vector.normalized * magnitude : Vector2.zero;
+            return vector.sqrMagnitude > Constants.NearZeroSqrMagnitude ? vector.normalized * magnitude : Vector2.zero;
         }
 
         /// <summary>Returns the direction from this vector to the target vector.</summary>
@@ -87,12 +82,6 @@ namespace NekoLib.Extensions
             );
         }
 
-        /// <summary>Reflects the vector across a surface with the given normal.</summary>
-        public static Vector2 Reflect(this Vector2 vector, Vector2 normal)
-        {
-            return Vector2.Reflect(vector, normal);
-        }
-
         /// <summary>Returns the largest component of the vector.</summary>
         public static float MaxComponent(this Vector2 vector)
         {
@@ -112,7 +101,6 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>Checks if this point is inside a rectangle defined by center and size.</summary>
-        /// <summary>Checks if this point is inside a rectangle defined by center and size.</summary>
         public static bool IsInsideRect(this Vector2 point, Vector2 center, Vector2 size)
         {
             Vector2 halfSize = size * 0.5f;
@@ -120,12 +108,6 @@ namespace NekoLib.Extensions
             Vector2 max = center + halfSize;
             return point.x >= min.x && point.x <= max.x &&
                     point.y >= min.y && point.y <= max.y;
-        }
-
-        /// <summary>Checks if this point is inside a Unity Rect.</summary>
-        public static bool IsInsideRect(this Vector2 point, Rect rect)
-        {
-            return rect.Contains(point);
         }
 
         /// <summary>Computes a random point in an annulus (a ring-shaped area) based on minimum and maximum radius values around a central Vector2 point (origin).</summary>

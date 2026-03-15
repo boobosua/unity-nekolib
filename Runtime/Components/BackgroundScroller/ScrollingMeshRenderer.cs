@@ -16,24 +16,6 @@ namespace NekoLib.Components
             _material = _meshRenderer.material = Instantiate(_meshRenderer.material);
         }
 
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (TryGetComponent<MeshRenderer>(out var meshRenderer))
-            {
-                if (meshRenderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off)
-                {
-                    meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                    meshRenderer.receiveShadows = false;
-                    meshRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-                    meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-                    meshRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
-                    meshRenderer.allowOcclusionWhenDynamic = false;
-                }
-            }
-        }
-#endif
-
         protected override void ApplyOffset(Vector2 offset)
         {
             if (_material != null)
@@ -53,6 +35,8 @@ namespace NekoLib.Components
         private void OnDestroy()
         {
             ResetOffset();
+            Destroy(_material);
+            _material = null;
         }
     }
 }

@@ -1,6 +1,5 @@
 using System.Collections;
-using NekoLib.ColorPalette;
-using NekoLib.Logger;
+using NekoLib.Utilities;
 using UnityEngine;
 
 namespace NekoLib.Extensions
@@ -72,78 +71,28 @@ namespace NekoLib.Extensions
         public static IEnumerator PlayAndWait(this Animator animator, string stateName, int layerIndex = 0)
         {
             animator.Play(stateName, layerIndex);
-            yield return WaitForAnimation(animator, stateName, layerIndex);
+            yield return animator.WaitForAnimation(stateName, layerIndex);
         }
 
         /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, int stateHash, int layerIndex = 0)
         {
             animator.Play(stateHash, layerIndex);
-            yield return WaitForAnimation(animator, stateHash, layerIndex);
+            yield return animator.WaitForAnimation(stateHash, layerIndex);
         }
 
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, string stateName, float transitionDuration, int layerIndex = 0)
         {
             animator.CrossFade(stateName, transitionDuration, layerIndex);
-            yield return WaitForAnimation(animator, stateName, layerIndex);
+            yield return animator.WaitForAnimation(stateName, layerIndex);
         }
 
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, int stateHash, float transitionDuration, int layerIndex = 0)
         {
             animator.CrossFade(stateHash, transitionDuration, layerIndex);
-            yield return WaitForAnimation(animator, stateHash, layerIndex);
-        }
-
-        /// <summary>Coroutine to wait for an animation to complete.</summary>
-        public static IEnumerator WaitForAnimation(Animator animator, string stateName, int layerIndex = 0)
-        {
-            yield return new WaitForEndOfFrame();
-
-            // Wait for transition to complete.
-            while (animator.IsInTransition(layerIndex))
-                yield return null;
-
-            // Check if animation is looped - if so, don't wait.
-            var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-            if (stateInfo.loop)
-            {
-                Log.Warn($"Animation '{stateName.Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
-                yield break;
-            }
-
-            // Wait for non-looped animation to complete.
-            while (animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(stateName) &&
-                    animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime < 1f)
-            {
-                yield return null;
-            }
-        }
-
-        /// <summary>Coroutine to wait for an animation to complete.</summary>
-        public static IEnumerator WaitForAnimation(Animator animator, int stateHash, int layerIndex = 0)
-        {
-            yield return new WaitForEndOfFrame();
-
-            // Wait for transition to complete.
-            while (animator.IsInTransition(layerIndex))
-                yield return null;
-
-            // Check if animation is looped - if so, don't wait.
-            var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-            if (stateInfo.loop)
-            {
-                Log.Warn($"Animation with hash '{stateHash.ToString().Colorize(Swatch.GA)}' is looped. Will not wait for completion.");
-                yield break;
-            }
-
-            // Wait for non-looped animation to complete.
-            while (animator.GetCurrentAnimatorStateInfo(layerIndex).shortNameHash == stateHash &&
-                    animator.GetCurrentAnimatorStateInfo(layerIndex).normalizedTime < 1f)
-            {
-                yield return null;
-            }
+            yield return animator.WaitForAnimation(stateHash, layerIndex);
         }
     }
 }

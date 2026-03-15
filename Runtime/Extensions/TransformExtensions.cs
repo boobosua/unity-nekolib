@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NekoLib.Constant;
 using NekoLib.Logger;
 using NekoLib.Utilities;
 using UnityEngine;
@@ -55,9 +56,6 @@ namespace NekoLib.Extensions
             }
         }
 
-        [Obsolete("Use Clear() instead.")]
-        public static void DestroyChildren(this Transform transform) => Clear(transform);
-
         /// <summary>Sets orbit position around a target using specific angles. Use this for manual/static positioning.</summary>
         public static void SetOrbitRotation(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance)
         {
@@ -103,10 +101,10 @@ namespace NekoLib.Extensions
             }
 
             currentAngle += speed * Time.deltaTime;
-            if (currentAngle >= 360f)
-                currentAngle -= 360f;
+            if (currentAngle >= Constants.FullRotation)
+                currentAngle -= Constants.FullRotation;
             if (currentAngle < 0f)
-                currentAngle += 360f;
+                currentAngle += Constants.FullRotation;
 
             if (orientation == Orientation.Horizontal)
             {
@@ -122,10 +120,10 @@ namespace NekoLib.Extensions
         public static void OrbitAround(this Transform transform, Vector3 targetPosition, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
         {
             currentAngle += speed * Time.deltaTime;
-            if (currentAngle >= 360f)
-                currentAngle -= 360f;
+            if (currentAngle >= Constants.FullRotation)
+                currentAngle -= Constants.FullRotation;
             if (currentAngle < 0f)
-                currentAngle += 360f;
+                currentAngle += Constants.FullRotation;
 
             if (orientation == Orientation.Horizontal)
             {

@@ -81,9 +81,12 @@ namespace NekoLib.Extensions
                 throw new ArgumentException($"percentage '{probability}' must be in range [{min}, {max}]");
             }
 
-            // For int Random.Range, max is exclusive, so we add 1 to include our max value
-            var randomRoll = Random.Range(min, max + 1);
-            return randomRoll <= probability;
+            // Random.Range(int, int) is [min, maxExclusive), so Range(min, max) yields [min, max-1].
+            // Comparing with < probability gives exact boundary behaviour:
+            //   probability == min  → 0%  (roll can never be < min)
+            //   probability == max  → 100% (roll is always < max)
+            var randomRoll = Random.Range(min, max);
+            return randomRoll < probability;
         }
 
         /// <summary>Converts an integer to the specified enum type.</summary>

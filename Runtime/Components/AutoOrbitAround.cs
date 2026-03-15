@@ -1,4 +1,5 @@
 using NekoLib.ColorPalette;
+using NekoLib.Constant;
 using NekoLib.Extensions;
 using NekoLib.Utilities;
 using UnityEngine;
@@ -7,38 +8,79 @@ namespace NekoLib
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("NekoLib/Auto Orbit Around")]
-    public class AutoOrbitAround : MonoBehaviour
+    public sealed class AutoOrbitAround : MonoBehaviour
     {
         private enum OrbitMode
         {
-            AutoHorizontalOnly = 0,  // OrbitAround - only horizontal rotation
-            AutoVerticalOnly = 1,    // OrbitAroundVertical - only vertical rotation
+            AutoHorizontalOnly = 0,
+            AutoVerticalOnly = 1,
+        }
+
+        private enum FacingMode
+        {
+            FaceTarget = 0,
+            FaceAwayFromTarget = 1,
+            FaceHeading = 2,
+            FaceOppositeHeading = 3,
+            None = 4,
         }
 
         [SerializeField] private Transform _target;
         [SerializeField] private float _distance = 5f;
         [SerializeField] private OrbitMode _mode = OrbitMode.AutoHorizontalOnly;
-        [SerializeField] private float _horizontalSpeed = 30f; // degrees per second
-        [SerializeField] private float _staticVerticalAngle = 30f; // for horizontal-only mode
-        [SerializeField] private float _verticalSpeed = 15f;   // degrees per second
-        [SerializeField] private float _staticHorizontalAngle = 0f;
+        [SerializeField, Tooltip("Degrees per second on the moving axis.")]
+        private float _speed = 30f;
+        [SerializeField, Tooltip("Initial angle offset (degrees). Use this to evenly space multiple orbiters.")]
+        private float _startAngle = 0f;
+        [SerializeField, Tooltip("Elevation angle above the target (degrees). 0 = same height, 90 = directly above.")]
+        private float _elevationAngle = 30f;
+        [SerializeField, Tooltip("Bearing of the vertical orbit plane around Y (degrees). 0 = orbit in the Z plane.")]
+        private float _bearingAngle = 0f;
+        [SerializeField, Tooltip("How the orbiting object orients itself.")]
+        private FacingMode _facing = FacingMode.FaceTarget;
 
-        private float _currentHorizontalAngle = 0f;
-        private float _currentVerticalAngle = 30f;
+        private float _currentAngle = 0f;
+
+        private void Awake()
+        {
+            _currentAngle = _startAngle;
+        }
 
         private void Update()
         {
             if (_target == null)
                 return;
 
-            switch (_mode)
+            var orientation = _mode == OrbitMode.AutoHorizontalOnly ? Orientation.Horizontal : Orientation.Vertical;
+            float staticAngle = _mode == OrbitMode.AutoHorizontalOnly ? _elevationAngle : _bearingAngle;
+            transform.OrbitAround(_target.position, orientation, _speed, staticAngle, _distance, ref _currentAngle);
+            ApplyFacing();
+        }
+
+        private void ApplyFacing()
+        {
+            switch (_facing)
             {
-                case OrbitMode.AutoHorizontalOnly:
-                    transform.OrbitAround(_target, Orientation.Horizontal, _horizontalSpeed, _staticVerticalAngle, _distance, ref _currentHorizontalAngle);
+                case FacingMode.FaceTarget:
+                    transform.LookAt(_target);
                     break;
 
-                case OrbitMode.AutoVerticalOnly:
-                    transform.OrbitAround(_target, Orientation.Vertical, _verticalSpeed, _staticHorizontalAngle, _distance, ref _currentVerticalAngle);
+                case FacingMode.FaceAwayFromTarget:
+                    transform.forward = (transform.position - _target.position).normalized;
+                    break;
+
+                case FacingMode.FaceHeading:
+                case FacingMode.FaceOppositeHeading:
+                    float staticAngle = _mode == OrbitMode.AutoHorizontalOnly ? _elevationAngle : _bearingAngle;
+                    Vector3 orbitAxis = _mode == OrbitMode.AutoHorizontalOnly
+                        ? Vector3.up
+                        : Quaternion.AngleAxis(staticAngle, Vector3.up) * Vector3.right;
+                    Vector3 heading = Vector3.Cross(orbitAxis, transform.position - _target.position) * Mathf.Sign(_speed);
+                    if (heading.sqrMagnitude > 0.0001f)
+                        transform.forward = _facing == FacingMode.FaceHeading ? heading.normalized : -heading.normalized;
+                    break;
+
+                case FacingMode.None:
                     break;
             }
         }
@@ -51,44 +93,33 @@ namespace NekoLib
 
             Gizmos.color = Swatch.ME;
             Gizmos.DrawLine(_target.position, transform.position);
-            // Draw a circle representing the orbit path
-            // Draw a circle representing the orbit path (horizontal plane)
             const int segments = 64;
             Vector3 center = _target.position;
             float radius = _distance;
 
             if (_mode == OrbitMode.AutoHorizontalOnly)
             {
-                // Orbit in horizontal plane at static vertical angle
-                float verticalAngle = _staticVerticalAngle;
-                Quaternion tilt = Quaternion.Euler(verticalAngle, 0f, 0f);
-                Vector3 orbitNormal = tilt * Vector3.up;
-                Vector3 orbitForward = tilt * Vector3.forward;
-
-                Vector3 prevPoint = center + orbitForward * radius;
+                // Flat circle elevated by elevationAngle. Sweeps around Vector3.up.
+                Vector3 baseOfs = Quaternion.AngleAxis(_elevationAngle, Vector3.right) * (Vector3.back * radius);
+                Vector3 prevPoint = center + baseOfs;
                 for (int i = 1; i <= segments; i++)
                 {
-                    float angle = 360f / segments * i;
-                    Quaternion segmentRotation = Quaternion.AngleAxis(angle, orbitNormal);
-                    Vector3 nextPoint = center + segmentRotation * orbitForward * radius;
+                    float angle = Constants.FullRotation / segments * i;
+                    Vector3 nextPoint = center + Quaternion.AngleAxis(angle, Vector3.up) * baseOfs;
                     Gizmos.DrawLine(prevPoint, nextPoint);
                     prevPoint = nextPoint;
                 }
             }
             else // AutoVerticalOnly
             {
-                // Orbit in vertical plane at static horizontal angle
-                float horizontalAngle = _staticHorizontalAngle;
-                Quaternion yaw = Quaternion.Euler(0f, horizontalAngle, 0f);
-                Vector3 orbitRight = yaw * Vector3.right;
-                Vector3 orbitUp = yaw * Vector3.up;
-
-                Vector3 prevPoint = center + orbitUp * radius;
+                // Vertical circle in the plane at bearingAngle around Y.
+                Vector3 orbitAxis = Quaternion.AngleAxis(_bearingAngle, Vector3.up) * Vector3.right;
+                Vector3 baseOfs = Quaternion.AngleAxis(_bearingAngle, Vector3.up) * (Vector3.back * radius);
+                Vector3 prevPoint = center + baseOfs;
                 for (int i = 1; i <= segments; i++)
                 {
-                    float angle = 360f / segments * i;
-                    Quaternion segmentRotation = Quaternion.AngleAxis(angle, orbitRight);
-                    Vector3 nextPoint = center + segmentRotation * orbitUp * radius;
+                    float angle = Constants.FullRotation / segments * i;
+                    Vector3 nextPoint = center + Quaternion.AngleAxis(angle, orbitAxis) * baseOfs;
                     Gizmos.DrawLine(prevPoint, nextPoint);
                     prevPoint = nextPoint;
                 }

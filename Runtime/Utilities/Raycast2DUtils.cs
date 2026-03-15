@@ -1,4 +1,3 @@
-using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Utilities
@@ -29,29 +28,7 @@ namespace NekoLib.Utilities
             return hit != null;
         }
 
-        /// <summary>Checks if the pointer is over a 2D object.</summary>
-        public static bool IsPointerOver2DObject(GameObject objectToCheck)
-        {
-            if (objectToCheck == null)
-            {
-                Log.Warn("Object to check is null.");
-                return false;
-            }
-
-            var position = GetMousePosition2D();
-            var hit = Physics2D.OverlapPoint(position);
-            return hit != null && (hit.transform == objectToCheck.transform || hit.transform.IsChildOf(objectToCheck.transform));
-        }
-
-        /// <summary>Checks if the pointer is over a 2D object.</summary>
-        public static bool IsPointerOver2DObject<T>() where T : Component
-        {
-            var position = GetMousePosition2D();
-            var hit = Physics2D.OverlapPoint(position);
-            return hit != null && hit.GetComponent<T>() != null;
-        }
-
-        /// <summary>Checks if the pointer is over a 2D object.</summary>
+        /// <summary>Checks if the pointer is over a 2D object of the specified type.</summary>
         public static bool IsPointerOver2DObject<T>(out T component) where T : Component
         {
             var position = GetMousePosition2D();

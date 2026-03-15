@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
+using NekoLib.Constant;
 using UnityEngine;
 using NekoLib.Logger;
 using NekoLib.ColorPalette;
-
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,60 +14,27 @@ namespace NekoLib.Utilities
     public static partial class Utils
     {
 #if UNITY_EDITOR
-        /// <summary>
-        /// Finds all *.asset files of type T in the given directory. 
-        /// Only works on Unity Editor. 
-        /// Use a path starting at "Assets/asset-folder/".
-        /// </summary>
-        public static T[] FindAllAssets<T>(string directoryPath) where T : UnityEngine.Object
+        private const float NearParallelSqrMagnitude = 0.001f;
+
+        /// <summary>Finds all assets of type T in a directory. Use a path starting at "Assets/".</summary>
+        public static T[] FindAssets<T>(string directoryPath) where T : UnityEngine.Object
         {
-            try
+            if (string.IsNullOrEmpty(directoryPath))
             {
-                // Check if directoryPath is null or empty
-                if (string.IsNullOrEmpty(directoryPath))
-                {
-                    throw new ArgumentNullException(nameof(directoryPath), "Directory path cannot be null or empty");
-                }
+                Log.Error("Directory path cannot be null or empty.");
+                return Array.Empty<T>();
+            }
 
-                // Find all asset files in the directory
-                string[] files = System.IO.Directory.GetFiles(directoryPath, "*.asset");
-
-                // Filter files to only include assets of type T
-                List<T> assets = new();
-                foreach (string file in files)
-                {
-                    string filePath = file;
-                    try
-                    {
-                        T asset = AssetDatabase.LoadAssetAtPath<T>(filePath);
-                        if (asset != null)
-                        {
-                            assets.Add(asset);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"Error loading asset at path {filePath}: {ex.Message}");
-                    }
-                }
-
-                return assets.ToArray();
-            }
-            catch (System.IO.DirectoryNotFoundException ex)
+            string[] guids = AssetDatabase.FindAssets($"t:{typeof(T).Name}", new[] { directoryPath });
+            List<T> assets = new();
+            foreach (string guid in guids)
             {
-                Log.Error($"Directory not found: {directoryPath}. Error: {ex.Message}");
-                return new T[0];
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                if (asset != null)
+                    assets.Add(asset);
             }
-            catch (System.IO.IOException ex)
-            {
-                Log.Error($"Error reading directory: {directoryPath}. Error: {ex.Message}");
-                return new T[0];
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Unexpected error: {ex.Message}");
-                return new T[0];
-            }
+            return assets.ToArray();
         }
 
         /// <summary>Draws an annulus (ring) gizmo in the Scene view.</summary>
@@ -78,12 +45,12 @@ namespace NekoLib.Utilities
 
             // Create a coordinate system based on the up vector
             Vector3 forward = Vector3.Cross(up, Vector3.right);
-            if (forward.sqrMagnitude < 0.001f) // up is parallel to right, use forward instead
+            if (forward.sqrMagnitude < NearParallelSqrMagnitude) // up is parallel to right, use forward instead
                 forward = Vector3.Cross(up, Vector3.forward);
             forward = forward.normalized;
             Vector3 right = Vector3.Cross(forward, up).normalized;
 
-            float angleStep = 360f / segments;
+            float angleStep = Constants.FullRotation / segments;
             Vector3 lastInnerPoint = Vector3.zero;
             Vector3 lastOuterPoint = Vector3.zero;
 
@@ -118,12 +85,12 @@ namespace NekoLib.Utilities
             if (up == default) up = Vector3.up;
 
             Vector3 forward = Vector3.Cross(up, Vector3.right);
-            if (forward.sqrMagnitude < 0.001f) // up is parallel to right, use forward instead
+            if (forward.sqrMagnitude < NearParallelSqrMagnitude) // up is parallel to right, use forward instead
                 forward = Vector3.Cross(up, Vector3.forward);
             forward = forward.normalized;
             Vector3 right = Vector3.Cross(forward, up).normalized;
 
-            float angleStep = 360f / segments;
+            float angleStep = Constants.FullRotation / segments;
             Vector3 lastPoint = center + right * radius;
 
             for (int i = 1; i <= segments; i++)

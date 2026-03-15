@@ -1,4 +1,4 @@
-using NekoLib.Logger;
+using NekoLib.Timer;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -6,7 +6,7 @@ namespace NekoLib.Components
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("NekoLib/Auto Destroy")]
-    public class AutoDestroy : MonoBehaviour
+    public sealed class AutoDestroy : MonoBehaviour
     {
         [SerializeField, Min(0f), Tooltip("Time in seconds before the object is destroyed")]
         private float _destroyAfter = 5f;
@@ -17,19 +17,13 @@ namespace NekoLib.Components
 
         private void Start()
         {
-            if (_destroyAfter <= 0f)
-            {
-                Log.Warn("[AutoDestroy] Destroy delay must be greater than zero. Object will not be destroyed.");
-                enabled = false;
-                return;
-            }
-
-            Destroy(gameObject, _destroyAfter);
+            this.CallAfter(_destroyAfter, OnDestroyAfterDelay);
         }
 
-        private void OnDestroy()
+        private void OnDestroyAfterDelay()
         {
             _onBeforeDestroy?.Invoke();
+            Destroy(gameObject);
         }
     }
 }

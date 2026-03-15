@@ -6,7 +6,7 @@ namespace NekoLib
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("NekoLib/Look At Camera")]
-    public class LookAtCamera : MonoBehaviour
+    public sealed class LookAtCamera : MonoBehaviour
     {
         private enum Mode
         {
@@ -20,20 +20,27 @@ namespace NekoLib
         [SerializeField] private bool _useCustomCamera;
         [SerializeField] private Camera _cameraToLookAt;
 
+        private Camera _cachedMainCamera;
+
+        private void Start()
+        {
+            if (!_useCustomCamera)
+            {
+                _cachedMainCamera = Camera.main;
+                if (_cachedMainCamera == null)
+                {
+                    Log.Warn("[LookAtCamera] No main camera found. Component will not function.");
+                    enabled = false;
+                }
+            }
+        }
+
         private void LateUpdate()
         {
-            var currentCamera = Camera.main;
-
-            if (_useCustomCamera && _cameraToLookAt != null)
-            {
-                currentCamera = _cameraToLookAt;
-            }
+            Camera currentCamera = _useCustomCamera ? _cameraToLookAt : _cachedMainCamera;
 
             if (currentCamera == null)
-            {
-                Log.Warn("[LookAtCamera] No camera found. Component will not function.");
                 return;
-            }
 
             switch (_mode)
             {
@@ -42,8 +49,9 @@ namespace NekoLib
                     break;
 
                 case Mode.LookAtInverted:
-                    var dirFromCamera = transform.DirectionTo(currentCamera.transform);
-                    transform.LookAt(transform.position + dirFromCamera);
+                    // Direction from camera to self = pointing away from camera.
+                    var dirAwayFromCamera = currentCamera.transform.DirectionTo(transform);
+                    transform.LookAt(transform.position + dirAwayFromCamera);
                     break;
 
                 case Mode.CameraForward:

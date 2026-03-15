@@ -15,17 +15,18 @@ namespace NekoLib.Utilities
             return degrees;
         }
 
-        /// <summary>Returns a random rotation based on the specified axis and ranges for each axis.</summary>
-        public static Quaternion GetRandomRotation(Axis axis, Vector2 xRange = default, Vector2 yRange = default, Vector2 zRange = default)
-        {
-            // If ranges not specified, default to 0-360
-            if (xRange == default) xRange = new Vector2(0f, 360f);
-            if (yRange == default) yRange = new Vector2(0f, 360f);
-            if (zRange == default) zRange = new Vector2(0f, 360f);
+        private static readonly Vector2 s_defaultAngleRange = new(0f, 360f);
 
-            float angleX = axis.HasFlag(Axis.X) ? Random.Range(xRange.x, xRange.y) : 0f;
-            float angleY = axis.HasFlag(Axis.Y) ? Random.Range(yRange.x, yRange.y) : 0f;
-            float angleZ = axis.HasFlag(Axis.Z) ? Random.Range(zRange.x, zRange.y) : 0f;
+        /// <summary>Returns a random rotation based on the specified axis and ranges for each axis.</summary>
+        public static Quaternion GetRandomRotation(Axis axis, Vector2? xRange = null, Vector2? yRange = null, Vector2? zRange = null)
+        {
+            var rx = xRange ?? s_defaultAngleRange;
+            var ry = yRange ?? s_defaultAngleRange;
+            var rz = zRange ?? s_defaultAngleRange;
+
+            float angleX = axis.HasFlag(Axis.X) ? Random.Range(rx.x, rx.y) : 0f;
+            float angleY = axis.HasFlag(Axis.Y) ? Random.Range(ry.x, ry.y) : 0f;
+            float angleZ = axis.HasFlag(Axis.Z) ? Random.Range(rz.x, rz.y) : 0f;
 
             return Quaternion.Euler(angleX, angleY, angleZ);
         }

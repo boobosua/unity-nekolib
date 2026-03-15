@@ -1,15 +1,10 @@
+using NekoLib.Constant;
 using UnityEngine;
 
 namespace NekoLib.Extensions
 {
     public static class Vector3Extensions
     {
-        /// <summary>Converts a Vector3 to a Vector2 by dropping the z component.</summary>
-        public static Vector2 ToVector2(this Vector3 vector)
-        {
-            return (Vector2)vector;
-        }
-
         /// <summary>Returns a new Vector3 with the specified components replaced.</summary>
         public static Vector3 With(this Vector3 vector, float? x = null, float? y = null, float? z = null)
         {
@@ -68,16 +63,10 @@ namespace NekoLib.Extensions
             return (current - target).sqrMagnitude <= range * range;
         }
 
-        /// <summary>Returns a vector with the same direction but clamped to a maximum magnitude.</summary>
-        public static Vector3 ClampMagnitude(this Vector3 vector, float maxMagnitude)
-        {
-            return Vector3.ClampMagnitude(vector, maxMagnitude);
-        }
-
         /// <summary>Returns a vector with the specified magnitude in the same direction (0 if original vector is zero).</summary>
         public static Vector3 WithMagnitude(this Vector3 vector, float magnitude)
         {
-            return vector.sqrMagnitude > 0.0001f ? vector.normalized * magnitude : Vector3.zero;
+            return vector.sqrMagnitude > Constants.NearZeroSqrMagnitude ? vector.normalized * magnitude : Vector3.zero;
         }
 
         /// <summary>Returns the direction from this vector to the target vector.</summary>
@@ -90,18 +79,6 @@ namespace NekoLib.Extensions
         public static float DistanceTo(this Vector3 from, Vector3 to)
         {
             return Vector3.Distance(from, to);
-        }
-
-        /// <summary>Reflects the vector across a surface with the given normal.</summary>
-        public static Vector3 Reflect(this Vector3 vector, Vector3 normal)
-        {
-            return Vector3.Reflect(vector, normal);
-        }
-
-        /// <summary>Projects this vector onto another vector.</summary>
-        public static Vector3 ProjectOnto(this Vector3 vector, Vector3 onto)
-        {
-            return Vector3.Project(vector, onto);
         }
 
         /// <summary>Returns the largest component of the vector.</summary>
@@ -133,20 +110,8 @@ namespace NekoLib.Extensions
                     point.z >= min.z && point.z <= max.z;
         }
 
-        /// <summary>Checks if this point is inside Unity Bounds.</summary>
-        public static bool IsInsideBounds(this Vector3 point, Bounds bounds)
-        {
-            return bounds.Contains(point);
-        }
-
-        /// <summary>Returns the closest point on the surface of bounds to this point.</summary>
-        public static Vector3 ClosestPointOnBounds(this Vector3 point, Bounds bounds)
-        {
-            return bounds.ClosestPoint(point);
-        }
-
-        /// <summary>Checks if this point is inside a Collider's bounds.</summary>
-        public static bool IsInsideCollider(this Vector3 point, Collider collider)
+        /// <summary>Checks if this point is inside a Collider's axis-aligned bounding box. Note: this is an AABB approximation, not an exact shape test.</summary>
+        public static bool IsInsideColliderBounds(this Vector3 point, Collider collider)
         {
             return collider.bounds.Contains(point);
         }

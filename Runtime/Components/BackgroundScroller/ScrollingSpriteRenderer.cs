@@ -31,6 +31,8 @@ namespace NekoLib.Components
         private void OnDestroy()
         {
             ResetOffset();
+            Destroy(_material);
+            _material = null;
         }
     }
 }

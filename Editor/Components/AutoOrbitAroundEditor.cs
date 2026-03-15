@@ -17,10 +17,11 @@ namespace NekoLib.Components
         private InspectorProperty _target;
         private InspectorProperty _distance;
         private InspectorProperty _mode;
-        private InspectorProperty _horizontalSpeed;
-        private InspectorProperty _staticVerticalAngle;
-        private InspectorProperty _verticalSpeed;
-        private InspectorProperty _staticHorizontalAngle;
+        private InspectorProperty _speed;
+        private InspectorProperty _startAngle;
+        private InspectorProperty _elevationAngle;
+        private InspectorProperty _bearingAngle;
+        private InspectorProperty _facing;
 
         protected override void OnEnable()
         {
@@ -32,10 +33,11 @@ namespace NekoLib.Components
             _target = _tree.GetPropertyAtUnityPath("_target");
             _distance = _tree.GetPropertyAtUnityPath("_distance");
             _mode = _tree.GetPropertyAtUnityPath("_mode");
-            _horizontalSpeed = _tree.GetPropertyAtUnityPath("_horizontalSpeed");
-            _staticVerticalAngle = _tree.GetPropertyAtUnityPath("_staticVerticalAngle");
-            _verticalSpeed = _tree.GetPropertyAtUnityPath("_verticalSpeed");
-            _staticHorizontalAngle = _tree.GetPropertyAtUnityPath("_staticHorizontalAngle");
+            _speed = _tree.GetPropertyAtUnityPath("_speed");
+            _startAngle = _tree.GetPropertyAtUnityPath("_startAngle");
+            _elevationAngle = _tree.GetPropertyAtUnityPath("_elevationAngle");
+            _bearingAngle = _tree.GetPropertyAtUnityPath("_bearingAngle");
+            _facing = _tree.GetPropertyAtUnityPath("_facing");
         }
 
         protected override void OnDisable()
@@ -61,35 +63,20 @@ namespace NekoLib.Components
 
             EditorGUILayout.Space();
 
+            _speed?.Draw();
+            _startAngle?.Draw();
+
             int modeValue = 0;
             object modeObj = _mode?.ValueEntry?.WeakSmartValue;
             if (modeObj is Enum enumValue)
-            {
                 modeValue = Convert.ToInt32(enumValue);
-            }
-            else if (modeObj is int intValue)
-            {
-                modeValue = intValue;
-            }
 
             if (modeValue == 0) // AutoHorizontalOnly
-            {
-                _horizontalSpeed?.Draw();
-                _staticVerticalAngle?.Draw();
-            }
-            else if (modeValue == 1) // AutoVerticalOnly
-            {
-                _verticalSpeed?.Draw();
-                _staticHorizontalAngle?.Draw();
-            }
+                _elevationAngle?.Draw();
             else
-            {
-                // Fallback (e.g., mixed values): show both sets
-                _horizontalSpeed?.Draw();
-                _staticVerticalAngle?.Draw();
-                _verticalSpeed?.Draw();
-                _staticHorizontalAngle?.Draw();
-            }
+                _bearingAngle?.Draw();
+
+            _facing?.Draw();
 
             _tree.ApplyChanges();
             _tree.InvokeDelayedActions();
@@ -101,47 +88,43 @@ namespace NekoLib.Components
         private SerializedProperty _targetProperty;
         private SerializedProperty _distanceProperty;
         private SerializedProperty _modeProperty;
-        private SerializedProperty _horizontalSpeedProperty;
-        private SerializedProperty _staticVerticalAngleProperty;
-        private SerializedProperty _verticalSpeedProperty;
-        private SerializedProperty _staticHorizontalAngleProperty;
+        private SerializedProperty _speedProperty;
+        private SerializedProperty _startAngleProperty;
+        private SerializedProperty _elevationAngleProperty;
+        private SerializedProperty _bearingAngleProperty;
+        private SerializedProperty _facingProperty;
 
         private void OnEnable()
         {
             _targetProperty = serializedObject.FindProperty("_target");
             _distanceProperty = serializedObject.FindProperty("_distance");
             _modeProperty = serializedObject.FindProperty("_mode");
-            _horizontalSpeedProperty = serializedObject.FindProperty("_horizontalSpeed");
-            _staticVerticalAngleProperty = serializedObject.FindProperty("_staticVerticalAngle");
-            _verticalSpeedProperty = serializedObject.FindProperty("_verticalSpeed");
-            _staticHorizontalAngleProperty = serializedObject.FindProperty("_staticHorizontalAngle");
+            _speedProperty = serializedObject.FindProperty("_speed");
+            _startAngleProperty = serializedObject.FindProperty("_startAngle");
+            _elevationAngleProperty = serializedObject.FindProperty("_elevationAngle");
+            _bearingAngleProperty = serializedObject.FindProperty("_bearingAngle");
+            _facingProperty = serializedObject.FindProperty("_facing");
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            // Common properties that are always visible
             EditorGUILayout.PropertyField(_targetProperty);
             EditorGUILayout.PropertyField(_distanceProperty);
             EditorGUILayout.PropertyField(_modeProperty);
 
             EditorGUILayout.Space();
 
-            // Get the current mode value
-            int modeValue = _modeProperty.enumValueIndex;
+            EditorGUILayout.PropertyField(_speedProperty);
+            EditorGUILayout.PropertyField(_startAngleProperty);
 
-            // Show fields conditionally based on the orbit mode
-            if (modeValue == 0) // AutoHorizontalOnly
-            {
-                EditorGUILayout.PropertyField(_horizontalSpeedProperty);
-                EditorGUILayout.PropertyField(_staticVerticalAngleProperty);
-            }
-            else if (modeValue == 1) // AutoVerticalOnly
-            {
-                EditorGUILayout.PropertyField(_verticalSpeedProperty);
-                EditorGUILayout.PropertyField(_staticHorizontalAngleProperty);
-            }
+            if (_modeProperty.enumValueIndex == 0) // AutoHorizontalOnly
+                EditorGUILayout.PropertyField(_elevationAngleProperty);
+            else
+                EditorGUILayout.PropertyField(_bearingAngleProperty);
+
+            EditorGUILayout.PropertyField(_facingProperty);
 
             serializedObject.ApplyModifiedProperties();
         }

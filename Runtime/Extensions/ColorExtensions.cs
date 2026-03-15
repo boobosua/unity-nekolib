@@ -71,20 +71,14 @@ namespace NekoLib.Extensions
             return new(gray, gray, gray, color.a);
         }
 
-        /// <summary>Lerp with parameter validation.</summary>
-        public static Color LerpTo(this Color from, Color to, float t)
-        {
-            return Color.Lerp(from, to, Mathf.Clamp01(t));
-        }
-
         /// <summary>Converts the color to a hex string.</summary>
-        public static string ColorToHex(this Color color)
+        public static string ToHex(this Color color)
         {
             return $"#{ColorUtility.ToHtmlStringRGBA(color)}";
         }
 
         /// <summary>Converts a hex string to a color.</summary>
-        public static Color HexToColor(this string hex)
+        public static Color ToColor(this string hex)
         {
             if (ColorUtility.TryParseHtmlString(hex, out Color color))
             {

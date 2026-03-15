@@ -7,6 +7,7 @@ namespace NekoLib.Extensions
 {
     public static class GameObjectExtensions
     {
+        private const int UnityLayerCount = 32;
         /// <summary>Gets or adds a component of type T to the specified MonoBehaviour.</summary>
         public static T GetOrAdd<T>(this MonoBehaviour monoBehaviour) where T : Component
         {
@@ -57,18 +58,18 @@ namespace NekoLib.Extensions
             gameObject.layer = newLayer;
         }
 
-        /// <summary>Set GameObject to a layer using LayerMask (uses the first layer found in the mask).</summary>
+        /// <summary>Set GameObject to a layer using LayerMask (uses the lowest-numbered layer found in the mask).</summary>
         public static void SetLayer(this GameObject gameObject, LayerMask layerMask)
         {
-            // Convert LayerMask to layer number by finding the first set bit
-            int layerNumber = 0;
             int mask = layerMask.value;
-            while (mask > 1)
+            for (int i = 0; i < UnityLayerCount; i++)
             {
-                mask >>= 1;
-                layerNumber++;
+                if ((mask & (1 << i)) != 0)
+                {
+                    gameObject.layer = i;
+                    return;
+                }
             }
-            gameObject.layer = layerNumber;
         }
 
         /// <summary>Set GameObject to a layer by name.</summary>

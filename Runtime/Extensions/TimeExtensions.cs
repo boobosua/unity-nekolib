@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using NekoLib.Constant;
 using NekoLib.Logger;
 using NekoLib.Services;
 using UnityEngine;
@@ -8,11 +9,11 @@ namespace NekoLib.Extensions
 {
     public static class TimeExtensions
     {
-        private const double SecondsPerMinute = 60.0;
-        private const double SecondsPerHour = 3600.0;
-        private const double SecondsPerDay = 86400.0;
-
         private static readonly StringBuilder s_stringBuilder = new(32);
+
+        private const double SecondsPerMinuteD = 60.0;
+        private const double SecondsPerHourD = 3600.0;
+        private const double SecondsPerDayD = 86400.0;
 
         #region Time to String Formatting
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
@@ -119,27 +120,27 @@ namespace NekoLib.Extensions
 
         #region DateTime Time Calculations
 
-        /// <summary>Gets the time span from this DateTime to now (for past times).</summary>
-        public static TimeSpan TimeUntilNow(this DateTime time)
+        /// <summary>Gets the time span elapsed from this DateTime to now (for past times).</summary>
+        public static TimeSpan TimeSince(this DateTime time)
         {
             return TimeService.Now - time;
         }
 
-        /// <summary>Gets the time span from this DateTime to now (UTC, for past times).</summary>
-        public static TimeSpan TimeUntilNowUtc(this DateTime time)
+        /// <summary>Gets the time span elapsed from this DateTime to now (UTC, for past times).</summary>
+        public static TimeSpan TimeSinceUtc(this DateTime time)
         {
             return TimeService.UtcNow - time;
         }
 
         /// <summary>Gets seconds elapsed from this DateTime to now (for past times).</summary>
-        public static double SecondsUntilNow(this DateTime time)
+        public static double SecondsSince(this DateTime time)
         {
             var now = TimeService.Now;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
             {
-                Log.Warn($"SecondsUntilNow called with future time. Expected past time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsSince called with future time. Expected past time, got: {time}. Returning 0.");
                 return 0;
             }
 
@@ -147,14 +148,14 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>Gets seconds elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double SecondsUntilNowUtc(this DateTime time)
+        public static double SecondsSinceUtc(this DateTime time)
         {
             var now = TimeService.UtcNow;
             var diff = (now - time).TotalSeconds;
 
             if (diff < 0)
             {
-                Log.Warn($"SecondsUntilNowUtc called with future time. Expected past time, got: {time}. Returning 0.");
+                Log.Warn($"SecondsSinceUtc called with future time. Expected past time, got: {time}. Returning 0.");
                 return 0;
             }
 
@@ -162,39 +163,39 @@ namespace NekoLib.Extensions
         }
 
         /// <summary>Gets minutes elapsed from this DateTime to now (for past times).</summary>
-        public static double MinutesUntilNow(this DateTime time)
+        public static double MinutesSince(this DateTime time)
         {
-            return SecondsUntilNow(time) / SecondsPerMinute;
+            return SecondsSince(time) / SecondsPerMinuteD;
         }
 
         /// <summary>Gets minutes elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double MinutesUntilNowUtc(this DateTime time)
+        public static double MinutesSinceUtc(this DateTime time)
         {
-            return SecondsUntilNowUtc(time) / SecondsPerMinute;
+            return SecondsSinceUtc(time) / SecondsPerMinuteD;
         }
 
         /// <summary>Gets hours elapsed from this DateTime to now (for past times).</summary>
-        public static double HoursUntilNow(this DateTime time)
+        public static double HoursSince(this DateTime time)
         {
-            return SecondsUntilNow(time) / SecondsPerHour;
+            return SecondsSince(time) / SecondsPerHourD;
         }
 
         /// <summary>Gets hours elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double HoursUntilNowUtc(this DateTime time)
+        public static double HoursSinceUtc(this DateTime time)
         {
-            return SecondsUntilNowUtc(time) / SecondsPerHour;
+            return SecondsSinceUtc(time) / SecondsPerHourD;
         }
 
         /// <summary>Gets days elapsed from this DateTime to now (for past times).</summary>
-        public static double DaysUntilNow(this DateTime time)
+        public static double DaysSince(this DateTime time)
         {
-            return SecondsUntilNow(time) / SecondsPerDay;
+            return SecondsSince(time) / SecondsPerDayD;
         }
 
         /// <summary>Gets days elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double DaysUntilNowUtc(this DateTime time)
+        public static double DaysSinceUtc(this DateTime time)
         {
-            return SecondsUntilNowUtc(time) / SecondsPerDay;
+            return SecondsSinceUtc(time) / SecondsPerDayD;
         }
 
         #endregion
@@ -246,37 +247,37 @@ namespace NekoLib.Extensions
         /// <summary>Gets minutes from now until this DateTime (for future times).</summary>
         public static double MinutesFromNow(this DateTime time)
         {
-            return SecondsFromNow(time) / SecondsPerMinute;
+            return SecondsFromNow(time) / SecondsPerMinuteD;
         }
 
         /// <summary>Gets minutes from now until this DateTime (UTC, for future times).</summary>
         public static double MinutesFromNowUtc(this DateTime time)
         {
-            return SecondsFromNowUtc(time) / SecondsPerMinute;
+            return SecondsFromNowUtc(time) / SecondsPerMinuteD;
         }
 
         /// <summary>Gets hours from now until this DateTime (for future times).</summary>
         public static double HoursFromNow(this DateTime time)
         {
-            return SecondsFromNow(time) / SecondsPerHour;
+            return SecondsFromNow(time) / SecondsPerHourD;
         }
 
         /// <summary>Gets hours from now until this DateTime (UTC, for future times).</summary>
         public static double HoursFromNowUtc(this DateTime time)
         {
-            return SecondsFromNowUtc(time) / SecondsPerHour;
+            return SecondsFromNowUtc(time) / SecondsPerHourD;
         }
 
         /// <summary>Gets days from now until this DateTime (for future times).</summary>
         public static double DaysFromNow(this DateTime time)
         {
-            return SecondsFromNow(time) / SecondsPerDay;
+            return SecondsFromNow(time) / SecondsPerDayD;
         }
 
         /// <summary>Gets days from now until this DateTime (UTC, for future times).</summary>
         public static double DaysFromNowUtc(this DateTime time)
         {
-            return SecondsFromNowUtc(time) / SecondsPerDay;
+            return SecondsFromNowUtc(time) / SecondsPerDayD;
         }
 
         #endregion

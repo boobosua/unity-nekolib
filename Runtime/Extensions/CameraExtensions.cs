@@ -5,6 +5,10 @@ namespace NekoLib.Extensions
 {
     public static class CameraExtensions
     {
+        private const float MinFOV = 1f;
+        private const float MaxFOV = 179f;
+        private const float MinOrthographicSize = 0.1f;
+
         /// <summary>Check if a layer is in the camera's culling mask.</summary>
         public static bool IsLayerInCullingMask(this Camera camera, LayerMask layerMask)
         {
@@ -50,19 +54,19 @@ namespace NekoLib.Extensions
         /// <summary>Zoom in by reducing field of view.</summary>
         public static void ZoomIn(this Camera camera, float amount = 10f)
         {
-            camera.fieldOfView = Mathf.Max(1f, camera.fieldOfView - amount);
+            camera.fieldOfView = Mathf.Max(MinFOV, camera.fieldOfView - amount);
         }
 
         /// <summary>Zoom out by increasing field of view.</summary>
         public static void ZoomOut(this Camera camera, float amount = 10f)
         {
-            camera.fieldOfView = Mathf.Min(179f, camera.fieldOfView + amount);
+            camera.fieldOfView = Mathf.Min(MaxFOV, camera.fieldOfView + amount);
         }
 
         /// <summary>Set field of view with clamping.</summary>
         public static void SetFOV(this Camera camera, float fov)
         {
-            camera.fieldOfView = Mathf.Clamp(fov, 1f, 179f);
+            camera.fieldOfView = Mathf.Clamp(fov, MinFOV, MaxFOV);
         }
 
         /// <summary>Get the camera's screen size in pixels.</summary>
@@ -76,7 +80,7 @@ namespace NekoLib.Extensions
         {
             if (camera.orthographic)
             {
-                camera.orthographicSize = Mathf.Max(0.1f, size);
+                camera.orthographicSize = Mathf.Max(MinOrthographicSize, size);
             }
             else
             {

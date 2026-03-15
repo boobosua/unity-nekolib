@@ -212,6 +212,8 @@ namespace NekoLib.Components
                 return;
             }
 
+            _isReversed = false;
+
             if (_startAtRandomFrame && !_isPlaying)
             {
                 _currentFrame = _sprites.RandIndex();
@@ -220,20 +222,6 @@ namespace NekoLib.Components
 
             _isPlaying = true;
             _frameTimer = 0f;
-        }
-
-        /// <summary>Play the animation in reverse.</summary>
-        public virtual void PlayReverse()
-        {
-            if (_spriteCount == 0) return;
-
-            _isReversed = true;
-            if (!_isPlaying)
-            {
-                _currentFrame = _spriteCount - 1;
-                UpdateSprite();
-            }
-            Play();
         }
 
         /// <summary>Stop the animation.</summary>

@@ -6,8 +6,9 @@ namespace NekoLib.Extensions
 {
     public static class TMPTextExtensions
     {
-        private const int HoursPerDay = 24;
+        private const int SecondsPerMinute = 60;
         private const int MinutesPerHour = 60;
+        private const int HoursPerDay = 24;
 
         /// <summary>Sets text to "HH:MM:SS" from seconds.</summary>
         public static void SetClock(this TMP_Text text, int totalSeconds)
@@ -16,8 +17,8 @@ namespace NekoLib.Extensions
 
             if (totalSeconds < 0) totalSeconds = 0;
 
-            int totalMinutes = totalSeconds / MinutesPerHour;
-            int seconds = totalSeconds - (totalMinutes * MinutesPerHour);
+            int totalMinutes = totalSeconds / SecondsPerMinute;
+            int seconds = totalSeconds - (totalMinutes * SecondsPerMinute);
 
             int totalHours = totalMinutes / MinutesPerHour;
             int minutes = totalMinutes - (totalHours * MinutesPerHour);
@@ -46,8 +47,8 @@ namespace NekoLib.Extensions
 
             if (totalSeconds < 0) totalSeconds = 0;
 
-            int totalMinutes = totalSeconds / MinutesPerHour;
-            int seconds = totalSeconds - (totalMinutes * MinutesPerHour);
+            int totalMinutes = totalSeconds / SecondsPerMinute;
+            int seconds = totalSeconds - (totalMinutes * SecondsPerMinute);
 
             int minutes = totalMinutes % MinutesPerHour;
 
@@ -73,8 +74,8 @@ namespace NekoLib.Extensions
 
             if (totalSeconds < 0) totalSeconds = 0;
 
-            int totalMinutes = totalSeconds / MinutesPerHour;
-            int seconds = totalSeconds - (totalMinutes * MinutesPerHour);
+            int totalMinutes = totalSeconds / SecondsPerMinute;
+            int seconds = totalSeconds - (totalMinutes * SecondsPerMinute);
 
             int totalHours = totalMinutes / MinutesPerHour;
             int minutes = totalMinutes - (totalHours * MinutesPerHour);

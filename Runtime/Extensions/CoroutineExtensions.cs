@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
-using UnityEngine;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using NekoLib.Utilities;
+using UnityEngine;
 
 namespace NekoLib.Extensions
 {
@@ -106,19 +106,21 @@ namespace NekoLib.Extensions
         /// <summary>Waits for a Coroutine to complete and sets the TaskCompletionSource result.</summary>
         private static IEnumerator WaitForCoroutine(Coroutine coroutine, TaskCompletionSource<bool> tcs, CancellationToken cancellationToken)
         {
-            while (!coroutine.Equals(null) && !cancellationToken.IsCancellationRequested)
-            {
-                yield return null;
-            }
-
             if (cancellationToken.IsCancellationRequested)
             {
                 tcs.SetCanceled();
+                yield break;
             }
+
+            // yield return on a Coroutine suspends until that coroutine finishes — the correct way to wait.
+            // The previous polling loop (!coroutine.Equals(null)) never terminated because Unity does not
+            // null-out a Coroutine handle upon completion.
+            yield return coroutine;
+
+            if (cancellationToken.IsCancellationRequested)
+                tcs.SetCanceled();
             else
-            {
                 tcs.SetResult(true);
-            }
         }
 
         /// <summary>Runs multiple coroutines concurrently.</summary>
