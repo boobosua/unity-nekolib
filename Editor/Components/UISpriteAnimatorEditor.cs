@@ -1,5 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace NekoLib.Components
 {
@@ -29,6 +31,21 @@ namespace NekoLib.Components
             {
                 EditorGUILayout.HelpBox("No Canvas Groups assigned. Visibility checks will use only the Image component (enabled + alpha).", MessageType.Info);
             }
+        }
+
+        protected override void SetSprite0AsPreview(Sprite sprite)
+        {
+            var img = ((UISpriteAnimator)target).GetComponent<Image>();
+            if (img == null) return;
+            Undo.RecordObject(img, "Set Sprite[0] Preview");
+            img.sprite = sprite;
+            EditorUtility.SetDirty(img);
+        }
+
+        protected override void SetPreviewSprite(Sprite sprite)
+        {
+            var img = ((UISpriteAnimator)target).GetComponent<Image>();
+            if (img != null) img.sprite = sprite;
         }
     }
 }

@@ -34,14 +34,6 @@ GameObject[] allEnemies = gameObject.GetChildrenInLayerRecursive(LayerMask.GetMa
 transform.Clear(); // Destroy all children
 Transform[] children = transform.GetChildren(includeInactive: false);
 
-// Orbital positioning (static)
-transform.SetOrbitRotation(target, horizontalAngle: 45f, verticalAngle: 30f, distance: 5f);
-transform.SetOrbitRotationClamped(target, 45f, 30f, 5f, -80f, 80f);
-
-// Orbital movement (dynamic - call in Update)
-float currentAngle = 0f;
-transform.OrbitAround(target, Orientation.Horizontal, speed: 30f, staticAngle: 0f, distance: 5f, ref currentAngle);
-
 // Rotation around point
 transform.RotateAround(center, Vector3.up, 90f);
 

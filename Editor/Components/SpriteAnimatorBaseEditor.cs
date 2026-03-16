@@ -34,9 +34,12 @@ namespace NekoLib.Components
         private List<bool> _eventFoldouts = new();
         private int _selectedTab = 0; // 0: Settings, 1: Events
         private static GUIStyle _foldoutNoFocusStyle;
-        private static readonly GUIContent RemoveEventContent = new("×");
+        private static readonly GUIContent RemoveEventContent = new("\u00d7");
         private static readonly GUIContent OnFrameContent = new("OnFrame");
         private static readonly GUIContent AddEventContent = new("Add Event");
+        private static readonly GUIContent SetSprite0Content = new("Frame 0", "Set the renderer sprite to the first frame of the animation.");
+        private static readonly GUIContent PreviewPlayContent = new("Preview", "Preview the animation in the editor.");
+        private static readonly GUIContent PreviewStopContent = new("Stop", "Stop the editor preview.");
 
         private readonly HashSet<int> _usedFrames = new();
         private readonly HashSet<int> _duplicateFrames = new();
@@ -44,6 +47,13 @@ namespace NekoLib.Components
         private readonly List<int> _availableFrames = new();
         private readonly List<string> _availableFrameOptions = new();
         private string[] _availableFrameOptionsArray = Array.Empty<string>();
+
+        private bool _isPreviewPlaying;
+        private Sprite[] _previewSprites;
+        private int _previewCurrentFrame;
+        private bool _previewReversed;
+        private float _previewTimer;
+        private double _previewLastTime;
 
 #if ODIN_INSPECTOR
         private PropertyTree _tree;
@@ -70,6 +80,7 @@ namespace NekoLib.Components
             _selectedTab = SessionState.GetInt(TabSessionKey, 0);
             CacheCurrentSprites();
             SyncEventFoldoutsSize();
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 
 #if ODIN_INSPECTOR
             _tree?.Dispose();
@@ -81,6 +92,8 @@ namespace NekoLib.Components
 #if ODIN_INSPECTOR
         protected override void OnDisable()
         {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            StopPreview(false);
             _tree?.Dispose();
             _tree = null;
             base.OnDisable();
@@ -108,6 +121,14 @@ namespace NekoLib.Components
 
             var property = _tree.GetPropertyAtUnityPath(unityPropertyPath);
             property?.Draw();
+        }
+#endif
+
+#if !ODIN_INSPECTOR
+        protected virtual void OnDisable()
+        {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            StopPreview(false);
         }
 #endif
 
@@ -152,20 +173,17 @@ namespace NekoLib.Components
                 {
                     DrawAdditionalProperties();
                 }
-
-                // Normal Events now live under Settings tab
-                EditorGUILayout.Space();
-                DrawEvents();
-                EditorGUILayout.Space();
             }
             else
             {
-                // Frame Events tab only shows per-frame events
                 DrawFrameEvents();
-                EditorGUILayout.Space();
             }
 
-            // Preview removed by request
+            EditorGUILayout.Space();
+            DrawEvents();
+            EditorGUILayout.Space();
+            DrawPreviewControls();
+            EditorGUILayout.Space();
 
             bool changed;
 #if ODIN_INSPECTOR
@@ -468,7 +486,6 @@ namespace NekoLib.Components
 
         private void DrawEvents()
         {
-            EditorGUILayout.LabelField("Events", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_onCycleComplete);
         }
 
@@ -539,6 +556,139 @@ namespace NekoLib.Components
                 {
                     _frameEvents.DeleteArrayElementAtIndex(i);
                 }
+            }
+        }
+
+        // --- Editor preview controls ---
+
+        protected virtual void SetSprite0AsPreview(Sprite sprite) { }
+        protected virtual void SetPreviewSprite(Sprite sprite) { }
+
+        private void DrawPreviewControls()
+        {
+            bool hasSprites = _sprites.arraySize > 0;
+            bool multiEdit = targets.Length > 1;
+            bool canPreview = hasSprites && !multiEdit && !Application.isPlaying;
+
+            using (new EditorGUI.DisabledScope(!canPreview))
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button(SetSprite0Content))
+                    HandleSetSprite0();
+
+                GUIContent playStopLabel = _isPreviewPlaying ? PreviewStopContent : PreviewPlayContent;
+                if (GUILayout.Button(playStopLabel))
+                {
+                    if (_isPreviewPlaying) StopPreview();
+                    else StartPreview();
+                }
+            }
+
+            if (multiEdit)
+                EditorGUILayout.HelpBox("Preview is not available when editing multiple objects.", MessageType.None);
+            else if (!hasSprites)
+                EditorGUILayout.HelpBox("Add sprites to enable preview.", MessageType.None);
+        }
+
+        private void HandleSetSprite0()
+        {
+            if (_sprites.arraySize == 0) return;
+            var sprite = _sprites.GetArrayElementAtIndex(0).objectReferenceValue as Sprite;
+            if (sprite == null) return;
+            SetSprite0AsPreview(sprite);
+        }
+
+        private void StartPreview()
+        {
+            if (_sprites.arraySize == 0) return;
+
+            _previewSprites = new Sprite[_sprites.arraySize];
+            for (int i = 0; i < _sprites.arraySize; i++)
+                _previewSprites[i] = _sprites.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+
+            _previewCurrentFrame = 0;
+            _previewReversed = false;
+            _previewTimer = 0f;
+            _previewLastTime = EditorApplication.timeSinceStartup;
+            _isPreviewPlaying = true;
+
+            EditorApplication.update += OnEditorUpdate;
+
+            if (_previewSprites[0] != null)
+                SetPreviewSprite(_previewSprites[0]);
+        }
+
+        private void StopPreview(bool resetSprite = true)
+        {
+            if (!_isPreviewPlaying) return;
+            _isPreviewPlaying = false;
+            EditorApplication.update -= OnEditorUpdate;
+            if (resetSprite && target != null && _previewSprites is { Length: > 0 } && _previewSprites[0] != null)
+                SetPreviewSprite(_previewSprites[0]);
+            _previewSprites = null;
+        }
+
+        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state != PlayModeStateChange.ExitingEditMode) return;
+            StopPreview(false);
+            Repaint();
+        }
+
+        private void OnEditorUpdate()
+        {
+            if (!_isPreviewPlaying || target == null)
+            {
+                StopPreview();
+                Repaint();
+                return;
+            }
+
+            double now = EditorApplication.timeSinceStartup;
+            float delta = (float)(now - _previewLastTime);
+            _previewLastTime = now;
+
+            float frameRate = _frameRate.floatValue * _speedMultiplier.floatValue;
+            if (frameRate <= 0f) return;
+
+            _previewTimer += delta;
+            float frameDuration = 1f / frameRate;
+            if (_previewTimer < frameDuration) return;
+            _previewTimer -= frameDuration;
+
+            int spriteCount = _previewSprites.Length;
+            if (spriteCount == 0) return;
+
+            var loopMode = (SpriteAnimatorLoopMode)_loopMode.enumValueIndex;
+
+            if (!_previewReversed) _previewCurrentFrame++;
+            else _previewCurrentFrame--;
+
+            if (_previewCurrentFrame >= spriteCount || _previewCurrentFrame < 0)
+            {
+                switch (loopMode)
+                {
+                    case SpriteAnimatorLoopMode.Once:
+                        _previewCurrentFrame = _previewReversed ? 0 : spriteCount - 1;
+                        StopPreview();
+                        Repaint();
+                        return;
+                    case SpriteAnimatorLoopMode.Loop:
+                        _previewCurrentFrame = _previewReversed ? spriteCount - 1 : 0;
+                        break;
+                    case SpriteAnimatorLoopMode.PingPong:
+                        _previewReversed = !_previewReversed;
+                        _previewCurrentFrame = _previewReversed ? spriteCount - 2 : 1;
+                        _previewCurrentFrame = Mathf.Clamp(_previewCurrentFrame, 0, spriteCount - 1);
+                        break;
+                }
+            }
+
+            var sprite = _previewSprites[_previewCurrentFrame];
+            if (sprite != null)
+            {
+                SetPreviewSprite(sprite);
+                SceneView.RepaintAll();
             }
         }
 

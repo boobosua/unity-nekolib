@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using NekoLib.Constant;
 using NekoLib.Logger;
 using NekoLib.Utilities;
 using UnityEngine;
@@ -53,85 +52,6 @@ namespace NekoLib.Extensions
                     }
                 }
                 return activeChildren.ToArray();
-            }
-        }
-
-        /// <summary>Sets orbit position around a target using specific angles. Use this for manual/static positioning.</summary>
-        public static void SetOrbitRotation(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance)
-        {
-            if (target == null)
-            {
-                Log.Warn($"Target transform is null for {transform.name}");
-                return;
-            }
-            SetOrbitRotation(transform, target.position, horizontalAngle, verticalAngle, distance);
-            transform.LookAt(target);
-        }
-
-        /// <summary>Sets orbit position around a target position using specific angles. Use this for manual/static positioning.</summary>
-        public static void SetOrbitRotation(this Transform transform, Vector3 targetPosition, float horizontalAngle, float verticalAngle, float distance)
-        {
-            // Calculate orbital position
-            var offset = Vector3.back * distance;
-            offset = Quaternion.AngleAxis(verticalAngle, Vector3.right) * offset;
-            offset = Quaternion.AngleAxis(horizontalAngle, Vector3.up) * offset;
-
-            transform.position = targetPosition + offset;
-        }
-
-        /// <summary>Sets orbit position with clamped vertical angles to prevent flipping.</summary>
-        public static void SetOrbitRotationClamped(this Transform transform, Transform target, float horizontalAngle, float verticalAngle, float distance, float minVerticalAngle = -80f, float maxVerticalAngle = 80f)
-        {
-            if (target == null)
-            {
-                Log.Warn($"Target transform is null for {transform.name}");
-                return;
-            }
-            verticalAngle = Mathf.Clamp(verticalAngle, minVerticalAngle, maxVerticalAngle);
-            SetOrbitRotation(transform, target, horizontalAngle, verticalAngle, distance);
-        }
-
-        /// <summary>Updates orbit position with automatic rotation. Call this in Update() for continuous motion.</summary>
-        public static void OrbitAround(this Transform transform, Transform target, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
-        {
-            if (target == null)
-            {
-                Log.Warn($"Target transform is null for {transform.name}");
-                return;
-            }
-
-            currentAngle += speed * Time.deltaTime;
-            if (currentAngle >= Constants.FullRotation)
-                currentAngle -= Constants.FullRotation;
-            if (currentAngle < 0f)
-                currentAngle += Constants.FullRotation;
-
-            if (orientation == Orientation.Horizontal)
-            {
-                SetOrbitRotation(transform, target, currentAngle, staticAngle, distance);
-            }
-            else
-            {
-                SetOrbitRotation(transform, target, staticAngle, currentAngle, distance);
-            }
-        }
-
-        /// <summary>Updates orbit position with automatic rotation around a target position. Call this in Update() for continuous motion.</summary>
-        public static void OrbitAround(this Transform transform, Vector3 targetPosition, Orientation orientation, float speed, float staticAngle, float distance, ref float currentAngle)
-        {
-            currentAngle += speed * Time.deltaTime;
-            if (currentAngle >= Constants.FullRotation)
-                currentAngle -= Constants.FullRotation;
-            if (currentAngle < 0f)
-                currentAngle += Constants.FullRotation;
-
-            if (orientation == Orientation.Horizontal)
-            {
-                SetOrbitRotation(transform, targetPosition, currentAngle, staticAngle, distance);
-            }
-            else
-            {
-                SetOrbitRotation(transform, targetPosition, staticAngle, currentAngle, distance);
             }
         }
 

@@ -5,7 +5,7 @@ namespace NekoLib.Components
 {
     [RequireComponent(typeof(Image))]
     [AddComponentMenu("NekoLib/UI Sprite Animator")]
-    public class UISpriteAnimator : SpriteAnimatorBase
+    public sealed class UISpriteAnimator : SpriteAnimatorBase
     {
         [Tooltip("Optional Canvas Groups used for visibility checks. If any assigned group has alpha <= 0, animation pauses.")]
         [SerializeField] private CanvasGroup[] _canvasGroups;
