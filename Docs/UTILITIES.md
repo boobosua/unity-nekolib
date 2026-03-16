@@ -148,12 +148,19 @@ Ray mouseRayCustom = Utils.GetMouseRay(myCamera);
 
 ### EventUtils
 
-#### FloatEvent
+#### UnityEvent type aliases
 
 ```csharp
-// Use FloatEvent class for Unity Events with float parameter
+// Serialisable UnityEvent subclasses for common value types
 [SerializeField] private FloatEvent onValueChanged;
+[SerializeField] private IntEvent onCountChanged;
+[SerializeField] private StringEvent onTextChanged;
+[SerializeField] private BoolEvent onToggled;
+
 onValueChanged.Invoke(0.5f);
+onCountChanged.Invoke(3);
+onTextChanged.Invoke("Hello");
+onToggled.Invoke(true);
 ```
 
 ### TaskUtils
@@ -197,24 +204,10 @@ bool isOverObjectCustom = Utils.IsPointerOverAny2DObject(myCamera);
 bool isOver = Utils.IsPointerOverAny2DObject(out Collider2D hit);
 ```
 
-#### IsPointerOver2DObject() with GameObject
-
-```csharp
-// Check if mouse is over specific GameObject
-bool isOverTarget = Utils.IsPointerOver2DObject(targetGameObject);
-```
-
-#### IsPointerOver2DObject() with component type
-
-```csharp
-// Check if mouse is over object with specific component
-bool isOverButton = Utils.IsPointerOver2DObject<Button>();
-```
-
 #### IsPointerOver2DObject() with component output
 
 ```csharp
-// Check if mouse is over object and get the component
+// Check if mouse is over object and get a component of type T
 bool isOver = Utils.IsPointerOver2DObject<Button>(out Button button);
 ```
 
@@ -255,24 +248,10 @@ bool isOverObjectCustom = Utils.IsPointerOverAny3DObject(myCamera);
 bool isOver = Utils.IsPointerOverAny3DObject(out RaycastHit hit);
 ```
 
-#### IsPointerOver3DObject() with GameObject
-
-```csharp
-// Check if mouse is over specific GameObject
-bool isOverTarget = Utils.IsPointerOver3DObject(targetGameObject);
-```
-
-#### IsPointerOver3DObject() with component type
-
-```csharp
-// Check if mouse is over object with specific component
-bool isOverInteractable = Utils.IsPointerOver3DObject<Interactable>();
-```
-
 #### IsPointerOver3DObject() with component output
 
 ```csharp
-// Check if mouse is over object and get the component
+// Check if mouse is over object and get a component of type T
 bool isOver = Utils.IsPointerOver3DObject<Interactable>(out Interactable interactable);
 ```
 
@@ -289,11 +268,37 @@ bool isOverUI = Utils.IsPointerOverUI(LayerMask.GetMask("UI"));
 
 ### EditorUtils
 
-#### FindAllAssets()
+#### FindAssets()
 
 ```csharp
-// Find all ScriptableObject assets in directory (Editor only)
-MyScriptableObject[] assets = Utils.FindAllAssets<MyScriptableObject>("Assets/Data/");
+// Find all assets of any type in a directory (Editor only)
+// Works with ScriptableObjects, Sprites, AudioClips, Materials, Prefabs, etc.
+MyScriptableObject[] configs = Utils.FindAssets<MyScriptableObject>("Assets/Data/");
+Sprite[] icons = Utils.FindAssets<Sprite>("Assets/Art/Icons/");
+AudioClip[] sfx = Utils.FindAssets<AudioClip>("Assets/Audio/SFX/");
+```
+
+#### DrawAnnulusGizmo()
+
+```csharp
+// Draw an annulus (ring) gizmo in the Scene view (Editor only, call from OnDrawGizmos)
+Utils.DrawAnnulusGizmo(center, innerRadius: 2f, outerRadius: 5f);
+Utils.DrawAnnulusGizmo(center, 2f, 5f, up: Vector3.up, color: Color.yellow, segments: 36);
+```
+
+#### DrawCircleGizmo()
+
+```csharp
+// Draw a circle gizmo in the Scene view (Editor only, call from OnDrawGizmos)
+Utils.DrawCircleGizmo(center, radius: 3f);
+Utils.DrawCircleGizmo(center, 3f, up: Vector3.forward, color: Color.cyan, segments: 64);
+```
+
+#### IsReloadDomainDisabled()
+
+```csharp
+// Check whether Domain Reload is disabled in Enter Play Mode Options
+bool noDomainReload = Utils.IsReloadDomainDisabled();
 ```
 
 #### DrawAnnulusGizmo()

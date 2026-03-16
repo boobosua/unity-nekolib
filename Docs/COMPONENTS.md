@@ -128,14 +128,33 @@ Optionally override the camera via `Use Custom Camera` + `Camera To Look At` in 
 
 ### AutoOrbitAround
 
-Continuously orbits around a target transform. Draws a gizmo arc in the editor for easy visualisation.
+Continuously orbits around a target transform using a single unified orbit axis driven by two angles. Draws a gizmo arc and a start-angle tick mark in the editor.
+
+| Inspector Field | Description                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Target          | The transform to orbit around                                                                 |
+| Distance        | Orbit radius in world units                                                                   |
+| Speed           | Degrees per second; negative values reverse direction                                         |
+| Start Angle     | Initial angle offset in degrees — use this to evenly space multiple orbiters                  |
+| Elevation Angle | Tilts the orbit plane up/down: `0` = flat horizontal ring, `90` = vertical loop               |
+| Bearing Angle   | Rotates the tilt direction around world Y; only meaningful when elevation is between 0 and 90 |
+| Facing          | How the orbiting object orients itself (see table below)                                      |
+
+#### Facing Modes
+
+| Mode                  | Behaviour                                            |
+| --------------------- | ---------------------------------------------------- |
+| `FaceTarget`          | Always looks at the target (default)                 |
+| `FaceAwayFromTarget`  | Looks directly away from the target                  |
+| `FaceHeading`         | Faces the direction of travel (tangent of the orbit) |
+| `FaceOppositeHeading` | Faces opposite to the direction of travel            |
+| `None`                | Rotation is not modified                             |
 
 ```csharp
-// Configure in inspector:
-//   Target, Distance, Mode, Speed angles
-// No runtime API needed for basic use
-
-// Two modes:
-//   AutoHorizontalOnly — revolves on the horizontal plane at a fixed vertical angle
-//   AutoVerticalOnly   — revolves on the vertical plane at a fixed horizontal angle
+// No runtime code required — configure everything in the inspector.
+// The component manages its own angle state internally.
+// Use Start Angle to stagger multiple orbiters around the same target:
+//   orbiter1._startAngle = 0f;
+//   orbiter2._startAngle = 120f;
+//   orbiter3._startAngle = 240f;
 ```

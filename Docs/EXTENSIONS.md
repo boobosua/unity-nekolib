@@ -20,11 +20,14 @@ gameObject.SetLayer(8);                  // By layer number
 gameObject.SetLayer(LayerMask.GetMask("UI")); // By LayerMask
 
 // Child management
-gameObject.ClearChildTransforms(); // Destroy all children (also aliased as DestroyChildren)
+gameObject.ClearChildTransforms(); // Destroy all children
+// Note: DestroyChildren() is [Obsolete] — use ClearChildTransforms()
 
 // Get children in specific layers
 GameObject[] enemyChildren = gameObject.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
 GameObject[] allEnemies = gameObject.GetChildrenInLayerRecursive(LayerMask.GetMask("Enemy"));
+// MonoBehaviour overloads also available:
+GameObject[] fromMono = monoBehaviour.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
 ```
 
 ### TransformExtensions
@@ -75,7 +78,7 @@ yield return animator.PlayAndWait("AttackAnimation");
 yield return animator.CrossFadeAndWait("IdleAnimation", transitionDuration: 0.2f);
 
 // Wait for specific animation to complete
-yield return AnimatorExtensions.WaitForAnimation(animator, "DeathAnimation");
+yield return animator.WaitForAnimation("DeathAnimation");
 ```
 
 ### CameraExtensions
@@ -84,11 +87,22 @@ yield return AnimatorExtensions.WaitForAnimation(animator, "DeathAnimation");
 // Culling mask management
 bool isVisible = camera.IsLayerInCullingMask(LayerMask.GetMask("Enemy"));
 camera.AddToCullingMask(LayerMask.GetMask("UI"));
+camera.RemoveFromCullingMask(LayerMask.GetMask("UI"));
 camera.SetCullingMask(LayerMask.GetMask("Player", "Enemy"));
+camera.ShowAllLayers(); // cullingMask = -1
+camera.HideAllLayers(); // cullingMask = 0
 
 // FOV control
 camera.ZoomIn(15f);
+camera.ZoomOut(15f);
 camera.SetFOV(60f);
+
+// Orthographic control
+camera.SetOrthographicSize(5f);
+camera.FitBoundsInView(bounds); // adjusts orthographic size to fit bounds
+
+// Screen info
+Vector2 screenSize = camera.GetScreenSize(); // pixelWidth x pixelHeight
 ```
 
 ### ColorExtensions
@@ -96,14 +110,20 @@ camera.SetFOV(60f);
 ```csharp
 // Component modification
 Color newColor = originalColor.WithAlpha(0.5f);
+Color redModified = originalColor.WithRed(1f);
+Color greenModified = originalColor.WithGreen(0.5f);
+Color blueModified = originalColor.WithBlue(0f);
 
 // Color operations
 Color brighter = color.MultiplyRGB(1.5f);
+Color lighter = color.AddRGB(0.1f);
 Color inverted = color.Invert();
+Color grayscale = color.ToGrayscale();
+float brightness = color.GetLuminance();
 
 // Hex conversion
-string hex = color.ColorToHex(); // "#RRGGBBAA"
-Color color = "#FF0000FF".HexToColor();
+string hex = color.ToHex(); // "#RRGGBBAA"
+Color parsed = "#FF0000FF".ToColor();
 ```
 
 ### Vector2Extensions
@@ -112,13 +132,19 @@ Color color = "#FF0000FF".HexToColor();
 // Component modification
 Vector2 modified = vector.With(x: 5f, y: 10f);
 Vector2 added = vector.Add(x: 2f);
+Vector2 subtracted = vector.Subtract(y: 1f);
 Vector2 multiplied = vector.Multiply(x: 2f, y: 0.5f);
+Vector2 divided = vector.Divide(x: 2f);
 
 // Vector operations
 bool inRange = currentPos.InRangeOf(targetPos, 5f);
 Vector2 direction = fromPos.DirectionTo(toPos);
 float distance = fromPos.DistanceTo(toPos);
-Vector2 perpendicular = vector.Perpendicular();
+Vector2 withLength = vector.WithMagnitude(5f);
+float maxComp = vector.MaxComponent();
+float minComp = vector.MinComponent();
+Vector2 perpendicular = vector.Perpendicular();          // counterclockwise
+Vector2 perpendicularCW = vector.PerpendicularClockwise(); // clockwise
 Vector2 rotated = vector.Rotate(45f);
 
 // Boundary checks
@@ -134,21 +160,29 @@ Vector2 randomPoint = origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 8f);
 ```csharp
 // Component modification
 Vector3 modified = vector.With(x: 5f, y: 10f, z: 15f);
+Vector3 added = vector.Add(y: 1f);
+Vector3 subtracted = vector.Subtract(x: 1f);
+Vector3 multiplied = vector.Multiply(x: 2f);
+Vector3 divided = vector.Divide(z: 2f);
 Vector3 rotatedX = vector.RotateX(45f);
 Vector3 rotatedY = vector.RotateY(90f);
+Vector3 rotatedZ = vector.RotateZ(30f);
 
 // Vector operations
 bool inRange = currentPos.InRangeOf(targetPos, 5f);
 Vector3 direction = fromPos.DirectionTo(toPos);
-Vector3 reflected = vector.Reflect(normal);
-Vector3 projected = vector.ProjectOnto(onto);
+float distance = fromPos.DistanceTo(toPos);
+Vector3 withLength = vector.WithMagnitude(5f);
+float maxComp = vector.MaxComponent();
+float minComp = vector.MinComponent();
 
 // Boundary checks
 bool insideSphere = point.IsInsideSphere(center, radius);
-bool insideBox = point.IsInsideBox(center, size);
-bool insideBounds = point.IsInsideBounds(bounds);
+bool insideBox = point.IsInsideBox(center, size);             // AABB by center+size
+bool insideCollider = point.IsInsideColliderBounds(collider); // AABB of a Collider
 
 // Random point in 3D annulus
+// Plane2D enum: XY, XZ (default), YZ — defined in NekoLib.Extensions
 Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
 ```
 
@@ -159,15 +193,32 @@ Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
 ```csharp
 // Number parsing
 float value = "3,14".ParseFloatWithComma(); // 3.14f
+bool ok = "3,14".TryParseFloatWithComma(out float result); // non-throwing variant
+
+// String utilities
+string noSpaces = "hello world".WithoutSpaces();    // "helloworld"
+string split = "MyVariableName".SplitCamelCase();   // "My Variable Name"
 
 // Percentage formatting
-string percent = 0.25f.AsPercent(); // "25%"
+string percent = 0.25f.AsPercent();              // "25%"  (multiplies by 100)
+string percent2 = 0.25f.AsPercent(1);            // "25%"
+string exact = 25f.AsExactPercent();             // "25%"  (uses value directly)
+string exact2 = 25.5f.AsExactPercent(1);         // "25.5%"
 
-// Large number formatting
-string short = 1500000.ToShortFormat(1); // "1.5M"
+// Large number formatting (K / M / B / T / aa / bb ...)
+string short1 = 1500000m.ToShortFormat(1);       // "1.5M"
+string short2 = 1500000L.ToShortFormat(1);       // "1.5M"
+string short3 = 1500000.ToShortFormat(1);        // "1.5M"
+
+// Alphabetic suffix format (a / b / c ...)
+string abc1 = 1500m.ToShortABCFormat();         // "1.5a"
+string abc2 = 1500000m.ToShortABCFormat();      // "1.5b"
+string abc3 = 1500000L.ToShortABCFormat();
+string abc4 = 1500000.ToShortABCFormat();
 
 // Enum conversion
 MyEnum value = "EnumValue".ToEnum<MyEnum>();
+MyEnum safe = "BadValue".ToEnumOrDefault(MyEnum.Default);
 ```
 
 ### NumberExtensions
@@ -186,7 +237,7 @@ float clampedFloat = value.AtLeast(0f).AtMost(1f);
 
 // Probability/chance
 bool success = 0.75f.IsSuccessfulRoll();          // 75% chance (0–1 range)
-bool luckyRoll = 25.IsSuccessfulRoll(0, 100);     // 25% chance out of 100
+bool luckyRoll = 25.IsSuccessfulRoll(0, 100);     // 25% chance out of 100 (int overload)
 
 // Enum conversion
 MyEnum enumValue = 1.ToEnum<MyEnum>();
@@ -265,17 +316,42 @@ string setFormatted = hashSet.ToLiteral();
 ### TimeExtensions
 
 ```csharp
-// Clock formatting
-string clock = 3661f.ToClock(); // "01:01:01"
-string short = 125f.ToShortClock(); // "02:05"
+// Clock string formatting (float/double/int overloads; useCeiling = true by default)
+string clock = 3661f.ToClock();          // "01:01:01"
+string clockFloor = 3661f.ToClock(useCeiling: false);
+string short1 = 125f.ToShortClock();     // "02:05"
+string short2 = 125.ToShortClock();      // int overload, no ceiling param
 
-// DateTime calculations
-DateTime pastTime = DateTime.Now.AddHours(-2);
-double hours = pastTime.HoursUntilNow(); // 2.0
+// Readable duration (TimeSpan / double / float / int overloads)
+string readable = 93784f.ToReadableFormat();              // "1d 2h 3m" (spacing by default)
+string noSpace = 93784f.ToReadableFormat(useSpacing: false); // "1d2h3m"
+string fromSpan = TimeSpan.FromSeconds(93784).ToReadableFormat(); // no spacing by default
 
-// DateTime manipulation
-DateTime newDate = original.WithDate(year: 2024);
-DateTime newTime = original.WithTime(hour: 9, minute: 0);
+// DateTime elapsed time (past → now, uses TimeService.Now)
+DateTime past = TimeService.Now.AddHours(-2);
+TimeSpan elapsed = past.TimeSince();          // TimeSpan
+double seconds = past.SecondsSince();         // seconds as double
+double minutes = past.MinutesSince();
+double hours = past.HoursSince();
+double days = past.DaysSince();
+
+// UTC variants
+TimeSpan utcElapsed = past.TimeSinceUtc();
+double utcHours = past.HoursSinceUtc();
+
+// DateTime time remaining (future → now, uses TimeService.Now)
+DateTime future = TimeService.Now.AddHours(3);
+TimeSpan remaining = future.TimeFromNow();    // TimeSpan
+double secFromNow = future.SecondsFromNow();
+double minFromNow = future.MinutesFromNow();
+double hrsFromNow = future.HoursFromNow();
+double daysFromNow = future.DaysFromNow();
+
+// UTC variants
+double utcSecsFromNow = future.SecondsFromNowUtc();
+
+// Absolute difference (past or future)
+double absDiff = someDateTime.AbsoluteSecondsDifference();
 ```
 
 ### TMPTextExtensions
@@ -337,14 +413,6 @@ token.Cancel(); // cancels before it fires — silent, no callbacks
 // Repeat every interval; returns a token to stop the loop
 TimerToken ticker = this.CallEvery(1f, () => Log.Info("Tick"));
 ticker.Cancel();
-```
-
-### SerializeExtensions
-
-```csharp
-// JSON serialization
-string json = myObject.Serialize(prettyPrint: true);
-MyObject restored = json.Deserialize<MyObject>();
 ```
 
 ### TaskExtensions

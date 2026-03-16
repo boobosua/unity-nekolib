@@ -18,6 +18,8 @@ namespace NekoLib
             None = 4,
         }
 
+        private const float NearParallelDot = 0.99f;
+
         [SerializeField] private Transform _target;
         [SerializeField] private float _distance = 5f;
         [SerializeField, Tooltip("Degrees per second. Negative values reverse direction.")]
@@ -51,7 +53,7 @@ namespace NekoLib
 
             // Orbit axis: world Y tilted by elevation, then rotated by bearing.
             Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
+            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < NearParallelDot
                 ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
                 : Vector3.Cross(orbitAxis, Vector3.right).normalized;
             transform.position = _target.position + Quaternion.AngleAxis(_currentAngle, orbitAxis) * perp * _distance;
@@ -85,19 +87,6 @@ namespace NekoLib
         }
 
 #if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (_target == null || Application.isPlaying)
-                return;
-
-            Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
-                ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
-                : Vector3.Cross(orbitAxis, Vector3.right).normalized;
-            transform.position = _target.position + Quaternion.AngleAxis(_startAngle, orbitAxis) * perp * _distance;
-            UnityEditor.SceneView.RepaintAll();
-        }
-
         private void OnDrawGizmosSelected()
         {
             if (_target == null)
@@ -111,7 +100,7 @@ namespace NekoLib
             Vector3 center = _target.position;
 
             Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
+            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < NearParallelDot
                 ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
                 : Vector3.Cross(orbitAxis, Vector3.right).normalized;
 
@@ -125,7 +114,7 @@ namespace NekoLib
             }
 
             // Tick mark at start angle.
-            Gizmos.color = Color.yellow;
+            Gizmos.color = Swatch.CO;
             Vector3 startOfs = Quaternion.AngleAxis(_startAngle, orbitAxis) * perp;
             Gizmos.DrawLine(center + startOfs * (_distance * 0.85f), center + startOfs * (_distance * 1.15f));
         }
