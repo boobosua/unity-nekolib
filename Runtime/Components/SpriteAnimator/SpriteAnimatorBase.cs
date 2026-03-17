@@ -53,6 +53,8 @@ namespace NekoLib.Components
 
         [SerializeField] protected UnityEvent _onCycleComplete;
 
+        public UnityEvent OnCycleComplete => _onCycleComplete;
+
         protected int _currentFrame = 0;
         protected bool _isPlaying = false;
         protected bool _isReversed = false;
