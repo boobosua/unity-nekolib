@@ -45,14 +45,14 @@ NekoLib is part of a suite of Unity packages:
 
 - **[NekoSerializer](https://github.com/boobosua/unity-neko-serializer)**: Serialization system (Newtonsoft.Json)
 - **[NekoSignal](https://github.com/boobosua/unity-neko-signal)**: Event/signal system
-- **[NekoFlow](https://github.com/boobosua/unity-neko-flow)**: Lightweight state machine + conditional flow helpers (`StateBehaviour`, `StateMachine`, `SimpleFlow`, `BranchFlow`)
+- **[NekoFlow](https://github.com/boobosua/unity-neko-flow)**: Lightweight state machine & conditional flow helpers
 - **[NekoNav](https://github.com/boobosua/unity-neko-nav)**: Grid-based navigation — Physics2D tilemap pathfinding and BoardGrid for dynamic tactical grids
 
 ---
 
 ## Requirements
 
-- Unity 2020.3 or later
+- Unity 6 or later
 - No external dependencies
 
 ## License

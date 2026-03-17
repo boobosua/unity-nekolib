@@ -85,31 +85,6 @@ countdown.Cancel(); // silent (does NOT invoke OnStop callbacks)
 countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
 
-### PauseWithOwner
-
-`PauseWithOwner()` is a fluent builder call that auto-pauses the timer while the owner's `GameObject` or component is disabled, and resumes it automatically when re-enabled. It sets an `UpdateWhen` predicate of `owner.isActiveAndEnabled` on the timer using the non-capturing overload, so there is no closure allocation.
-
-```csharp
-// Countdown pauses while this GameObject/component is disabled
-var countdown = Countdown.Create(this, 10f)
-    .PauseWithOwner()
-    .OnStop(() => Debug.Log("Done"));
-countdown.Start();
-
-// Stopwatch also supports it
-var watch = Stopwatch.Create(this)
-    .PauseWithOwner()
-    .OnUpdate(t => Debug.Log($"Elapsed: {t:F2}s"));
-watch.Start();
-```
-
-Notes:
-
-- State is preserved while paused — the timer does not reset when disabled.
-- `PauseWithOwner()` and `OnUpdateWhen(...)` both configure the same `UpdateWhen` slot; only the last call wins. Do not combine them.
-
----
-
 ### Invoke Helpers
 
 Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Timer`) that schedule actions via the PlayerLoop timer system — no coroutines required.
