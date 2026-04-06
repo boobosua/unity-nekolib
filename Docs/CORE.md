@@ -2,6 +2,12 @@
 
 Core foundational systems: singletons, timers, and color swatches.
 
+## Singletons
+
+```csharp
+using NekoLib.Singleton;
+```
+
 ### PersistentSingleton
 
 Survives scene changes. Perfect for game managers.
@@ -32,6 +38,10 @@ AudioManager.Instance.PlayMusic(backgroundMusic);
 
 ### Creating Timers
 
+```csharp
+using NekoLib.Timer;
+```
+
 NekoLib timers are PlayerLoop-driven (no coroutines) and come in two flavors:
 
 - `Countdown`: counts down from a duration to 0.
@@ -46,8 +56,10 @@ using UnityEngine;
 // Countdown — loops 3 times, only ticks when not paused
 var countdown = Countdown.Create(this, 10f)
     .SetLoop(3)
+    .OnStart(() => Debug.Log("Started!"))
     .OnUpdateWhen(() => !isPaused)
     .OnUpdate(remaining => Debug.Log($"Remaining: {remaining:F2}s"))
+    .OnLoop(() => Debug.Log("Loop restarted"))
     .OnStop(() => Debug.Log("Countdown finished"));
 
 countdown.Start();
@@ -74,6 +86,13 @@ bool paused = countdown.IsPaused;
 float remaining = countdown.RemainingTime;
 float total = countdown.TotalTime;
 int loopIteration = countdown.CurrentLoopIteration;
+
+// Countdown time adjustments
+countdown.AddTime(5f);    // add seconds to remaining time
+countdown.ReduceTime(2f); // remove seconds from remaining time
+
+// Stopwatch values
+float elapsed = stopwatch.ElapsedTime;
 
 // Control
 countdown.Pause();
@@ -110,6 +129,10 @@ Notes:
 - Active timers can be inspected via `Window > Neko Framework > Timer Tracker`.
 
 ### Pooling
+
+```csharp
+using NekoLib.Pooling;
+```
 
 NekoLib provides a small, deterministic prefab pooling helper built on Unity's `UnityEngine.Pool.ObjectPool<T>`.
 
@@ -195,6 +218,8 @@ public sealed class EnemyProjectile : PoolableBehaviour
     {
         // If created by PrefabPool, returns to pool; otherwise Destroy(gameObject).
         ReleaseSelf();
+        // Delayed release is also available:
+        // ReleaseSelf(delay: 2f);
     }
 }
 ```
@@ -207,6 +232,10 @@ Other useful APIs on `PrefabPool<T>`:
 - `CountInactive` (how many instances are currently pooled)
 
 ### Color Swatch
+
+```csharp
+using NekoLib.ColorPalette;
+```
 
 Pre-defined color constants for consistent theming.
 
@@ -225,6 +254,10 @@ errorText.color = Swatch.VR;
 ```
 
 ### Log
+
+```csharp
+using NekoLib.Logger;
+```
 
 Simple conditional logger. Methods are compiled only in the Editor, Development builds, or when `NEKOLIB_LOG` is defined.
 

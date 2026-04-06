@@ -2,6 +2,10 @@
 
 Lightweight, cache-friendly collection helpers. Primary focus: `Grid<T>` — a flat-array backed 2D grid with ref access and Span-friendly APIs.
 
+```csharp
+using NekoLib.Collections;
+```
+
 ### Grid<T>
 
 ```csharp
@@ -14,12 +18,24 @@ var grid = new Grid<int>(10, 5);
 grid[3, 2] = 42;
 int v = grid[3, 2];
 
+// Vector2Int indexer overload
+Vector2Int pos = new Vector2Int(3, 2);
+grid[pos] = 42;
+
+// Bounds checking
+bool valid = grid.InBounds(3, 2);
+bool validVec = grid.InBounds(pos);
+
 // Safe access
 if (grid.TryGet(3, 2, out int outValue))
     Debug.Log(outValue);
 
 // Safe write
 grid.TrySet(0, 0, 7);
+
+// Fill and clear
+grid.Fill(0);   // set all cells to a value
+grid.Clear();   // reset all cells to default(T)
 
 // Iterate by reference for in-place updates
 grid.ForEach((x, y, ref int cell) =>

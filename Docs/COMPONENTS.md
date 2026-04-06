@@ -2,6 +2,10 @@
 
 MonoBehaviour components for common game functionality.
 
+```csharp
+using NekoLib.Components;
+```
+
 ---
 
 ## Sprite Animation
@@ -13,7 +17,6 @@ Frame-based sprite animation for `SpriteRenderer`. Pauses automatically when the
 ```csharp
 var animator = GetComponent<SpriteAnimator>();
 animator.Play();
-animator.PlayReverse();
 animator.PlayOneShot();          // Once mode, then stops
 animator.Restart();
 animator.Stop();

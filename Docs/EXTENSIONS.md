@@ -2,6 +2,12 @@
 
 Extension methods for Unity and C# types.
 
+```csharp
+using NekoLib.Extensions;
+```
+
+## Unity Extensions
+
 ### GameObjectExtensions
 
 ```csharp
@@ -182,7 +188,7 @@ bool insideBox = point.IsInsideBox(center, size);             // AABB by center+
 bool insideCollider = point.IsInsideColliderBounds(collider); // AABB of a Collider
 
 // Random point in 3D annulus
-// Plane2D enum: XY, XZ (default), YZ — defined in NekoLib.Extensions
+// Plane2D enum (XY / XZ / YZ) is in NekoLib.Extensions
 Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
 ```
 
@@ -402,8 +408,9 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 
 ### TimerExtensions
 
+> Requires `using NekoLib.Timer;`
+
 ```csharp
-using NekoLib.Timer;
 
 // Invoke once after a delay; returns a token to cancel before it fires
 TimerToken token = this.CallAfter(2f, () => Log.Info("Delayed"));

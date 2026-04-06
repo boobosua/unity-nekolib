@@ -2,6 +2,10 @@
 
 Static utility classes for common operations.
 
+```csharp
+using NekoLib.Utilities;
+```
+
 ## Static Utilities
 
 ### TimeUtils
@@ -299,25 +303,4 @@ Utils.DrawCircleGizmo(center, 3f, up: Vector3.forward, color: Color.cyan, segmen
 ```csharp
 // Check whether Domain Reload is disabled in Enter Play Mode Options
 bool noDomainReload = Utils.IsReloadDomainDisabled();
-```
-
-#### DrawAnnulusGizmo()
-
-```csharp
-// Draw ring gizmo in Scene view (Editor only)
-Utils.DrawAnnulusGizmo(transform.position, 2f, 5f, Vector3.up, Color.red);
-```
-
-#### DrawCircleGizmo()
-
-```csharp
-// Draw circle gizmo in Scene view (Editor only)
-Utils.DrawCircleGizmo(transform.position, 3f, Vector3.up, Color.blue);
-```
-
-#### IsReloadDomainDisabled()
-
-```csharp
-// Check if domain reload is disabled in Editor settings
-bool isDomainReloadDisabled = Utils.IsReloadDomainDisabled();
 ```
