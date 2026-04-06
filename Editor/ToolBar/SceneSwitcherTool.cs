@@ -25,9 +25,9 @@ namespace NekoLib
     {
         #region Fields
 #if UNITY_2020_1_OR_NEWER
-        private static ToolbarMenu toolbarMenu;          // Preferred control (auto‑styled)
+        private static ToolbarMenu toolbarMenu;
 #endif
-        private static DropdownField fallbackDropdown;   // Fallback or primary in older versions
+        private static DropdownField fallbackDropdown;
         private static Image sceneIcon;
         private static string[] sceneNames = Array.Empty<string>();
         private static string[] scenePaths = Array.Empty<string>();
@@ -36,18 +36,16 @@ namespace NekoLib
         private static bool initialized;
         private static VisualElement containerRef;
 
-        // Startup scene override (integrated formerly separate tool)
-        private static string startupScenePath;            // stored path for marked startup scene
-        private static bool playSwitched;                  // did we switch on play enter
-        private static string originalSceneBeforePlay;     // path to restore after play
+        private static string startupScenePath;
+        private static bool playSwitched;
+        private static string originalSceneBeforePlay;
         private const string SessionOriginalSceneKey = "NekoLib:OriginalSceneBeforePlay";
         private const string SessionPlaySwitchedKey = "NekoLib:PlaySwitchedFlag";
 
-        private const string PrefActivateLoadedAdditive = "NekoLib:ActivateLoadedAdditiveOnSelect"; // new preference
+        private const string PrefActivateLoadedAdditive = "NekoLib:ActivateLoadedAdditiveOnSelect";
         #endregion
         static SceneSwitcherToolbar()
         {
-            #region Initialization
             EditorApplication.delayCall += () =>
             {
                 RefreshSceneList();
@@ -77,7 +75,6 @@ namespace NekoLib
 #if !UNITY_6000_3_OR_NEWER
             EditorApplication.update += LegacySelfHeal;
 #endif
-            #endregion
         }
 
 #if UNITY_6000_3_OR_NEWER
@@ -113,7 +110,6 @@ namespace NekoLib
             button.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
             button.SetEnabled(!hidden);
 
-            // Best-effort label update (avoid hard dependency on specific API surface)
             try
             {
                 var active = SceneManager.GetActiveScene();
@@ -129,7 +125,6 @@ namespace NekoLib
 
         private static void ShowUnity6000Menu(VisualElement anchor)
         {
-            // Ensure scene list is up-to-date when opening
             RefreshSceneList();
 
             var menu = new GenericDropdownMenu();
@@ -140,26 +135,47 @@ namespace NekoLib
 
             if (!hasScenes)
             {
-                menu.AddItem("Open Build Settings...", false, OpenBuildSettings);
+                menu.AddItem("Open Scene List...", false, SceneSwitcherSettingsWindow.Open);
                 menu.AddItem("Add Active Scene To Build Settings", false, AddActiveSceneToBuild);
                 menu.AddSeparator(string.Empty);
-                // Startup scene mark (integrated tool)
                 AppendStartupMarkItemUnity6000(menu);
                 menu.AddSeparator(string.Empty);
                 menu.AddItem("Refresh", false, RefreshSceneList);
             }
             else
             {
+                var groupLookup = BuildGroupLookup();
+
+                // Ungrouped scenes
+                bool hadUngrouped = false;
                 for (int i = 0; i < sceneNames.Length; i++)
                 {
-                    string display = sceneNames[i];
-                    if (ScenePathMatchesStartup(scenePaths[i])) display += " ★";
+                    if (groupLookup.TryGetValue(scenePaths[i], out var grpU) && !string.IsNullOrEmpty(grpU)) continue;
+                    string itemLabel = sceneNames[i] + "\t" + i;
+                    if (ScenePathMatchesStartup(scenePaths[i])) itemLabel += " ★";
                     string captured = sceneNames[i];
-                    bool checkedState = captured == current;
-                    menu.AddItem(display, checkedState, () => SwitchToScene(captured));
+                    menu.AddItem(itemLabel, captured == current, () => SwitchToScene(captured));
+                    hadUngrouped = true;
                 }
+
+                // Grouped scenes
+                bool hasAnyGrouped = false;
+                for (int j = 0; j < sceneNames.Length; j++)
+                    if (groupLookup.TryGetValue(scenePaths[j], out var gj) && !string.IsNullOrEmpty(gj)) { hasAnyGrouped = true; break; }
+                if (hadUngrouped && hasAnyGrouped)
+                    menu.AddSeparator(string.Empty);
+                for (int i = 0; i < sceneNames.Length; i++)
+                {
+                    if (!groupLookup.TryGetValue(scenePaths[i], out var grp) || string.IsNullOrEmpty(grp)) continue;
+                    string itemLabel = sceneNames[i] + "\t" + i;
+                    if (ScenePathMatchesStartup(scenePaths[i])) itemLabel += " ★";
+                    string captured = sceneNames[i];
+                    menu.AddItem(grp + "/" + itemLabel, captured == current, () => SwitchToScene(captured));
+                }
+
                 menu.AddSeparator(string.Empty);
-                menu.AddItem("Open Build Settings...", false, OpenBuildSettings);
+                menu.AddItem("Open Scene List...", false, OpenBuildProfilesSceneList);
+                menu.AddItem("Scene Switcher Settings...", false, SceneSwitcherSettingsWindow.Open);
                 menu.AddItem("Add Active Scene To Build Settings", false, AddActiveSceneToBuild);
                 menu.AddSeparator(string.Empty);
                 AppendStartupMarkItemUnity6000(menu);
@@ -186,17 +202,41 @@ namespace NekoLib
             bool actAdd = EditorPrefs.GetBool(PrefActivateLoadedAdditive, true);
             menu.AddItem("Activate Loaded Additive Scenes On Select", actAdd, ToggleActivateLoadedAdditive);
         }
+
+        private static void MarkActiveSceneAsStartup()
+        {
+            var active = SceneManager.GetActiveScene();
+            if (!active.IsValid() || string.IsNullOrEmpty(active.path)) return;
+            startupScenePath = active.path;
+            PersistStartupScenePath(startupScenePath);
+            UpdateSelectionVisual();
+        }
+
+        private static void ClearStartupScene()
+        {
+            startupScenePath = string.Empty;
+            EditorSceneManager.playModeStartScene = null;
+            var settings = NekoLibSettings.GetOrCreate();
+            settings.startupScenePath = string.Empty;
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+            UpdateSelectionVisual();
+        }
+
+        private static void ToggleActivateLoadedAdditive()
+        {
+            bool current = EditorPrefs.GetBool(PrefActivateLoadedAdditive, true);
+            EditorPrefs.SetBool(PrefActivateLoadedAdditive, !current);
+        }
 #endif
 
         private static void TryInstall()
         {
-            // If global HideToolbar is enabled, don't install
             try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
             if (initialized) return;
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
 
-            // Defensive: domain reload / toolbar rebuild can leave old injected elements behind.
             ToolbarUtils.RemoveAllByName(root, "NekoLibSceneSwitcherContainer");
 
             initialized = true;
@@ -233,19 +273,7 @@ namespace NekoLib
             container.RegisterCallback<GeometryChangedEvent>(_ => MatchControlHeightToContainer(container, toolbarMenu));
             toolbarMenu.RegisterCallback<GeometryChangedEvent>(_ => { if (string.IsNullOrEmpty(toolbarMenu.text)) InstallFallbackDropdown(container); });
 
-            // Dynamic reposition registration (preserves original absolute layout logic)
-            // Register dynamic reposition with watcher if present (reflection to avoid hard assembly dependency)
-#if UNITY_EDITOR
             TryRegisterSceneSwitcherWatcher();
-#endif
-            /*ToolbarLayoutWatcher.Register(() =>
-            {
-                var rootLatest = ToolbarUtils.GetToolbarRoot();
-                if (rootLatest != null && containerRef != null)
-                {
-                    PositionContainer(rootLatest, containerRef);
-                }
-            });*/
 #else
             InstallFallbackDropdown(container);
             root.Add(container);
@@ -256,7 +284,6 @@ namespace NekoLib
         private static void LegacySelfHeal()
         {
             if (!initialized) return;
-            // Respect global HideToolbar preference
             try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
 
             if (containerRef != null && containerRef.parent != null) return;
@@ -280,7 +307,6 @@ namespace NekoLib
                 containerRef.parent.Remove(containerRef);
             }
             containerRef = null;
-            // Re-register install attempt if preference re-enabled later
             if (!NekoLibSettings.GetOrCreate().hideToolbar)
             {
                 EditorApplication.update += TryInstall;
@@ -290,7 +316,6 @@ namespace NekoLib
         internal static void ApplyPreferenceChange(bool enabled)
         {
 #if UNITY_6000_3_OR_NEWER
-            // Unity 6.3+ uses MainToolbarElement integration; element handles visibility.
             return;
 #else
             if (enabled)
@@ -308,7 +333,6 @@ namespace NekoLib
         private static void InstallFallbackDropdown(VisualElement container)
         {
             if (fallbackDropdown != null) return;
-            #region FallbackControl
             fallbackDropdown = new DropdownField
             {
                 name = "NekoLibSceneSwitcherFallback",
@@ -337,17 +361,7 @@ namespace NekoLib
             }
             container.RegisterCallback<GeometryChangedEvent>(_ => MatchControlHeightToContainer(container, fallbackDropdown));
 
-            // Dynamic reposition for fallback variant too
             TryRegisterSceneSwitcherWatcher();
-            /*ToolbarLayoutWatcher.Register(() =>
-            {
-                var rootLatest = GetToolbarRoot();
-                if (rootLatest != null && containerRef != null)
-                {
-                    PositionContainer(rootLatest, containerRef);
-                }
-            });*/
-            #endregion
         }
 
 #if UNITY_2020_1_OR_NEWER
@@ -362,7 +376,8 @@ namespace NekoLib
             {
                 toolbarMenu.text = TruncateDisplayName(NoScenesLabel);
                 toolbarMenu.SetEnabled(true);
-                toolbarMenu.menu.AppendAction("Open Build Settings...", _ => OpenBuildSettings(), _ => DropdownMenuAction.Status.Normal);
+                toolbarMenu.menu.AppendAction("Open Scene List...", _ => OpenBuildProfilesSceneList(), _ => DropdownMenuAction.Status.Normal);
+                toolbarMenu.menu.AppendAction("Scene Switcher Settings...", _ => SceneSwitcherSettingsWindow.Open(), _ => DropdownMenuAction.Status.Normal);
                 toolbarMenu.menu.AppendAction("Add Active Scene To Build Settings", _ => AddActiveSceneToBuild(), _ => CanAddActiveScene() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 toolbarMenu.menu.AppendSeparator("");
                 AppendStartupMarkItem();
@@ -387,16 +402,38 @@ namespace NekoLib
                     baseDisplay += " ★";
                 toolbarMenu.text = TruncateDisplayName(baseDisplay);
             }
-            string startupDisplay = StartupSceneName();
+            var groupLookup = BuildGroupLookup();
+
+            // Ungrouped scenes
+            bool hadUngrouped = false;
             for (int i = 0; i < sceneNames.Length; i++)
             {
-                string display = sceneNames[i];
-                if (ScenePathMatchesStartup(scenePaths[i])) display = display + " ★"; // star as suffix to avoid clashing with left checkmark
+                if (groupLookup.TryGetValue(scenePaths[i], out var grpU) && !string.IsNullOrEmpty(grpU)) continue;
+                string itemLabel = sceneNames[i] + "\t" + i;
+                if (ScenePathMatchesStartup(scenePaths[i])) itemLabel += " ★";
                 string captured = sceneNames[i];
-                toolbarMenu.menu.AppendAction(display, a => SwitchToScene(captured), a => captured == current ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+                toolbarMenu.menu.AppendAction(itemLabel, a => SwitchToScene(captured), a => captured == current ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+                hadUngrouped = true;
             }
+
+            // Grouped scenes
+            bool hasAnyGrouped = false;
+            for (int j = 0; j < sceneNames.Length; j++)
+                if (groupLookup.TryGetValue(scenePaths[j], out var gj) && !string.IsNullOrEmpty(gj)) { hasAnyGrouped = true; break; }
+            if (hadUngrouped && hasAnyGrouped)
+                toolbarMenu.menu.AppendSeparator("");
+            for (int i = 0; i < sceneNames.Length; i++)
+            {
+                if (!groupLookup.TryGetValue(scenePaths[i], out var grp) || string.IsNullOrEmpty(grp)) continue;
+                string itemLabel = sceneNames[i] + "\t" + i;
+                if (ScenePathMatchesStartup(scenePaths[i])) itemLabel += " ★";
+                string captured = sceneNames[i];
+                toolbarMenu.menu.AppendAction(grp + "/" + itemLabel, a => SwitchToScene(captured), a => captured == current ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal);
+            }
+
             toolbarMenu.menu.AppendSeparator("");
-            toolbarMenu.menu.AppendAction("Open Build Settings...", _ => OpenBuildSettings(), _ => DropdownMenuAction.Status.Normal);
+            toolbarMenu.menu.AppendAction("Open Scene List...", _ => OpenBuildProfilesSceneList(), _ => DropdownMenuAction.Status.Normal);
+            toolbarMenu.menu.AppendAction("Scene Switcher Settings...", _ => SceneSwitcherSettingsWindow.Open(), _ => DropdownMenuAction.Status.Normal);
             AppendStartupMarkItem();
             toolbarMenu.menu.AppendAction("Refresh", _ => RefreshSceneList(), _ => DropdownMenuAction.Status.Normal);
         }
@@ -410,6 +447,15 @@ namespace NekoLib
             return true;
         }
 
+        private static void OpenBuildProfilesSceneList()
+        {
+#if UNITY_6000_0_OR_NEWER
+            EditorApplication.ExecuteMenuItem("File/Build Profiles");
+#else
+            EditorWindow.GetWindow(typeof(BuildPlayerWindow));
+#endif
+        }
+
         private static void AddActiveSceneToBuild()
         {
             if (!CanAddActiveScene()) return;
@@ -419,11 +465,8 @@ namespace NekoLib
             RefreshSceneList();
         }
 
-        private static void OpenBuildSettings() => EditorWindow.GetWindow(typeof(BuildPlayerWindow));
-
-        private static void RefreshSceneList()
+        internal static void RefreshSceneList()
         {
-            #region RefreshList
             var buildScenes = EditorBuildSettings.scenes;
             int count = buildScenes.Length;
             sceneNames = new string[count];
@@ -437,14 +480,11 @@ namespace NekoLib
                 if (duplicateNameCounts.ContainsKey(baseName)) duplicateNameCounts[baseName]++; else duplicateNameCounts[baseName] = 1;
                 sceneNames[i] = baseName;
             }
-            // Disambiguate duplicates by appending (index)
             for (int i = 0; i < count; i++)
             {
                 string bn = sceneNames[i];
                 if (duplicateNameCounts.TryGetValue(bn, out var c) && c > 1)
-                {
                     sceneNames[i] = bn + " (" + (i + 1) + ")";
-                }
             }
 #if UNITY_2020_1_OR_NEWER
             PopulateToolbarMenu();
@@ -465,7 +505,6 @@ namespace NekoLib
                     fallbackDropdown.value = current;
                 }
             }
-            #endregion
         }
 
         private static void UpdateSelectionVisual()
@@ -488,7 +527,6 @@ namespace NekoLib
             if (index < 0 || index >= scenePaths.Length) return;
             string path = scenePaths[index];
             if (string.IsNullOrEmpty(path)) return;
-            // Optional behavior: if target scene already loaded additively, just set active instead of reopening.
             bool activateLoadedAdditive = EditorPrefs.GetBool(PrefActivateLoadedAdditive, false);
             if (activateLoadedAdditive)
             {
@@ -509,7 +547,7 @@ namespace NekoLib
                         {
                             UpdateSelectionVisual();
                         }
-                        return; // done
+                        return;
                     }
                 }
             }
@@ -523,8 +561,6 @@ namespace NekoLib
                 UpdateSelectionVisual();
             }
         }
-
-        // GetToolbarRoot moved to ToolbarUtils
 
         private static VisualElement FindPlayControlsRightMost(VisualElement root) => FindCandidateRecursive(root, 0);
 
@@ -541,8 +577,6 @@ namespace NekoLib
             }
             return null;
         }
-
-        // Helpers moved to ToolbarUtils
 
         private static void PositionContainer(VisualElement toolbarRoot, VisualElement container)
         {
@@ -585,22 +619,18 @@ namespace NekoLib
             });
         }
 
-        // Truncate while preserving a trailing star indicator (space + star) if present
         private static string TruncateDisplayName(string name)
         {
             if (string.IsNullOrEmpty(name)) return name;
-            const int max = 22; // total allowed characters including ellipsis & star
+            const int max = 22;
             bool hasStar = name.EndsWith(" ★", StringComparison.Ordinal);
             if (name.Length <= max) return name;
             if (hasStar)
             {
-                // Reserve 2 chars for space+star and 1 for ellipsis
-                int coreLen = max - 3; // remaining for visible core before ellipsis
-                if (coreLen < 1) return "★"; // degenerate fallback
-                string core = name.Substring(0, coreLen) + "…";
-                return core + " ★";
+                int coreLen = max - 3;
+                if (coreLen < 1) return "★";
+                return name.Substring(0, coreLen) + "… ★";
             }
-            // Normal truncation (no star)
             return name.Substring(0, max - 1) + "…";
         }
 
@@ -615,10 +645,8 @@ namespace NekoLib
             if (before != null) container.Insert(container.IndexOf(before), sceneIcon); else container.Add(sceneIcon);
         }
 
-        // --- Startup Scene Override Logic ---
         private static void LoadStartupPrefs()
         {
-            // Prefer NekoLibSettings (project-scoped ScriptableObject in Assets/Plugins/NekoLib/Editor)
             string fromSettings = string.Empty;
             try
             {
@@ -637,7 +665,6 @@ namespace NekoLib
                     return;
                 }
 
-                // Saved scene is no longer valid.
                 startupScenePath = string.Empty;
                 try
                 {
@@ -651,7 +678,6 @@ namespace NekoLib
                 return;
             }
 
-            // Fallback: if user set Unity's PlayMode start scene externally, mirror it into settings.
             var startScene = EditorSceneManager.playModeStartScene;
             if (startScene != null)
             {
@@ -679,7 +705,6 @@ namespace NekoLib
 
         private static void ToggleStartupScene()
         {
-            #region ToggleStartup
             var active = SceneManager.GetActiveScene();
             if (!HasStartupScene())
             {
@@ -693,14 +718,12 @@ namespace NekoLib
             {
                 if (active.IsValid() && !string.IsNullOrEmpty(active.path) && !string.Equals(active.path, startupScenePath, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Switch mark to current scene instead of unmarking
                     startupScenePath = active.path;
                     PersistStartupScenePath(startupScenePath);
                 }
                 else
                 {
                     startupScenePath = string.Empty;
-                    // Clear Unity start scene
                     EditorSceneManager.playModeStartScene = null;
                     // Mirror clear into NekoLibSettings asset
                     var settings = NekoLibSettings.GetOrCreate();
@@ -712,15 +735,12 @@ namespace NekoLib
 #if UNITY_2020_1_OR_NEWER
             PopulateToolbarMenu();
 #endif
-            #endregion
         }
 
         private static void PersistStartupScenePath(string path)
         {
-            // Persist via Unity's built-in project-scoped PlayMode start scene
             var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
             EditorSceneManager.playModeStartScene = sceneAsset;
-            // Mirror into NekoLibSettings asset for project-scoped visibility
             var settings = NekoLibSettings.GetOrCreate();
             settings.startupScenePath = path;
             EditorUtility.SetDirty(settings);
@@ -731,7 +751,6 @@ namespace NekoLib
         {
             if (!HasStartupScene()) return string.Empty;
             string baseName = System.IO.Path.GetFileNameWithoutExtension(startupScenePath);
-            // Find index to append if duplicate
             for (int i = 0; i < scenePaths.Length; i++)
             {
                 if (string.Equals(scenePaths[i], startupScenePath, StringComparison.OrdinalIgnoreCase))
@@ -753,15 +772,13 @@ namespace NekoLib
 #if UNITY_2020_1_OR_NEWER
         private static void AppendStartupMarkItem()
         {
-            string label;
             var active = SceneManager.GetActiveScene();
             bool activeValid = active.IsValid() && !string.IsNullOrEmpty(active.path);
-            // Helper: disambiguate active scene name if duplicates exist in build list
+
             string ActiveSceneDisplayName()
             {
                 if (!activeValid) return "(Invalid)";
                 string baseName = active.name;
-                // attempt to find index among build scenes to match duplicate formatting
                 for (int i = 0; i < scenePaths.Length; i++)
                 {
                     if (string.Equals(scenePaths[i], active.path, StringComparison.OrdinalIgnoreCase))
@@ -776,12 +793,13 @@ namespace NekoLib
 
             if (!HasStartupScene())
             {
-                label = "Mark Active Scene As Startup";
+                var label = "Mark Active Scene As Startup";
                 toolbarMenu.menu.AppendAction(label, _ => ToggleStartupScene(), _ => activeValid ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             }
             else
             {
                 bool activeIsStartup = activeValid && ScenePathMatchesStartup(active.path);
+                string label;
                 if (activeIsStartup)
                 {
                     var name = StartupSceneName();
@@ -790,24 +808,36 @@ namespace NekoLib
                 }
                 else
                 {
-                    var oldName = StartupSceneName();
-                    var newName = ActiveSceneDisplayName();
-                    label = $"Switch Startup Scene from ({oldName}) to ({newName})";
+                    label = $"Switch Startup Scene from ({StartupSceneName()}) to ({ActiveSceneDisplayName()})";
                     toolbarMenu.menu.AppendAction(label, _ => ToggleStartupScene(), _ => activeValid ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 }
             }
         }
 #endif
 
-        private static bool CanMarkActive()
+        private static Dictionary<string, string> BuildGroupLookup()
         {
-            var active = SceneManager.GetActiveScene();
-            return active.IsValid() && !string.IsNullOrEmpty(active.path);
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                var settings = SceneSwitcherSettings.GetOrCreate();
+                if (settings.groups == null) return result;
+                foreach (var group in settings.groups)
+                {
+                    if (string.IsNullOrEmpty(group?.label) || group.scenePaths == null) continue;
+                    foreach (var path in group.scenePaths)
+                    {
+                        if (!string.IsNullOrEmpty(path) && !result.ContainsKey(path))
+                            result[path] = group.label;
+                    }
+                }
+            }
+            catch { }
+            return result;
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            #region PlayModeHook
             switch (state)
             {
                 case PlayModeStateChange.ExitingEditMode:
@@ -839,7 +869,6 @@ namespace NekoLib
                     originalSceneBeforePlay = null; SessionState.EraseString(SessionOriginalSceneKey);
                     break;
             }
-            #endregion
         }
     }
 }

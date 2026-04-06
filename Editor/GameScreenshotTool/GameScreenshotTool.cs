@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
@@ -48,14 +49,7 @@ namespace NekoLib
             var filePath = Path.Combine(folder, BuildFileName(outW, outH));
 
             Directory.CreateDirectory(folder);
-            ScreenCapture.CaptureScreenshot(filePath, settings.supersize);
-            Debug.Log($"{LogPrefix} Capturing Game View → {filePath} (note: written end-of-frame)");
-
-            EditorApplication.delayCall += () =>
-            {
-                AssetDatabase.Refresh();
-                if (settings.revealOnSave) RevealInExplorerIfExists(filePath);
-            };
+            ScreenshotCoroutineHelper.Begin(filePath, settings.supersize, settings.revealOnSave);
         }
 
         [MenuItem("Tools/Neko Framework/Screenshot/Open Settings")]
@@ -207,14 +201,7 @@ namespace NekoLib
                 var outH = Mathf.Max(1, (int)gv.y) * _settings.supersize;
                 var finalPath = Path.Combine(directory, BuildFileName(outW, outH));
 
-                ScreenCapture.CaptureScreenshot(finalPath, _settings.supersize);
-                Debug.Log($"{LogPrefix} Capturing Game View → {finalPath} (x{_settings.supersize})");
-
-                EditorApplication.delayCall += () =>
-                {
-                    AssetDatabase.Refresh();
-                    if (_settings.revealOnSave) RevealInExplorerIfExists(finalPath);
-                };
+                ScreenshotCoroutineHelper.Begin(finalPath, _settings.supersize, _settings.revealOnSave);
             }
             else
             {
@@ -293,6 +280,39 @@ namespace NekoLib
         {
             if (File.Exists(path))
                 EditorUtility.RevealInFinder(path);
+        }
+
+        // Spawns a temporary MonoBehaviour to run a WaitForEndOfFrame coroutine.
+        // This ensures all cameras (including stacked/background cameras) have finished
+        // rendering before capture, and lets us write the file synchronously so
+        // RevealInFinder triggers reliably on the first capture.
+        private sealed class ScreenshotCoroutineHelper : MonoBehaviour
+        {
+            internal static void Begin(string filePath, int supersize, bool revealOnSave)
+            {
+                var go = new GameObject("[ScreenshotHelper]") { hideFlags = HideFlags.HideAndDontSave };
+                go.AddComponent<ScreenshotCoroutineHelper>()
+                  .StartCoroutine(Capture(go, filePath, supersize, revealOnSave));
+            }
+
+            private static IEnumerator Capture(GameObject go, string filePath, int supersize, bool revealOnSave)
+            {
+                yield return new WaitForEndOfFrame();
+                var tex = ScreenCapture.CaptureScreenshotAsTexture(supersize);
+                try
+                {
+                    File.WriteAllBytes(filePath, tex.EncodeToPNG());
+                    Debug.Log($"{LogPrefix} Captured → {filePath}");
+                    AssetDatabase.Refresh();
+                    if (revealOnSave)
+                        EditorUtility.RevealInFinder(filePath);
+                }
+                finally
+                {
+                    DestroyImmediate(tex);
+                    DestroyImmediate(go);
+                }
+            }
         }
     }
 }

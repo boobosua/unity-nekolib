@@ -9,10 +9,8 @@ namespace NekoLib
     {
         public override void OnInspectorGUI()
         {
-            var so = serializedObject;
-            so.Update();
+            serializedObject.Update();
 
-            // Explicitly render only the core settings fields as read-only, hide script
             using (new EditorGUI.DisabledScope(true))
             {
                 DrawProp("startupScenePath", new GUIContent("Startup Scene Path"));
@@ -27,9 +25,7 @@ namespace NekoLib
         {
             var p = serializedObject.FindProperty(name);
             if (p != null)
-            {
                 EditorGUILayout.PropertyField(p, label, true);
-            }
         }
     }
 }
