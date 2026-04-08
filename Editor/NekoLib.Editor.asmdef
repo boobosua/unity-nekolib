@@ -2,7 +2,8 @@
     "name": "NekoLib.Editor",
     "rootNamespace": "NekoLib",
     "references": [
-        "GUID:22a704979ba6f464ea6e8bb476cdcc2b"
+        "GUID:22a704979ba6f464ea6e8bb476cdcc2b",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
     ],
     "includePlatforms": [
         "Editor"

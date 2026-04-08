@@ -26,7 +26,7 @@ namespace NekoLib
         private SceneSwitcherSettings _settings;
         private EditorBuildSettingsScene[] _buildScenes = Array.Empty<EditorBuildSettingsScene>();
 
-        [MenuItem("Tools/Neko Framework/Scene Switcher/Scene Switcher Settings")]
+        [MenuItem("Tools/Neko Framework/Scene Switcher Groups")]
         internal static void Open()
         {
             var win = GetWindow<SceneSwitcherSettingsWindow>("Scene Switcher Settings");
