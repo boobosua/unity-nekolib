@@ -14,13 +14,18 @@ namespace NekoLib
         [MenuItem("Tools/Neko Framework/TMP Font Replacer")]
         public static void Open() => GetWindow<TmpFontReplacerWindow>("TMP Font Replacer");
 
+        // --- Settings ---
+        private TmpFontReplacerSettings _settings;
+
         // --- Font ---
         private TMP_FontAsset _targetFont;
         private Material[] _sdfMaterials = System.Array.Empty<Material>();
         private string[] _sdfMatNames = System.Array.Empty<string>();
         private int _sdfMatIndex;
+        private bool _materialsScanned;
 
         // --- Asset lists ---
+        // Only assets containing at least one TMP_Text component are stored.
         private int _tab;
         private Vector2 _sceneScroll;
         private Vector2 _prefabScroll;
@@ -34,10 +39,19 @@ namespace NekoLib
         private Vector2 _exclusionScroll;
         private bool _exclusionFoldout = true;
 
-        // Row tint textures — built once in OnGUI, safe because they don't
-        // depend on any GUIStyle or skin.
+        // --- Cached styles & textures ---
         private Texture2D _rowEvenTex;
         private Texture2D _rowOddTex;
+        private Texture2D _rowChildEvenTex;
+        private Texture2D _rowChildOddTex;
+        private GUIStyle _rowEvenStyle;
+        private GUIStyle _rowOddStyle;
+        private GUIStyle _rowChildEvenStyle;
+        private GUIStyle _rowChildOddStyle;
+        private GUIStyle _iconBtnStyle;
+        private GUIStyle _infoLabelStyle;
+
+        private float _windowHeight;
 
         // -------------------------------------------------------------------------
 
@@ -46,25 +60,140 @@ namespace NekoLib
             public string Path;
             public string Name;
             public bool Selected;
+            public bool Foldout;
+            public List<ObjectEntry> Objects = new();
+
+            // Cached count of selected children — maintained incrementally to
+            // avoid iterating Objects every OnGUI frame in ChildCheckState.
+            public int SelectedObjectCount;
+
+            public enum CheckState { None, Mixed, All }
+
+            public CheckState ChildCheckState()
+            {
+                if (SelectedObjectCount == 0) return CheckState.None;
+                if (SelectedObjectCount == Objects.Count) return CheckState.All;
+                return CheckState.Mixed;
+            }
+        }
+
+        private class ObjectEntry
+        {
+            public string Name;
+            public string FontName;
+            public string MaterialName;
+            public bool Selected;
+
+            // Measured once on first draw, reset to 0 when FontName/MaterialName changes.
+            public float CachedInfoWidth;
+
+            public string InfoText => $"{FontName}  ·  {MaterialName}";
+            public void InvalidateInfoWidth() => CachedInfoWidth = 0f;
         }
 
         // -------------------------------------------------------------------------
 
         private void OnEnable()
         {
-            Scan();
+            LoadSettings();
             RebuildMaterialList();
+
+            // Defer scan until after Unity finishes initializing. If the window was
+            // left open from a previous session, OnEnable fires during early editor
+            // boot before AssetDatabase and EditorSceneManager are ready.
+            EditorApplication.delayCall += () =>
+            {
+                if (this == null) return;
+                Scan();
+                Repaint();
+            };
         }
 
-        // Row textures are plain Color→Texture2D; safe to build any time.
-        private void EnsureRowTextures()
+        private void OnDisable()
+        {
+            DestroyTexture(ref _rowEvenTex);
+            DestroyTexture(ref _rowOddTex);
+            DestroyTexture(ref _rowChildEvenTex);
+            DestroyTexture(ref _rowChildOddTex);
+
+            _rowEvenStyle = null;
+            _rowOddStyle = null;
+            _rowChildEvenStyle = null;
+            _rowChildOddStyle = null;
+            _iconBtnStyle = null;
+            _infoLabelStyle = null;
+        }
+
+        private void LoadSettings()
+        {
+            _settings = TmpFontReplacerSettings.GetOrCreate();
+            _targetFont = _settings.lastFont;
+            _excludedFolders = _settings.excludedFolders ?? new List<DefaultAsset>();
+        }
+
+        private void SaveSettings()
+        {
+            if (_settings == null) return;
+            _settings.lastFont = _targetFont;
+            _settings.lastMaterial = SelectedMaterial;
+            _settings.excludedFolders = _excludedFolders;
+            _settings.Save();
+        }
+
+        // -------------------------------------------------------------------------
+
+        private static void DestroyTexture(ref Texture2D tex)
+        {
+            if (tex == null) return;
+            DestroyImmediate(tex);
+            tex = null;
+        }
+
+        // Built once when first needed. GUIStyle objects that reference EditorStyles
+        // must be created inside OnGUI — not in OnEnable — because the editor skin
+        // isn't guaranteed to be loaded before the first paint.
+        private void EnsureStyles()
         {
             if (_rowEvenTex != null) return;
+
             _rowEvenTex = MakeTex(EditorGUIUtility.isProSkin
                 ? new Color(0.22f, 0.22f, 0.22f) : new Color(0.88f, 0.88f, 0.88f));
             _rowOddTex = MakeTex(EditorGUIUtility.isProSkin
                 ? new Color(0.19f, 0.19f, 0.19f) : new Color(0.84f, 0.84f, 0.84f));
+            _rowChildEvenTex = MakeTex(EditorGUIUtility.isProSkin
+                ? new Color(0.20f, 0.20f, 0.20f) : new Color(0.86f, 0.86f, 0.86f));
+            _rowChildOddTex = MakeTex(EditorGUIUtility.isProSkin
+                ? new Color(0.17f, 0.17f, 0.17f) : new Color(0.82f, 0.82f, 0.82f));
+
+            _rowEvenStyle = BuildRowStyle(_rowEvenTex);
+            _rowOddStyle = BuildRowStyle(_rowOddTex);
+            _rowChildEvenStyle = BuildRowStyle(_rowChildEvenTex);
+            _rowChildOddStyle = BuildRowStyle(_rowChildOddTex);
+
+            _iconBtnStyle = new GUIStyle(EditorStyles.miniButton)
+            {
+                padding = new RectOffset(2, 2, 1, 1),
+                fixedWidth = 20,
+                fixedHeight = 18,
+            };
+
+            _infoLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleRight,
+                normal = { textColor = EditorGUIUtility.isProSkin
+                    ? new Color(0.5f, 0.5f, 0.5f)
+                    : new Color(0.4f, 0.4f, 0.4f) },
+                clipping = TextClipping.Clip,
+            };
         }
+
+        private static GUIStyle BuildRowStyle(Texture2D tex) => new GUIStyle(GUIStyle.none)
+        {
+            normal = { background = tex },
+            padding = new RectOffset(4, 4, 1, 1),
+            margin = new RectOffset(0, 0, 0, 0),
+            fixedHeight = 20,
+        };
 
         private static Texture2D MakeTex(Color c)
         {
@@ -74,26 +203,28 @@ namespace NekoLib
             return t;
         }
 
-        // Row styles are built inline each call — GUIStyle(GUIStyle.none) with
-        // a background tex is safe inside OnGUI; no EditorStyles dependency.
-        private GUIStyle RowStyle(int index)
+        private GUIStyle RowStyle(int index, bool child = false)
         {
-            return new GUIStyle(GUIStyle.none)
-            {
-                normal = { background = index % 2 == 0 ? _rowEvenTex : _rowOddTex },
-                padding = new RectOffset(4, 4, 1, 1),
-                margin = new RectOffset(0, 0, 0, 0),
-                fixedHeight = 20,
-            };
+            if (child) return index % 2 == 0 ? _rowChildEvenStyle : _rowChildOddStyle;
+            return index % 2 == 0 ? _rowEvenStyle : _rowOddStyle;
         }
 
-        private static GUIStyle IconBtnStyle() => new GUIStyle(EditorStyles.miniButton)
+        // Measured once per ObjectEntry, cached. CalcSize is not free —
+        // skipping it on every frame matters for large lists.
+        private float GetInfoWidth(ObjectEntry obj)
         {
-            padding = new RectOffset(2, 2, 1, 1),
-            fixedWidth = 20,
-            fixedHeight = 18,
-        };
+            if (obj.CachedInfoWidth > 0f) return obj.CachedInfoWidth;
+            const float padding = 16f;
+            const float hardCap = 320f;
+            float measured = _infoLabelStyle.CalcSize(new GUIContent(obj.InfoText)).x;
+            obj.CachedInfoWidth = Mathf.Min(measured + padding, hardCap);
+            return obj.CachedInfoWidth;
+        }
 
+        // -------------------------------------------------------------------------
+        // Scan — opens every scene additively, filters to TMP-only, caches all data.
+        // Called once after boot via delayCall, and again on Rescan button.
+        // Foldouts show pre-cached data — zero I/O on click.
         // -------------------------------------------------------------------------
 
         private void Scan()
@@ -107,40 +238,160 @@ namespace NekoLib
             bool IsExcluded(string path)
                 => excludedPaths.Any(ex => path.StartsWith(ex + "/") || path == ex);
 
-            _scenes = AssetDatabase
+            var scenePaths = AssetDatabase
                 .FindAssets("t:Scene", new[] { "Assets" })
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where(p => !IsExcluded(p))
-                .Select(p => new AssetEntry { Path = p, Name = System.IO.Path.GetFileName(p) })
-                .OrderBy(e => e.Path)
+                .OrderBy(p => p)
                 .ToList();
 
-            _prefabs = AssetDatabase
+            var prefabPaths = AssetDatabase
                 .FindAssets("t:Prefab", new[] { "Assets" })
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where(p => !IsExcluded(p))
-                .Select(p => new AssetEntry { Path = p, Name = System.IO.Path.GetFileName(p) })
-                .OrderBy(e => e.Path)
+                .OrderBy(p => p)
                 .ToList();
+
+            int total = scenePaths.Count + prefabPaths.Count;
+            int progress = 0;
+
+            _scenes = new List<AssetEntry>(scenePaths.Count);
+            foreach (var path in scenePaths)
+            {
+                EditorUtility.DisplayProgressBar(
+                    "Scanning Project",
+                    $"Scene: {System.IO.Path.GetFileName(path)}",
+                    total > 0 ? (float)progress / total : 1f);
+
+                var entry = BuildSceneEntry(path);
+                if (entry.Objects.Count > 0)
+                    _scenes.Add(entry);
+
+                progress++;
+            }
+
+            _prefabs = new List<AssetEntry>(prefabPaths.Count);
+            foreach (var path in prefabPaths)
+            {
+                EditorUtility.DisplayProgressBar(
+                    "Scanning Project",
+                    $"Prefab: {System.IO.Path.GetFileName(path)}",
+                    total > 0 ? (float)progress / total : 1f);
+
+                var entry = BuildPrefabEntry(path);
+                if (entry.Objects.Count > 0)
+                    _prefabs.Add(entry);
+
+                progress++;
+            }
+
+            EditorUtility.ClearProgressBar();
 
             _selectedSceneCount = 0;
             _selectedPrefabCount = 0;
         }
 
+        // Opens the scene additively, collects all GameObjects with TMP_Text
+        // along with their current font/material info, then closes it.
+        // NOTE: Two GameObjects with the same name in the same scene will both
+        // be processed when either is selected — known name-collision limitation.
+        private static AssetEntry BuildSceneEntry(string path)
+        {
+            bool isActive = SceneManager.GetActiveScene().path == path;
+            Scene scene;
+
+            if (isActive)
+            {
+                scene = SceneManager.GetActiveScene();
+            }
+            else
+            {
+                scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+                if (!scene.IsValid())
+                    return new AssetEntry { Path = path, Name = System.IO.Path.GetFileName(path) };
+            }
+
+            var objects = scene.GetRootGameObjects()
+                .SelectMany(go => go.GetComponentsInChildren<TMP_Text>(true))
+                .GroupBy(t => t.gameObject)
+                .Select(g => MakeObjectEntry(g.First()))
+                .ToList();
+
+            if (!isActive)
+                EditorSceneManager.CloseScene(scene, true);
+
+            return new AssetEntry
+            {
+                Path = path,
+                Name = System.IO.Path.GetFileName(path),
+                Objects = objects,
+            };
+        }
+
+        private static AssetEntry BuildPrefabEntry(string path)
+        {
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+            var objects = root != null
+                ? root.GetComponentsInChildren<TMP_Text>(true)
+                      .GroupBy(t => t.gameObject)
+                      .Select(g => MakeObjectEntry(g.First()))
+                      .ToList()
+                : new List<ObjectEntry>();
+
+            return new AssetEntry
+            {
+                Path = path,
+                Name = System.IO.Path.GetFileName(path),
+                Objects = objects,
+            };
+        }
+
+        private static ObjectEntry MakeObjectEntry(TMP_Text text) => new ObjectEntry
+        {
+            Name = text.gameObject.name,
+            FontName = text.font != null ? text.font.name : "None",
+            MaterialName = text.fontSharedMaterial != null
+                ? text.fontSharedMaterial.name : "None",
+            Selected = false,
+            CachedInfoWidth = 0f,
+        };
+
+        // Scoped to the font's folder — TMP material presets always live alongside
+        // the font. Avoids a full project scan which triggers the search indexer,
+        // causing lag and native memory leaks.
         private void RebuildMaterialList()
         {
-            if (_targetFont == null)
+            _materialsScanned = false;
+            _sdfMaterials = System.Array.Empty<Material>();
+            _sdfMatNames = System.Array.Empty<string>();
+            _sdfMatIndex = 0;
+
+            if (_targetFont == null) return;
+
+            Texture2D atlas = _targetFont.atlasTexture;
+            if (atlas == null)
             {
-                _sdfMaterials = System.Array.Empty<Material>();
-                _sdfMatNames = System.Array.Empty<string>();
-                _sdfMatIndex = 0;
+                _sdfMatNames = new[] { "Atlas not ready" };
+                _materialsScanned = true;
                 return;
             }
 
-            Texture2D atlas = _targetFont.atlasTexture;
+            string fontPath = AssetDatabase.GetAssetPath(_targetFont);
+            // Guard: GetAssetPath returns empty string for assets not in the database.
+            // An empty search path would fall back to a full project scan.
+            if (string.IsNullOrEmpty(fontPath))
+            {
+                _sdfMatNames = new[] { "Font not in AssetDatabase" };
+                _materialsScanned = true;
+                return;
+            }
+
+            string fontFolder = System.IO.Path.GetDirectoryName(fontPath)
+                                    ?.Replace('\\', '/') ?? "Assets";
 
             _sdfMaterials = AssetDatabase
-                .FindAssets("t:Material")
+                .FindAssets("t:Material", new[] { fontFolder })
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(p => AssetDatabase.LoadAssetAtPath<Material>(p))
                 .Where(m => m != null &&
@@ -151,26 +402,67 @@ namespace NekoLib
 
             _sdfMatNames = _sdfMaterials.Select(m => m.name).ToArray();
 
-            _sdfMatIndex = System.Array.IndexOf(_sdfMaterials, _targetFont.material);
+            // Try to restore the previously saved material. Fall back to the
+            // font's own base material if the saved one isn't in the list.
+            Material savedMat = _settings != null ? _settings.lastMaterial : null;
+            _sdfMatIndex = savedMat != null
+                ? System.Array.IndexOf(_sdfMaterials, savedMat)
+                : -1;
+
+            if (_sdfMatIndex < 0)
+                _sdfMatIndex = System.Array.IndexOf(_sdfMaterials, _targetFont.material);
+
             if (_sdfMatIndex < 0) _sdfMatIndex = 0;
+
+            _materialsScanned = true;
         }
 
         private Material SelectedMaterial
             => _sdfMaterials.Length > 0 ? _sdfMaterials[_sdfMatIndex] : null;
 
-        private void SetSelected(AssetEntry entry, List<AssetEntry> list, bool value)
+        // -------------------------------------------------------------------------
+        // Selection helpers
+        // -------------------------------------------------------------------------
+
+        private void SetAssetSelected(AssetEntry entry, List<AssetEntry> list, bool value)
         {
-            if (entry.Selected == value) return;
             entry.Selected = value;
-            if (list == _scenes) _selectedSceneCount += value ? 1 : -1;
-            else _selectedPrefabCount += value ? 1 : -1;
+            foreach (var obj in entry.Objects)
+                obj.Selected = value;
+            // Sync cached child count with the new blanket selection state.
+            entry.SelectedObjectCount = value ? entry.Objects.Count : 0;
+            UpdateListCount(list);
+        }
+
+        private void SetObjectSelected(AssetEntry asset, List<AssetEntry> list,
+            ObjectEntry obj, bool value)
+        {
+            if (obj.Selected == value) return;
+            obj.Selected = value;
+            asset.SelectedObjectCount += value ? 1 : -1;
+            asset.Selected = asset.SelectedObjectCount > 0;
+            UpdateListCount(list);
         }
 
         private void SetAllSelected(List<AssetEntry> list, bool value)
         {
-            foreach (var e in list) e.Selected = value;
+            foreach (var e in list)
+            {
+                e.Selected = value;
+                foreach (var o in e.Objects) o.Selected = value;
+                e.SelectedObjectCount = value ? e.Objects.Count : 0;
+            }
             if (list == _scenes) _selectedSceneCount = value ? list.Count : 0;
             else _selectedPrefabCount = value ? list.Count : 0;
+        }
+
+        private void UpdateListCount(List<AssetEntry> list)
+        {
+            int count = 0;
+            for (int i = 0; i < list.Count; i++)
+                if (list[i].Selected) count++;
+            if (list == _scenes) _selectedSceneCount = count;
+            else _selectedPrefabCount = count;
         }
 
         // -------------------------------------------------------------------------
@@ -179,10 +471,11 @@ namespace NekoLib
 
         private void OnGUI()
         {
-            // Row textures are the only thing we lazily init here — no GUIStyle
-            // references, so safe at any point during OnGUI.
-            EnsureRowTextures();
+            // Cache on Repaint only — position.height is unreliable during Layout.
+            if (Event.current.type == EventType.Repaint)
+                _windowHeight = position.height;
 
+            EnsureStyles();
             DrawFontSection();
             DrawSeparator();
             DrawExclusionSection();
@@ -193,10 +486,6 @@ namespace NekoLib
             DrawFooter();
         }
 
-        // -------------------------------------------------------------------------
-        // Shared drawing helpers
-        // -------------------------------------------------------------------------
-
         private static void DrawSectionHeader(string title)
         {
             Rect rect = GUILayoutUtility.GetRect(0f, 22f, GUILayout.ExpandWidth(true));
@@ -204,7 +493,6 @@ namespace NekoLib
                 ? new Color(0.18f, 0.18f, 0.18f) : new Color(0.76f, 0.76f, 0.76f));
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height),
                 new Color(0.27f, 0.55f, 0.98f));
-            // EditorStyles.boldLabel is safe here — we are inside OnGUI.
             EditorGUI.LabelField(
                 new Rect(rect.x + 10f, rect.y, rect.width - 10f, rect.height),
                 title, EditorStyles.boldLabel);
@@ -237,27 +525,45 @@ namespace NekoLib
             {
                 _targetFont = newFont;
                 RebuildMaterialList();
+                SaveSettings();
             }
 
             EditorGUILayout.Space(2);
 
-            if (_targetFont != null)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                if (_sdfMaterials.Length > 0)
+                if (_targetFont != null && _materialsScanned && _sdfMaterials.Length > 0)
                 {
+                    EditorGUI.BeginChangeCheck();
                     _sdfMatIndex = EditorGUILayout.Popup(
                         "SDF Material", _sdfMatIndex, _sdfMatNames);
+                    if (EditorGUI.EndChangeCheck())
+                        SaveSettings();
                 }
                 else
                 {
-                    EditorGUILayout.LabelField("SDF Material", "No presets found",
-                        EditorStyles.miniLabel);
+                    using (new EditorGUI.DisabledScope(true))
+                        EditorGUILayout.Popup("SDF Material", 0,
+                            new[] { _targetFont == null
+                                ? "-"
+                                : !_materialsScanned
+                                    ? "Not scanned"
+                                    : "No presets found" });
                 }
-            }
-            else
-            {
-                using (new EditorGUI.DisabledScope(true))
-                    EditorGUILayout.Popup("SDF Material", 0, new[] { "-" });
+
+                // Re-scans the font folder for material presets. Use after
+                // creating a new material preset since the window was opened.
+                using (new EditorGUI.DisabledScope(_targetFont == null))
+                {
+                    if (GUILayout.Button(
+                            new GUIContent("↺", "Refresh material list for this font"),
+                            EditorStyles.miniButton,
+                            GUILayout.Width(22)))
+                    {
+                        RebuildMaterialList();
+                        SaveSettings();
+                    }
+                }
             }
 
             EditorGUILayout.Space(4);
@@ -269,19 +575,18 @@ namespace NekoLib
 
         private void DrawExclusionSection()
         {
-            Rect headerRect = GUILayoutUtility.GetRect(0f, 22f, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(headerRect, EditorGUIUtility.isProSkin
+            Rect hr = GUILayoutUtility.GetRect(0f, 22f, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(hr, EditorGUIUtility.isProSkin
                 ? new Color(0.18f, 0.18f, 0.18f) : new Color(0.76f, 0.76f, 0.76f));
-            EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.y, 3f, headerRect.height),
+            EditorGUI.DrawRect(new Rect(hr.x, hr.y, 3f, hr.height),
                 new Color(0.27f, 0.55f, 0.98f));
 
             _exclusionFoldout = EditorGUI.Foldout(
-                new Rect(headerRect.x + 6f, headerRect.y,
-                    headerRect.width - 80f, headerRect.height),
+                new Rect(hr.x + 6f, hr.y, hr.width - 80f, hr.height),
                 _exclusionFoldout, "Excluded Folders", true, EditorStyles.boldLabel);
 
             if (GUI.Button(
-                    new Rect(headerRect.xMax - 72f, headerRect.y + 3f, 68f, 16f),
+                    new Rect(hr.xMax - 72f, hr.y + 3f, 68f, 16f),
                     "Rescan", EditorStyles.miniButton))
                 Scan();
 
@@ -306,9 +611,10 @@ namespace NekoLib
                                 allowSceneObjects: false, GUILayout.Height(16));
                             EditorGUI.EndDisabledGroup();
 
-                            if (GUILayout.Button("✕", IconBtnStyle()))
+                            if (GUILayout.Button("✕", _iconBtnStyle))
                             {
                                 _excludedFolders.RemoveAt(i);
+                                SaveSettings();
                                 break;
                             }
                         }
@@ -316,13 +622,11 @@ namespace NekoLib
                 }
             }
 
-            // Silent drop zone — tooltip only, no visible label.
             Rect dropRect = GUILayoutUtility.GetRect(0f, 20f, GUILayout.ExpandWidth(true));
             GUI.Box(dropRect,
                 new GUIContent("", "Drag folders from the Project window to exclude them"),
                 EditorStyles.helpBox);
             HandleFolderDrop(dropRect);
-
             EditorGUILayout.Space(2);
         }
 
@@ -343,12 +647,17 @@ namespace NekoLib
             if (evt.type == EventType.DragPerform && anyFolder)
             {
                 DragAndDrop.AcceptDrag();
+                bool added = false;
                 foreach (var obj in DragAndDrop.objectReferences)
                 {
                     if (obj is not DefaultAsset da) continue;
                     if (!AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(da))) continue;
-                    if (!_excludedFolders.Contains(da)) _excludedFolders.Add(da);
+                    if (_excludedFolders.Contains(da)) continue;
+                    _excludedFolders.Add(da);
+                    added = true;
                 }
+
+                if (added) SaveSettings();
             }
 
             evt.Use();
@@ -366,7 +675,6 @@ namespace NekoLib
             var scenes = _scenes;
             var prefabs = _prefabs;
 
-            // Toolbar row — tabs + count + All / None.
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
                 if (GUILayout.Toggle(_tab == 0,
@@ -378,29 +686,37 @@ namespace NekoLib
 
                 GUILayout.FlexibleSpace();
 
-                var currentList = _tab == 0 ? scenes : prefabs;
+                var list = _tab == 0 ? scenes : prefabs;
                 int selectedCount = _tab == 0 ? _selectedSceneCount : _selectedPrefabCount;
 
-                GUILayout.Label($"{selectedCount} / {currentList.Count}",
+                GUILayout.Label($"{selectedCount} / {list.Count}",
                     EditorStyles.toolbarButton, GUILayout.Width(56));
 
                 if (GUILayout.Button("All", EditorStyles.toolbarButton, GUILayout.Width(36)))
-                    SetAllSelected(currentList, true);
+                    SetAllSelected(list, true);
                 if (GUILayout.Button("None", EditorStyles.toolbarButton, GUILayout.Width(42)))
-                    SetAllSelected(currentList, false);
+                    SetAllSelected(list, false);
             }
 
-            // Re-read after possible tab change.
-            var list = _tab == 0 ? scenes : prefabs;
+            var currentList = _tab == 0 ? scenes : prefabs;
+
+            // Plain loop — avoids per-frame LINQ allocation.
             float rowH = EditorGUIUtility.singleLineHeight + 2f;
-            float listHeight = Mathf.Clamp(list.Count * rowH, 60f, 280f);
+            int visibleRows = 0;
+            for (int i = 0; i < currentList.Count; i++)
+                visibleRows += 1 + (currentList[i].Foldout ? currentList[i].Objects.Count : 0);
+
+            float contentH = Mathf.Max(visibleRows * rowH, 1f);
+            float available = Mathf.Max(_windowHeight - 280f, 60f);
+            float listHeight = Mathf.Min(contentH, available);
+
             Vector2 scroll = _tab == 0 ? _sceneScroll : _prefabScroll;
 
             using (var sv = new EditorGUILayout.ScrollViewScope(scroll, GUILayout.Height(listHeight)))
             {
                 scroll = sv.scrollPosition;
 
-                if (list.Count == 0)
+                if (currentList.Count == 0)
                 {
                     EditorGUILayout.Space(8);
                     EditorGUILayout.LabelField("No assets found.",
@@ -408,30 +724,99 @@ namespace NekoLib
                 }
                 else
                 {
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        var entry = list[i];
-                        using (new EditorGUILayout.HorizontalScope(RowStyle(i)))
-                        {
-                            bool next = EditorGUILayout.ToggleLeft(
-                                new GUIContent(entry.Name, entry.Path),
-                                entry.Selected, GUILayout.Height(16));
-
-                            if (next != entry.Selected)
-                                SetSelected(entry, list, next);
-
-                            if (GUILayout.Button(
-                                    new GUIContent("→", "Ping in Project window"),
-                                    IconBtnStyle()))
-                                EditorGUIUtility.PingObject(
-                                    AssetDatabase.LoadAssetAtPath<Object>(entry.Path));
-                        }
-                    }
+                    for (int i = 0; i < currentList.Count; i++)
+                        DrawAssetRow(currentList[i], currentList, i);
                 }
             }
 
             if (_tab == 0) _sceneScroll = scroll;
             else _prefabScroll = scroll;
+        }
+
+        private void DrawAssetRow(AssetEntry entry, List<AssetEntry> list, int index)
+        {
+            // All entries have at least one Object (enforced at scan time),
+            // so foldout is always shown.
+            using (new EditorGUILayout.HorizontalScope(RowStyle(index)))
+            {
+                Rect foldRect = GUILayoutUtility.GetRect(
+                    14f, 20f, GUILayout.Width(14), GUILayout.Height(20));
+                bool newFoldout = EditorGUI.Foldout(foldRect, entry.Foldout, GUIContent.none);
+                if (newFoldout != entry.Foldout)
+                    entry.Foldout = newFoldout;
+
+                // BeginChangeCheck ensures SetAssetSelected fires only on actual
+                // user click, never on repaint — prevents the select-all bug.
+                var state = entry.ChildCheckState();
+                bool mixed = state == AssetEntry.CheckState.Mixed;
+                bool current = state == AssetEntry.CheckState.All;
+
+                EditorGUI.BeginChangeCheck();
+                using (new EditorGUI.MixedValueScope(mixed))
+                    EditorGUILayout.Toggle(current, GUILayout.Width(14));
+
+                if (EditorGUI.EndChangeCheck())
+                    SetAssetSelected(entry, list, state != AssetEntry.CheckState.All);
+
+                EditorGUILayout.LabelField(
+                    new GUIContent(entry.Name, entry.Path),
+                    GUILayout.Height(16));
+
+                if (GUILayout.Button(
+                        new GUIContent("→", "Ping in Project window"),
+                        _iconBtnStyle))
+                    EditorGUIUtility.PingObject(
+                        AssetDatabase.LoadAssetAtPath<Object>(entry.Path));
+            }
+
+            if (!entry.Foldout) return;
+
+            for (int j = 0; j < entry.Objects.Count; j++)
+            {
+                var obj = entry.Objects[j];
+
+                Rect rowRect = GUILayoutUtility.GetRect(
+                    0f, 20f, GUILayout.ExpandWidth(true), GUILayout.Height(20));
+
+                if (Event.current.type == EventType.Repaint)
+                    RowStyle(j, child: true).Draw(rowRect, false, false, false, false);
+
+                const float indent = 28f;
+                const float toggleWidth = 18f;
+                const float rightMargin = 8f;
+                const float minNameWidth = 60f;
+
+                // infoWidth cached per ObjectEntry — nameWidth takes the remainder.
+                float infoWidth = GetInfoWidth(obj);
+                float totalWidth = rowRect.width - indent - toggleWidth;
+                float nameWidth = Mathf.Max(totalWidth - infoWidth - rightMargin, minNameWidth);
+
+                var toggleRect = new Rect(
+                    rowRect.x + indent, rowRect.y + 2f,
+                    toggleWidth, rowRect.height - 4f);
+
+                var nameRect = new Rect(
+                    toggleRect.xMax, rowRect.y,
+                    nameWidth, rowRect.height);
+
+                var infoRect = new Rect(
+                    nameRect.xMax, rowRect.y,
+                    rowRect.xMax - nameRect.xMax - rightMargin, rowRect.height);
+
+                EditorGUI.BeginChangeCheck();
+                bool next = EditorGUI.Toggle(toggleRect, obj.Selected);
+                if (EditorGUI.EndChangeCheck())
+                    SetObjectSelected(entry, list, obj, next);
+
+                EditorGUI.LabelField(nameRect,
+                    new GUIContent(obj.Name, "GameObject containing TMP_Text"),
+                    EditorStyles.miniLabel);
+
+                EditorGUI.LabelField(infoRect,
+                    new GUIContent(obj.InfoText,
+                        $"Font: {obj.FontName}\nMaterial: {obj.MaterialName}"),
+                    _infoLabelStyle);
+            }
         }
 
         // -------------------------------------------------------------------------
@@ -489,7 +874,30 @@ namespace NekoLib
             int totalFound = 0;
             int totalReplaced = 0;
 
-            void ProcessText(TMP_Text text)
+            string newFontName = _targetFont.name;
+            string newMatName = mat != null ? mat.name : "None";
+
+            // Two GameObjects with the same name in the same asset will both be
+            // processed when either is selected — known name-collision limitation.
+            bool ShouldProcess(AssetEntry asset, TMP_Text text)
+                => asset.Objects.Any(o => o.Selected && o.Name == text.gameObject.name);
+
+            // Updates display strings in-place and invalidates cached width so
+            // the info label remeasures on next draw without a rescan.
+            void UpdateEntryInfo(AssetEntry asset, string goName)
+            {
+                foreach (var obj in asset.Objects)
+                {
+                    if (obj.Name != goName) continue;
+                    obj.FontName = newFontName;
+                    obj.MaterialName = newMatName;
+                    obj.InvalidateInfoWidth();
+                }
+            }
+
+            // Undo.RecordObject omitted for prefabs — EditPrefabContentsScope manages
+            // its own serialization; Undo is not valid in asset-editing mode.
+            void ProcessTextInPrefab(TMP_Text text, AssetEntry entry)
             {
                 totalFound++;
                 bool changed = false;
@@ -497,43 +905,87 @@ namespace NekoLib
                 if (text.font != _targetFont)
                 {
                     text.font = _targetFont;
+                    EditorUtility.SetDirty(text);
                     changed = true;
                 }
 
                 if (mat != null && text.fontSharedMaterial != mat)
                 {
                     text.fontSharedMaterial = mat;
+                    EditorUtility.SetDirty(text);
                     changed = true;
                 }
 
-                if (changed) totalReplaced++;
+                if (changed)
+                {
+                    totalReplaced++;
+                    UpdateEntryInfo(entry, text.gameObject.name);
+                }
             }
 
+            void ProcessTextInScene(TMP_Text text, AssetEntry entry)
+            {
+                totalFound++;
+                bool changed = false;
+
+                if (text.font != _targetFont)
+                {
+                    Undo.RecordObject(text, "Replace TMP Font");
+                    text.font = _targetFont;
+                    EditorUtility.SetDirty(text);
+                    changed = true;
+                }
+
+                if (mat != null && text.fontSharedMaterial != mat)
+                {
+                    Undo.RecordObject(text, "Replace TMP Font");
+                    text.fontSharedMaterial = mat;
+                    EditorUtility.SetDirty(text);
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    totalReplaced++;
+                    UpdateEntryInfo(entry, text.gameObject.name);
+                }
+            }
+
+            // --- Prefabs ---
             foreach (var entry in _prefabs.Where(e => e.Selected))
             {
                 using var scope = new PrefabUtility.EditPrefabContentsScope(entry.Path);
                 foreach (var text in scope.prefabContentsRoot
                     .GetComponentsInChildren<TMP_Text>(true))
-                    ProcessText(text);
+                {
+                    if (ShouldProcess(entry, text))
+                        ProcessTextInPrefab(text, entry);
+                }
             }
 
+            // --- Scenes ---
             string activeScenePath = SceneManager.GetActiveScene().path;
             foreach (var entry in _scenes.Where(e => e.Selected))
             {
-                var scene = EditorSceneManager.OpenScene(entry.Path, OpenSceneMode.Additive);
-                bool dirty = false;
+                bool isActive = entry.Path == activeScenePath;
+                var scene = isActive
+                    ? SceneManager.GetActiveScene()
+                    : EditorSceneManager.OpenScene(entry.Path, OpenSceneMode.Additive);
 
+                if (!scene.IsValid()) continue;
+
+                bool dirty = false;
                 foreach (var root in scene.GetRootGameObjects())
                     foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
                     {
+                        if (!ShouldProcess(entry, text)) continue;
                         int before = totalReplaced;
-                        ProcessText(text);
+                        ProcessTextInScene(text, entry);
                         if (totalReplaced > before) dirty = true;
                     }
 
                 if (dirty) EditorSceneManager.SaveScene(scene);
-                if (entry.Path != activeScenePath)
-                    EditorSceneManager.CloseScene(scene, true);
+                if (!isActive) EditorSceneManager.CloseScene(scene, true);
             }
 
             AssetDatabase.SaveAssets();

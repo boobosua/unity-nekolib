@@ -13,6 +13,9 @@ namespace NekoLib
         public List<string> scenePaths = new List<string>();
     }
 
+#if ODIN_INSPECTOR
+    [Sirenix.OdinInspector.HideMonoScript]
+#endif
     internal class SceneSwitcherSettings : ScriptableObject
     {
 #if ODIN_INSPECTOR
