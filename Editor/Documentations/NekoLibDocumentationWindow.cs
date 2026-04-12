@@ -613,7 +613,7 @@ namespace NekoLib
                 "DateTime","TimeSpan","Type","Enum","Math","Mathf","Random",
                 "Countdown","Stopwatch","TimerToken","PrefabPool","PoolableBehaviour",
                 "IPoolable","LazySingleton","PersistentSingleton","Swatch","Log",
-                "TimeService","NetworkService","ConnectionStatus","Grid",
+                "TimeService","NetworkService","ConnectionStatus",
                 "FloatEvent","IntEvent","StringEvent","BoolEvent","YieldTask",
                 "SpriteAnimator","UISpriteAnimator","AutoDestroy","LookAtCamera","AutoOrbitAround",
                 "ScrollingSpriteRenderer","ScrollingImage","ScrollingRawImage","ScrollingMeshRenderer"
@@ -798,7 +798,6 @@ namespace NekoLib
             DocCategory.Core => "⚙",
             DocCategory.Components => "◈",
             DocCategory.Extensions => "⊕",
-            DocCategory.Collections => "▤",
             DocCategory.Services => "◎",
             DocCategory.Utilities => "⊞",
             DocCategory.EditorTools => "◧",

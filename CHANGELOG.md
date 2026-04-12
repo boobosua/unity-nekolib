@@ -53,7 +53,6 @@
 
 ### Introduces significant improvements and new features:
 
-- Add Grid Collection
 - New collection extensions
 - Add option to hide toolbar tools
 - Add more time scale max values

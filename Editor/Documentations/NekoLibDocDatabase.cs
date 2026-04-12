@@ -567,35 +567,6 @@ Vector2 screen = camera.GetScreenSize();",
                     Category = DocCategory.Extensions
                 },
 
-                // ── Collections ─────────────────────────────────
-                new NekoLibDocEntry
-                {
-                    Title = "Grid<T>",
-                    Namespace = "NekoLib.Collections",
-                    Summary = "Flat-array backed 2D grid with ref access, Span rows, safe TryGet/TrySet, and search helpers.",
-                    Description = "Stores data in a contiguous row-major array for cache-friendly access. The unchecked indexer [x, y] is fast; TryGet/TrySet are bounds-safe. GetRowSpan() returns a Span<T> for a row that writes back into the grid. ForEach with ref gives in-place mutation without index overhead.\n\nPrefer Grid<T> over T[,] for performance-critical 2D buffers and Span-based APIs.",
-                    Code =
-@"var grid = new Grid<int>(10, 5);
-
-grid[3, 2] = 42;       // fast unchecked
-int v = grid[3, 2];
-
-if (grid.TryGet(3, 2, out int val)) Debug.Log(val);
-grid.TrySet(0, 0, 7);
-
-grid.Fill(0);
-grid.Clear();
-
-grid.ForEach((x, y, ref int cell) => cell += 1);
-
-Span<int> row = grid.GetRowSpan(2);
-row[0] = 99;   // writes back into grid
-
-var g2 = Grid<int>.From2D(source2DArray);",
-                    Tags = new[] { "Grid", "Span", "Performance", "2D" },
-                    Category = DocCategory.Collections
-                },
-
                 // ── Services ────────────────────────────────────
                 new NekoLibDocEntry
                 {

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NekoLib
 {
-    public enum DocCategory { Core, Components, Extensions, Collections, Services, Utilities, EditorTools, NekoSignal, NekoFlow, NekoSerializer }
+    public enum DocCategory { Core, Components, Extensions, Services, Utilities, EditorTools, NekoSignal, NekoFlow, NekoSerializer }
 
     [Serializable]
     public sealed class NekoLibDocEntry

@@ -291,28 +291,6 @@ bool hasNulls = dict.ContainsNullValues();
 Dictionary<K, V> copy = dict.AsNewCopy();
 string formatted = dict.ToLiteral(); // "{key1: value1, key2: value2}"
 
-// Grid<T> operations
-Grid<int> grid = new Grid<int>(10, 5);
-grid[3, 2] = 42;                       // unchecked fast indexer
-int v = grid[3, 2];
-
-bool contains = grid.Contains(42);    // linear scan over contiguous buffer
-// IndexOf returns (x,y) tuple and throws if not found
-var pos = grid.IndexOf(42);            // (int x, int y)
-// Safe variants
-if (grid.TryIndexOf(42, out var foundPos)) Log.Info(foundPos);
-
-// Last occurrence helpers
-var last = grid.LastIndexOf(42);
-if (grid.TryLastIndexOf(42, out var lastPos)) Log.Info(lastPos);
-
-int first = grid.First();              // element at (0,0)
-int lastElem = grid.Last();            // element at (width-1,height-1)
-bool emptyGrid = grid.IsNullOrEmpty();
-// For reference-type grids:
-bool hasNullsInGrid = default(Grid<object>).IsNullOrEmpty() ? false : grid.ContainsNull();
-string literal = grid.ToLiteral();     // compact textual representation
-
 // Other collections
 string queueFormatted = queue.ToLiteral();
 string stackFormatted = stack.ToLiteral();
