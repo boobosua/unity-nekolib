@@ -26,6 +26,7 @@ namespace NekoLib
             public string Code;
             public string[] Tags;
             public DocCategory Category;
+            public DocMember[] Members;
         }
 
         private List<Entry> _db;
@@ -40,6 +41,12 @@ namespace NekoLib
         private readonly Dictionary<string, string> _codeCache = new Dictionary<string, string>();
         // Per-entry copy feedback (key = Title)
         private readonly Dictionary<string, double> _copyUntil = new Dictionary<string, double>();
+        // Per-member foldout state (key = "Title::Signature")
+        private readonly Dictionary<string, bool> _memberFoldouts = new Dictionary<string, bool>();
+        // Per-member copy feedback (key = "Title::Signature")
+        private readonly Dictionary<string, double> _memberCopyUntil = new Dictionary<string, double>();
+        // Per-member highlighted code cache
+        private readonly Dictionary<string, string> _memberCodeCache = new Dictionary<string, string>();
         // Stable content width sampled once per Layout pass from the scroll view
         private float _contentWidth;
         private float _lastContentWidth;
@@ -82,6 +89,10 @@ namespace NekoLib
         private GUIStyle _styleSearch;
         private GUIStyle _styleBadge;
         private GUIStyle _styleArrow;
+        private GUIStyle _styleSectionHdr;
+        private GUIStyle _styleMemberSig;
+        private GUIStyle _styleMemberSummary;
+        private GUIStyle _styleMemberKind;
 
         private void OnEnable()
         {
@@ -102,7 +113,8 @@ namespace NekoLib
                     Description = e.Description,
                     Code = e.Code,
                     Tags = e.Tags,
-                    Category = e.Category
+                    Category = e.Category,
+                    Members = e.Members
                 });
             }
         }
@@ -114,6 +126,10 @@ namespace NekoLib
 
             // Repaint while any copy feedback is active
             foreach (var kv in _copyUntil)
+            {
+                if (EditorApplication.timeSinceStartup < kv.Value) { Repaint(); break; }
+            }
+            foreach (var kv in _memberCopyUntil)
             {
                 if (EditorApplication.timeSinceStartup < kv.Value) { Repaint(); break; }
             }
@@ -491,9 +507,18 @@ namespace NekoLib
                 GUILayout.Space(8f);
             }
 
-            // Code block — skip if the code contains nothing but comments/whitespace
-            if (!string.IsNullOrEmpty(entry.Code) && !IsCommentOnlyCode(entry.Code))
+            // Members section (Properties / Public Methods / Callbacks tables)
+            if (entry.Members != null && entry.Members.Length > 0)
             {
+                GUILayout.Space(4f);
+                DrawMembersSection(entry, cw);
+            }
+
+            // Overview code block — hidden when member foldouts are present (each member carries its own example)
+            bool hasMembers = entry.Members != null && entry.Members.Length > 0;
+            if (!hasMembers && !string.IsNullOrEmpty(entry.Code) && !IsCommentOnlyCode(entry.Code))
+            {
+                GUILayout.Space(4f);
                 DrawCardCodeBlock(entry, cw);
                 GUILayout.Space(4f);
             }
@@ -568,6 +593,172 @@ namespace NekoLib
             {
                 EditorGUI.DrawRect(codeRect, CodeBg);
                 GUI.Label(new Rect(codeRect.x + 14f, codeRect.y + 10f, codeRect.width - 28f, codeH - 20f),
+                    highlighted, _styleCode);
+            }
+        }
+
+        // ── Member tables (Properties / Public Methods / Callbacks) ──────────
+        private static readonly DocMemberKind[] MemberKindOrder =
+            { DocMemberKind.Property, DocMemberKind.Method, DocMemberKind.Callback };
+
+        private void DrawMembersSection(Entry entry, float cw)
+        {
+            foreach (var kind in MemberKindOrder)
+            {
+                // Collect members of this kind that have content
+                var group = new List<DocMember>();
+                foreach (var m in entry.Members)
+                    if (m.Kind == kind) group.Add(m);
+                if (group.Count == 0) continue;
+
+                string sectionTitle = kind switch
+                {
+                    DocMemberKind.Property => "Properties",
+                    DocMemberKind.Method   => "Public Methods",
+                    DocMemberKind.Callback => "Callbacks",
+                    _                      => kind.ToString()
+                };
+
+                // Section header
+                var hdrFull = EditorGUILayout.GetControlRect(false, 28f);
+                var hdrRect = new Rect(hdrFull.x + CardPad, hdrFull.y, cw, 28f);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    EditorGUI.DrawRect(hdrRect, GroupHdr);
+                    EditorGUI.DrawRect(new Rect(hdrRect.x, hdrRect.y, 3f, hdrRect.height), Accent);
+                    GUI.Label(new Rect(hdrRect.x + 10f, hdrRect.y, hdrRect.width - 10f, hdrRect.height),
+                        sectionTitle, _styleSectionHdr);
+                }
+
+                // Column header bar
+                var colFull = EditorGUILayout.GetControlRect(false, 20f);
+                var colRect = new Rect(colFull.x + CardPad, colFull.y, cw, 20f);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    EditorGUI.DrawRect(colRect, CodeHdr);
+                    float sigW = colRect.width * 0.42f;
+                    GUI.Label(new Rect(colRect.x + 8f, colRect.y, sigW, colRect.height),
+                        "Name", _styleMemberKind);
+                    GUI.Label(new Rect(colRect.x + sigW + 8f, colRect.y, colRect.width - sigW - 8f, colRect.height),
+                        "Description", _styleMemberKind);
+                }
+
+                // Rows
+                foreach (var member in group)
+                    DrawMemberRow(entry, member, cw);
+
+                GUILayout.Space(6f);
+            }
+        }
+
+        private void DrawMemberRow(Entry entry, DocMember member, float cw)
+        {
+            string key = entry.Title + "::" + member.Signature;
+            if (!_memberFoldouts.TryGetValue(key, out bool expanded))
+            {
+                _memberFoldouts[key] = false;
+                expanded = false;
+            }
+
+            bool hasCode = !string.IsNullOrEmpty(member.Code) && !IsCommentOnlyCode(member.Code);
+
+            // Compute dynamic row height based on summary content
+            float sigW = cw * 0.42f;
+            float summaryW = cw - sigW - 28f;
+            float summaryH = _styleMemberSummary.CalcHeight(
+                new GUIContent(member.Summary ?? ""), Mathf.Max(summaryW, 40f));
+            float rowH = Mathf.Max(30f, summaryH + 12f);
+
+            var rowFull = EditorGUILayout.GetControlRect(false, rowH);
+            var rowRect = new Rect(rowFull.x + CardPad, rowFull.y, cw, rowH);
+            bool hovered = rowRect.Contains(Event.current.mousePosition);
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Color rowBg = expanded
+                    ? new Color(Accent.r, Accent.g, Accent.b, 0.08f)
+                    : (hovered && hasCode ? RowHover : CodeBg);
+                EditorGUI.DrawRect(rowRect, rowBg);
+                EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f),
+                    new Color(Sep.r, Sep.g, Sep.b, 0.5f));
+
+                // Expand arrow (only if has code)
+                if (hasCode)
+                {
+                    string arrow = expanded ? "▾" : "▸";
+                    GUI.Label(new Rect(rowRect.x + 4f, rowRect.y + 6f, 14f, 18f), arrow,
+                        new GUIStyle(_styleArrow) { fontSize = 10 });
+                }
+
+                // Signature — top-aligned so it stays readable for tall rows
+                GUI.Label(new Rect(rowRect.x + 20f, rowRect.y + 6f, sigW - 24f, rowH - 6f),
+                    member.Signature, _styleMemberSig);
+
+                // Summary — word-wrapped, top-aligned
+                GUI.Label(new Rect(rowRect.x + sigW + 8f, rowRect.y + 6f, summaryW, summaryH),
+                    member.Summary, _styleMemberSummary);
+            }
+
+            if (hasCode && Event.current.type == EventType.MouseDown
+                && rowRect.Contains(Event.current.mousePosition))
+            {
+                _memberFoldouts[key] = !expanded;
+                Event.current.Use();
+                Repaint();
+            }
+
+            if (expanded && hasCode)
+                DrawMemberCodeBlock(member, key, cw);
+        }
+
+        private void DrawMemberCodeBlock(DocMember member, string key, float cw)
+        {
+            if (!_memberCodeCache.TryGetValue(key, out string highlighted))
+            {
+                highlighted = SyntaxHighlight(member.Code);
+                _memberCodeCache[key] = highlighted;
+            }
+
+            bool hasCopyFeedback = _memberCopyUntil.TryGetValue(key, out double until)
+                && EditorApplication.timeSinceStartup < until;
+
+            // Header bar
+            var hdrFull = EditorGUILayout.GetControlRect(false, 22f);
+            var hdrRect = new Rect(hdrFull.x + CardPad + 20f, hdrFull.y, cw - 20f, 22f);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(hdrRect, CodeHdr);
+                GUI.Label(hdrRect, "C#", new GUIStyle(EditorStyles.miniLabel)
+                {
+                    normal = { textColor = TextDim },
+                    alignment = TextAnchor.MiddleLeft,
+                    padding = new RectOffset(8, 0, 0, 0)
+                });
+                GUI.Label(hdrRect, hasCopyFeedback ? "Copied!" : "Copy", new GUIStyle(EditorStyles.miniLabel)
+                {
+                    normal = { textColor = hasCopyFeedback ? new Color(0.30f, 0.78f, 0.45f, 1f) : TextDim },
+                    alignment = TextAnchor.MiddleRight,
+                    padding = new RectOffset(0, 8, 0, 0)
+                });
+            }
+
+            if (Event.current.type == EventType.MouseDown && hdrRect.Contains(Event.current.mousePosition))
+            {
+                EditorGUIUtility.systemCopyBuffer = member.Code;
+                _memberCopyUntil[key] = EditorApplication.timeSinceStartup + 1.8;
+                Event.current.Use();
+                Repaint();
+            }
+
+            // Code body
+            float codeW = cw - 20f;
+            float codeH = _styleCode.CalcHeight(new GUIContent(member.Code), codeW - 28f) + 20f;
+            var codeFull = EditorGUILayout.GetControlRect(false, codeH);
+            var codeRect = new Rect(codeFull.x + CardPad + 20f, codeFull.y, codeW, codeH);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(codeRect, CodeBg);
+                GUI.Label(new Rect(codeRect.x + 12f, codeRect.y + 8f, codeRect.width - 24f, codeH - 16f),
                     highlighted, _styleCode);
             }
         }
@@ -942,6 +1133,38 @@ namespace NekoLib
             _styleSearch = new GUIStyle(EditorStyles.toolbarSearchField)
             {
                 fixedHeight = 0
+            };
+
+            _styleSectionHdr = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 11,
+                normal = { textColor = TextMain },
+                alignment = TextAnchor.MiddleLeft
+            };
+
+            _styleMemberKind = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = TextDim }
+            };
+
+            _styleMemberSig = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = Skin ? new Color(0.70f, 0.88f, 1.00f) : new Color(0.08f, 0.28f, 0.56f) },
+                clipping = TextClipping.Clip
+            };
+
+            _styleMemberSummary = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = TextDim },
+                clipping = TextClipping.Clip
             };
         }
     }
