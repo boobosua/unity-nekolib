@@ -52,6 +52,8 @@ namespace NekoLib
         private float _lastContentWidth;
         // Truncated summary cache (key = entry title); cleared on window resize
         private readonly Dictionary<string, string> _summaryCache = new Dictionary<string, string>();
+        // Member row height cache (key = "Title::Sig:cw"); cleared on window resize
+        private readonly Dictionary<string, float> _rowHeightCache = new Dictionary<string, float>();
 
         private const float SidebarW = 236f;
         private const float CatRowH = 30f;
@@ -65,14 +67,23 @@ namespace NekoLib
         private Color Sep => Skin ? new Color(0.27f, 0.27f, 0.29f) : new Color(0.70f, 0.70f, 0.73f);
         private Color RowHover => Skin ? new Color(0.24f, 0.25f, 0.28f) : new Color(0.79f, 0.81f, 0.85f);
         private Color GroupHdr => Skin ? new Color(0.21f, 0.22f, 0.25f) : new Color(0.82f, 0.83f, 0.86f);
-        private Color CodeBg => Skin ? new Color(0.13f, 0.14f, 0.16f) : new Color(0.92f, 0.93f, 0.95f);
-        private Color CodeHdr => Skin ? new Color(0.20f, 0.21f, 0.24f) : new Color(0.77f, 0.78f, 0.81f);
         private Color SummaryBox => Skin ? new Color(0.19f, 0.24f, 0.36f) : new Color(0.88f, 0.92f, 0.98f);
         private Color BadgeBg => Skin ? new Color(0.27f, 0.28f, 0.31f) : new Color(0.73f, 0.74f, 0.77f);
         private Color TextMain => Skin ? new Color(0.88f, 0.88f, 0.90f) : new Color(0.12f, 0.12f, 0.15f);
         private Color TextDim => Skin ? new Color(0.55f, 0.55f, 0.58f) : new Color(0.42f, 0.42f, 0.46f);
         private Color TextCode => Skin ? new Color(0.80f, 0.84f, 0.92f) : new Color(0.14f, 0.18f, 0.26f);
         private Color CardCollapsed => Skin ? new Color(0.22f, 0.23f, 0.26f) : new Color(0.87f, 0.88f, 0.90f);
+        // Member table — three clearly distinct layers
+        // Blue-tinted section title bars ("Properties", "Public Methods", "Callbacks")
+        private Color ApiSectionHdr => Skin ? new Color(0.17f, 0.24f, 0.38f) : new Color(0.72f, 0.80f, 0.92f);
+        // Very dark neutral column-header bar ("NAME / DESCRIPTION")
+        private Color MemberTableHdrBg => Skin ? new Color(0.13f, 0.14f, 0.17f) : new Color(0.74f, 0.75f, 0.78f);
+        // Clearly lighter neutral rows
+        private Color MemberRowBg => Skin ? new Color(0.25f, 0.26f, 0.29f) : new Color(0.88f, 0.89f, 0.92f);
+        // Code block — terminal-dark body + teal-accented header
+        private Color CodeBlockBody => Skin ? new Color(0.09f, 0.10f, 0.12f) : new Color(0.95f, 0.96f, 0.97f);
+        private Color CodeBlockHdr => Skin ? new Color(0.10f, 0.18f, 0.19f) : new Color(0.71f, 0.83f, 0.81f);
+        private Color CodeBlockAccent => Skin ? new Color(0.18f, 0.70f, 0.60f) : new Color(0.04f, 0.50f, 0.42f);
 
         private bool Skin => EditorGUIUtility.isProSkin;
 
@@ -347,6 +358,7 @@ namespace NekoLib
                 {
                     _lastContentWidth = probe.width;
                     _summaryCache.Clear();
+                    _rowHeightCache.Clear();
                 }
                 _contentWidth = probe.width;
             }
@@ -557,24 +569,30 @@ namespace NekoLib
             bool hasCopyFeedback = _copyUntil.TryGetValue(entry.Title, out double until)
                 && EditorApplication.timeSinceStartup < until;
 
-            // Header bar
+            // Header bar — teal accent
             var hdrFull = EditorGUILayout.GetControlRect(false, 26f);
             var hdrRect = new Rect(hdrFull.x + CardPad, hdrFull.y, cw, 26f);
             if (Event.current.type == EventType.Repaint)
             {
-                EditorGUI.DrawRect(hdrRect, CodeHdr);
-                GUI.Label(hdrRect, "C#", new GUIStyle(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = TextDim },
-                    alignment = TextAnchor.MiddleLeft,
-                    padding = new RectOffset(10, 0, 0, 0)
-                });
-                GUI.Label(hdrRect, hasCopyFeedback ? "Copied!" : "Copy", new GUIStyle(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = hasCopyFeedback ? new Color(0.30f, 0.78f, 0.45f, 1f) : TextDim },
-                    alignment = TextAnchor.MiddleRight,
-                    padding = new RectOffset(0, 10, 0, 0)
-                });
+                EditorGUI.DrawRect(hdrRect, CodeBlockHdr);
+                EditorGUI.DrawRect(new Rect(hdrRect.x, hdrRect.y, 3f, hdrRect.height), CodeBlockAccent);
+                GUI.Label(new Rect(hdrRect.x + 10f, hdrRect.y, 40f, hdrRect.height),
+                    "C#", new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        fontStyle = FontStyle.Bold,
+                        normal = { textColor = CodeBlockAccent },
+                        alignment = TextAnchor.MiddleLeft
+                    });
+                bool copyHovered = hdrRect.Contains(Event.current.mousePosition);
+                GUI.Label(hdrRect, hasCopyFeedback ? "✓ Copied!" : (copyHovered ? "Copy ▸" : "Copy"),
+                    new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        normal = { textColor = hasCopyFeedback
+                            ? new Color(0.30f, 0.78f, 0.45f, 1f)
+                            : (copyHovered ? TextMain : TextDim) },
+                        alignment = TextAnchor.MiddleRight,
+                        padding = new RectOffset(0, 10, 0, 0)
+                    });
             }
 
             if (Event.current.type == EventType.MouseDown && hdrRect.Contains(Event.current.mousePosition))
@@ -585,15 +603,18 @@ namespace NekoLib
                 Repaint();
             }
 
-            // Code body
+            // Code body — terminal-dark background
             float codeH = _styleCode.CalcHeight(new GUIContent(entry.Code), cw - 28f) + 24f;
             var codeFull = EditorGUILayout.GetControlRect(false, codeH);
             var codeRect = new Rect(codeFull.x + CardPad, codeFull.y, cw, codeH);
             if (Event.current.type == EventType.Repaint)
             {
-                EditorGUI.DrawRect(codeRect, CodeBg);
+                EditorGUI.DrawRect(codeRect, CodeBlockBody);
+                EditorGUI.DrawRect(new Rect(codeRect.x, codeRect.y, 3f, codeRect.height), CodeBlockAccent);
                 GUI.Label(new Rect(codeRect.x + 14f, codeRect.y + 10f, codeRect.width - 28f, codeH - 20f),
                     highlighted, _styleCode);
+                EditorGUI.DrawRect(new Rect(codeRect.x, codeRect.yMax - 1f, codeRect.width, 1f),
+                    new Color(CodeBlockAccent.r, CodeBlockAccent.g, CodeBlockAccent.b, 0.30f));
             }
         }
 
@@ -619,35 +640,46 @@ namespace NekoLib
                     _                      => kind.ToString()
                 };
 
-                // Section header
+                // Breathing space before each section (except first)
+                GUILayout.Space(8f);
+
+                // Section header — blue-tinted, clearly distinct from rows and code blocks
                 var hdrFull = EditorGUILayout.GetControlRect(false, 28f);
                 var hdrRect = new Rect(hdrFull.x + CardPad, hdrFull.y, cw, 28f);
                 if (Event.current.type == EventType.Repaint)
                 {
-                    EditorGUI.DrawRect(hdrRect, GroupHdr);
+                    EditorGUI.DrawRect(hdrRect, ApiSectionHdr);
                     EditorGUI.DrawRect(new Rect(hdrRect.x, hdrRect.y, 3f, hdrRect.height), Accent);
                     GUI.Label(new Rect(hdrRect.x + 10f, hdrRect.y, hdrRect.width - 10f, hdrRect.height),
                         sectionTitle, _styleSectionHdr);
                 }
 
                 // Column header bar
-                var colFull = EditorGUILayout.GetControlRect(false, 20f);
-                var colRect = new Rect(colFull.x + CardPad, colFull.y, cw, 20f);
+                var colFull = EditorGUILayout.GetControlRect(false, 22f);
+                var colRect = new Rect(colFull.x + CardPad, colFull.y, cw, 22f);
                 if (Event.current.type == EventType.Repaint)
                 {
-                    EditorGUI.DrawRect(colRect, CodeHdr);
+                    EditorGUI.DrawRect(colRect, MemberTableHdrBg);
+                    // Bottom border to separate header from rows
+                    EditorGUI.DrawRect(new Rect(colRect.x, colRect.yMax - 1f, colRect.width, 1f), Sep);
                     float sigW = colRect.width * 0.42f;
-                    GUI.Label(new Rect(colRect.x + 8f, colRect.y, sigW, colRect.height),
-                        "Name", _styleMemberKind);
+                    var colHdrStyle = new GUIStyle(_styleMemberKind)
+                    {
+                        fontStyle = FontStyle.Bold,
+                        normal = { textColor = TextDim },
+                        fontSize = 10
+                    };
+                    GUI.Label(new Rect(colRect.x + 28f, colRect.y, sigW - 28f, colRect.height),
+                        "NAME", colHdrStyle);
                     GUI.Label(new Rect(colRect.x + sigW + 8f, colRect.y, colRect.width - sigW - 8f, colRect.height),
-                        "Description", _styleMemberKind);
+                        "DESCRIPTION", colHdrStyle);
                 }
 
                 // Rows
                 foreach (var member in group)
                     DrawMemberRow(entry, member, cw);
 
-                GUILayout.Space(6f);
+                GUILayout.Space(4f);
             }
         }
 
@@ -662,12 +694,20 @@ namespace NekoLib
 
             bool hasCode = !string.IsNullOrEmpty(member.Code) && !IsCommentOnlyCode(member.Code);
 
-            // Compute dynamic row height based on summary content
-            float sigW = cw * 0.42f;
+            // Row height = tallest of the two columns, cached per (member, width) so CalcHeight
+            // only fires once per unique combination instead of every frame.
+            float sigW     = cw * 0.42f;
             float summaryW = cw - sigW - 28f;
-            float summaryH = _styleMemberSummary.CalcHeight(
-                new GUIContent(member.Summary ?? ""), Mathf.Max(summaryW, 40f));
-            float rowH = Mathf.Max(30f, summaryH + 12f);
+            string heightKey = key + ":" + (int)cw;
+            if (!_rowHeightCache.TryGetValue(heightKey, out float rowH))
+            {
+                float sigH     = _styleMemberSig.CalcHeight(
+                    new GUIContent(member.Signature ?? ""), Mathf.Max(sigW - 24f, 40f));
+                float summaryH = _styleMemberSummary.CalcHeight(
+                    new GUIContent(member.Summary ?? ""), Mathf.Max(summaryW, 40f));
+                rowH = Mathf.Max(32f, Mathf.Max(sigH, summaryH) + 14f);
+                _rowHeightCache[heightKey] = rowH;
+            }
 
             var rowFull = EditorGUILayout.GetControlRect(false, rowH);
             var rowRect = new Rect(rowFull.x + CardPad, rowFull.y, cw, rowH);
@@ -676,26 +716,27 @@ namespace NekoLib
             if (Event.current.type == EventType.Repaint)
             {
                 Color rowBg = expanded
-                    ? new Color(Accent.r, Accent.g, Accent.b, 0.08f)
-                    : (hovered && hasCode ? RowHover : CodeBg);
+                    ? new Color(Accent.r, Accent.g, Accent.b, 0.10f)
+                    : (hovered && hasCode ? RowHover : MemberRowBg);
                 EditorGUI.DrawRect(rowRect, rowBg);
-                EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f),
-                    new Color(Sep.r, Sep.g, Sep.b, 0.5f));
+                EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f), Sep);
 
                 // Expand arrow (only if has code)
                 if (hasCode)
                 {
                     string arrow = expanded ? "▾" : "▸";
-                    GUI.Label(new Rect(rowRect.x + 4f, rowRect.y + 6f, 14f, 18f), arrow,
+                    GUI.Label(new Rect(rowRect.x + 4f, rowRect.y + 7f, 14f, 18f), arrow,
                         new GUIStyle(_styleArrow) { fontSize = 10 });
                 }
 
-                // Signature — top-aligned so it stays readable for tall rows
-                GUI.Label(new Rect(rowRect.x + 20f, rowRect.y + 6f, sigW - 24f, rowH - 6f),
+                // Signature — top-aligned, height from cache
+                float sigContentH = rowH - 14f;
+                GUI.Label(new Rect(rowRect.x + 20f, rowRect.y + 7f, sigW - 24f, sigContentH),
                     member.Signature, _styleMemberSig);
 
                 // Summary — word-wrapped, top-aligned
-                GUI.Label(new Rect(rowRect.x + sigW + 8f, rowRect.y + 6f, summaryW, summaryH),
+                float summaryContentH = rowH - 14f;
+                GUI.Label(new Rect(rowRect.x + sigW + 8f, rowRect.y + 7f, summaryW, summaryContentH),
                     member.Summary, _styleMemberSummary);
             }
 
@@ -722,24 +763,36 @@ namespace NekoLib
             bool hasCopyFeedback = _memberCopyUntil.TryGetValue(key, out double until)
                 && EditorApplication.timeSinceStartup < until;
 
-            // Header bar
-            var hdrFull = EditorGUILayout.GetControlRect(false, 22f);
-            var hdrRect = new Rect(hdrFull.x + CardPad + 20f, hdrFull.y, cw - 20f, 22f);
+            float indentX = CardPad;
+            float blockW = cw;
+
+            // Header bar — teal accent to clearly signal "code block"
+            var hdrFull = EditorGUILayout.GetControlRect(false, 24f);
+            var hdrRect = new Rect(hdrFull.x + indentX, hdrFull.y, blockW, 24f);
             if (Event.current.type == EventType.Repaint)
             {
-                EditorGUI.DrawRect(hdrRect, CodeHdr);
-                GUI.Label(hdrRect, "C#", new GUIStyle(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = TextDim },
-                    alignment = TextAnchor.MiddleLeft,
-                    padding = new RectOffset(8, 0, 0, 0)
-                });
-                GUI.Label(hdrRect, hasCopyFeedback ? "Copied!" : "Copy", new GUIStyle(EditorStyles.miniLabel)
-                {
-                    normal = { textColor = hasCopyFeedback ? new Color(0.30f, 0.78f, 0.45f, 1f) : TextDim },
-                    alignment = TextAnchor.MiddleRight,
-                    padding = new RectOffset(0, 8, 0, 0)
-                });
+                EditorGUI.DrawRect(hdrRect, CodeBlockHdr);
+                // Left teal accent bar
+                EditorGUI.DrawRect(new Rect(hdrRect.x, hdrRect.y, 3f, hdrRect.height), CodeBlockAccent);
+                // "C#" label in teal
+                GUI.Label(new Rect(hdrRect.x + 10f, hdrRect.y, 40f, hdrRect.height),
+                    "C#", new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        fontStyle = FontStyle.Bold,
+                        normal = { textColor = CodeBlockAccent },
+                        alignment = TextAnchor.MiddleLeft
+                    });
+                // Copy button
+                bool copyHovered = hdrRect.Contains(Event.current.mousePosition);
+                GUI.Label(hdrRect, hasCopyFeedback ? "✓ Copied!" : (copyHovered ? "Copy ▸" : "Copy"),
+                    new GUIStyle(EditorStyles.miniLabel)
+                    {
+                        normal = { textColor = hasCopyFeedback
+                            ? new Color(0.30f, 0.78f, 0.45f, 1f)
+                            : (copyHovered ? TextMain : TextDim) },
+                        alignment = TextAnchor.MiddleRight,
+                        padding = new RectOffset(0, 10, 0, 0)
+                    });
             }
 
             if (Event.current.type == EventType.MouseDown && hdrRect.Contains(Event.current.mousePosition))
@@ -750,16 +803,20 @@ namespace NekoLib
                 Repaint();
             }
 
-            // Code body
-            float codeW = cw - 20f;
-            float codeH = _styleCode.CalcHeight(new GUIContent(member.Code), codeW - 28f) + 20f;
+            // Code body — terminal-dark background
+            float codeH = _styleCode.CalcHeight(new GUIContent(member.Code), blockW - 28f) + 22f;
             var codeFull = EditorGUILayout.GetControlRect(false, codeH);
-            var codeRect = new Rect(codeFull.x + CardPad + 20f, codeFull.y, codeW, codeH);
+            var codeRect = new Rect(codeFull.x + indentX, codeFull.y, blockW, codeH);
             if (Event.current.type == EventType.Repaint)
             {
-                EditorGUI.DrawRect(codeRect, CodeBg);
+                EditorGUI.DrawRect(codeRect, CodeBlockBody);
+                // Left accent bar continues through body
+                EditorGUI.DrawRect(new Rect(codeRect.x, codeRect.y, 3f, codeRect.height), CodeBlockAccent);
                 GUI.Label(new Rect(codeRect.x + 12f, codeRect.y + 8f, codeRect.width - 24f, codeH - 16f),
                     highlighted, _styleCode);
+                // Bottom border
+                EditorGUI.DrawRect(new Rect(codeRect.x, codeRect.yMax - 1f, codeRect.width, 1f),
+                    new Color(CodeBlockAccent.r, CodeBlockAccent.g, CodeBlockAccent.b, 0.30f));
             }
         }
 
@@ -767,12 +824,16 @@ namespace NekoLib
         {
             if (string.IsNullOrEmpty(src)) return src;
 
-            string cKw = Skin ? "#569CD6" : "#0000CC"; // blue   — keywords
-            string cType = Skin ? "#4EC9B0" : "#267F99"; // teal   — types
-            string cStr = Skin ? "#CE9178" : "#A31515"; // orange — strings
-            string cCmt = Skin ? "#6A9955" : "#008000"; // green  — comments
-            string cNum = Skin ? "#B5CEA8" : "#098658"; // pale   — numbers
-            string cPun = Skin ? "#808080" : "#666666"; // gray   — punctuation
+            // Normalize tabs to 4 spaces for consistent indentation display
+            src = src.Replace("\t", "    ");
+
+            string cKw   = Skin ? "#569CD6" : "#0000CC"; // blue   — keywords
+            string cType = Skin ? "#4EC9B0" : "#267F99"; // teal   — types / PascalCase
+            string cStr  = Skin ? "#CE9178" : "#A31515"; // orange — strings
+            string cCmt  = Skin ? "#6A9955" : "#008000"; // green  — comments
+            string cNum  = Skin ? "#B5CEA8" : "#098658"; // pale   — numbers
+            string cPun  = Skin ? "#808080" : "#666666"; // gray   — punctuation
+            string cPre  = Skin ? "#C586C0" : "#AF00DB"; // purple — preprocessor
 
             var keywords = new HashSet<string>
             {
@@ -786,36 +847,29 @@ namespace NekoLib
                 "true","try","typeof","uint","ulong","unchecked","unsafe","ushort","using",
                 "virtual","void","volatile","while","async","await","var","yield","get","set",
                 "add","remove","value","partial","where","select","from","let","join","into",
-                "orderby","ascending","descending","group","by","on","equals","when"
+                "orderby","ascending","descending","group","by","on","equals","when","init",
+                "record","with","not","and","or","required","file","scoped","managed","unmanaged"
             };
 
-            var types = new HashSet<string>
-            {
-                "MonoBehaviour","GameObject","Transform","Vector2","Vector3","Vector4",
-                "Quaternion","Color","Rect","Ray","RaycastHit","Collider","Collider2D",
-                "Rigidbody","Rigidbody2D","Camera","Animator","AudioSource","AudioClip",
-                "Sprite","Texture","Texture2D","Material","Mesh","MeshRenderer","Renderer",
-                "Canvas","Image","Button","Text","LayerMask","ScriptableObject","EditorWindow",
-                "SerializeField","MenuItem","GUIStyle","GUILayout","EditorGUILayout","EditorGUI",
-                "GUIContent","Event","EventType","Bounds","Debug","Time","Physics","Physics2D",
-                "PlayerPrefs","Application","Scene","SceneManager","Resources","AssetDatabase",
-                "List","Dictionary","HashSet","Queue","Stack","Array","String","Int32","Single",
-                "Double","Boolean","Task","IEnumerator","Action","Func","Span","Memory",
-                "DateTime","TimeSpan","Type","Enum","Math","Mathf","Random",
-                "Countdown","Stopwatch","TimerToken","PrefabPool","PoolableBehaviour",
-                "IPoolable","LazySingleton","PersistentSingleton","Swatch","Log",
-                "TimeService","NetworkService","ConnectionStatus",
-                "FloatEvent","IntEvent","StringEvent","BoolEvent","YieldTask",
-                "SpriteAnimator","UISpriteAnimator","AutoDestroy","LookAtCamera","AutoOrbitAround",
-                "ScrollingSpriteRenderer","ScrollingImage","ScrollingRawImage","ScrollingMeshRenderer"
-            };
-
-            var sb = new System.Text.StringBuilder(src.Length * 2);
+            var sb  = new System.Text.StringBuilder(src.Length * 2);
             int len = src.Length;
-            int i = 0;
+            int i   = 0;
 
             while (i < len)
             {
+                // ── Block comment /* ... */ ──────────────────────────────────
+                if (i + 1 < len && src[i] == '/' && src[i + 1] == '*')
+                {
+                    int end = src.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                    end = end < 0 ? len : end + 2;
+                    sb.Append($"<color={cCmt}>");
+                    AppendSafeRange(sb, src, i, end);
+                    sb.Append("</color>");
+                    i = end;
+                    continue;
+                }
+
+                // ── Line comment // ──────────────────────────────────────────
                 if (i + 1 < len && src[i] == '/' && src[i + 1] == '/')
                 {
                     int end = src.IndexOf('\n', i);
@@ -827,6 +881,57 @@ namespace NekoLib
                     continue;
                 }
 
+                // ── Preprocessor directive  #... ─────────────────────────────
+                if (src[i] == '#')
+                {
+                    int end = src.IndexOf('\n', i);
+                    if (end < 0) end = len;
+                    sb.Append($"<color={cPre}>");
+                    AppendSafeRange(sb, src, i, end);
+                    sb.Append("</color>");
+                    i = end;
+                    continue;
+                }
+
+                // ── Interpolated verbatim  $@"..."  or  @$"..." ──────────────
+                if (i + 2 < len &&
+                    ((src[i] == '$' && src[i + 1] == '@' && src[i + 2] == '"') ||
+                     (src[i] == '@' && src[i + 1] == '$' && src[i + 2] == '"')))
+                {
+                    sb.Append($"<color={cStr}>{SafeText(src[i].ToString())}{SafeText(src[i+1].ToString())}\"");
+                    i += 3;
+                    while (i < len)
+                    {
+                        if (src[i] == '"' && i + 1 < len && src[i + 1] == '"')
+                        { sb.Append("\"\""); i += 2; }
+                        else if (src[i] == '"')
+                        { sb.Append('"'); i++; break; }
+                        else
+                        { AppendSafeRange(sb, src, i, i + 1); i++; }
+                    }
+                    sb.Append("</color>");
+                    continue;
+                }
+
+                // ── Interpolated string  $"..." ──────────────────────────────
+                if (src[i] == '$' && i + 1 < len && src[i + 1] == '"')
+                {
+                    sb.Append($"<color={cStr}>$\"");
+                    i += 2;
+                    while (i < len)
+                    {
+                        if (src[i] == '\\' && i + 1 < len)
+                        { AppendSafeRange(sb, src, i, i + 2); i += 2; }
+                        else if (src[i] == '"')
+                        { sb.Append('"'); i++; break; }
+                        else
+                        { AppendSafeRange(sb, src, i, i + 1); i++; }
+                    }
+                    sb.Append("</color>");
+                    continue;
+                }
+
+                // ── Verbatim string  @"..." ──────────────────────────────────
                 if (src[i] == '@' && i + 1 < len && src[i + 1] == '"')
                 {
                     sb.Append($"<color={cStr}>@\"");
@@ -844,6 +949,7 @@ namespace NekoLib
                     continue;
                 }
 
+                // ── Regular string  "..." ────────────────────────────────────
                 if (src[i] == '"')
                 {
                     sb.Append($"<color={cStr}>\"");
@@ -861,33 +967,64 @@ namespace NekoLib
                     continue;
                 }
 
-                // Char literal '.'
+                // ── Char literal  '.' ────────────────────────────────────────
                 if (src[i] == '\'')
                 {
-                    int end = src.IndexOf('\'', i + 1);
-                    if (end < 0) end = i;
+                    // scan past optional escape then closing quote
+                    int j = i + 1;
+                    if (j < len && src[j] == '\\') j++; // skip escape char
+                    if (j < len) j++;                    // skip the char itself
+                    int end = (j < len && src[j] == '\'') ? j + 1 : i + 1;
                     sb.Append($"<color={cStr}>");
-                    AppendSafeRange(sb, src, i, end + 1);
+                    AppendSafeRange(sb, src, i, end);
                     sb.Append("</color>");
-                    i = end + 1;
+                    i = end;
                     continue;
                 }
 
-                if (char.IsDigit(src[i]))
+                // ── Number literal ───────────────────────────────────────────
+                if (char.IsDigit(src[i]) || (src[i] == '.' && i + 1 < len && char.IsDigit(src[i + 1])))
                 {
                     int start = i;
-                    while (i < len && (char.IsDigit(src[i]) || src[i] == '.' ||
-                           src[i] == 'f' || src[i] == 'd' || src[i] == 'm' ||
-                           src[i] == 'L' || src[i] == 'u' || src[i] == '_' ||
-                           (i + 1 < len && src[i] == 'x') ||
-                           (i > start && (src[i] == 'e' || src[i] == 'E'))))
-                        i++;
+                    bool isHex = false;
+                    // hex prefix 0x / 0X
+                    if (src[i] == '0' && i + 1 < len && (src[i + 1] == 'x' || src[i + 1] == 'X'))
+                    { i += 2; isHex = true; }
+
+                    while (i < len)
+                    {
+                        char c = src[i];
+                        if (char.IsDigit(c) || c == '_') { i++; continue; }
+                        if (isHex && ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) { i++; continue; }
+                        // decimal point only when next char is also a digit (avoid "5.ToString()")
+                        if (!isHex && c == '.' && i + 1 < len && char.IsDigit(src[i + 1])) { i++; continue; }
+                        // exponent
+                        if (!isHex && (c == 'e' || c == 'E') && i > start)
+                        {
+                            i++;
+                            if (i < len && (src[i] == '+' || src[i] == '-')) i++;
+                            continue;
+                        }
+                        // type suffixes: f F d D m M l L u U — only at end (next char not letter/digit)
+                        if ((c == 'f' || c == 'F' || c == 'd' || c == 'D' ||
+                             c == 'm' || c == 'M' || c == 'l' || c == 'L' ||
+                             c == 'u' || c == 'U') &&
+                            (i + 1 >= len || (!char.IsLetterOrDigit(src[i + 1]) && src[i + 1] != '_')))
+                        { i++; break; }
+                        // UL / LU combos
+                        if ((c == 'u' || c == 'U') && i + 1 < len && (src[i + 1] == 'l' || src[i + 1] == 'L'))
+                        { i += 2; break; }
+                        if ((c == 'l' || c == 'L') && i + 1 < len && (src[i + 1] == 'u' || src[i + 1] == 'U'))
+                        { i += 2; break; }
+                        break;
+                    }
                     sb.Append($"<color={cNum}>");
                     AppendSafeRange(sb, src, start, i);
                     sb.Append("</color>");
                     continue;
                 }
 
+                // ── Identifier / keyword / type ──────────────────────────────
                 if (char.IsLetter(src[i]) || src[i] == '_')
                 {
                     int start = i;
@@ -896,14 +1033,15 @@ namespace NekoLib
                     string word = src.Substring(start, i - start);
                     if (keywords.Contains(word))
                         sb.Append($"<color={cKw}>{SafeText(word)}</color>");
-                    else if (types.Contains(word))
+                    else if (word.Length > 1 && char.IsUpper(word[0]))
                         sb.Append($"<color={cType}>{SafeText(word)}</color>");
                     else
                         sb.Append(SafeText(word));
                     continue;
                 }
 
-                if ("{}[]();,.".IndexOf(src[i]) >= 0)
+                // ── Punctuation ──────────────────────────────────────────────
+                if ("{}[]();,.<>!?:=+-*/%&|^~".IndexOf(src[i]) >= 0)
                 {
                     sb.Append($"<color={cPun}>{SafeText(src[i].ToString())}</color>");
                     i++;
@@ -1127,7 +1265,7 @@ namespace NekoLib
                 fontSize = 11,
                 wordWrap = true,
                 richText = true,
-                normal = { textColor = TextCode }
+                normal   = { textColor = TextCode }
             };
 
             _styleSearch = new GUIStyle(EditorStyles.toolbarSearchField)
