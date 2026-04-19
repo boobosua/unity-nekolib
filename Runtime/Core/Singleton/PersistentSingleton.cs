@@ -20,8 +20,10 @@ namespace NekoLib.Singleton
     public abstract class PersistentSingleton<T> : BaseBehaviour where T : MonoBehaviour
     {
         private static T s_instance;
-        protected static bool s_applicationIsQuitting = false;
+        private static bool s_applicationIsQuitting = false;
         private static bool s_isInitializing = false;
+
+        protected static bool IsApplicationQuitting => s_applicationIsQuitting;
 
         public static bool HasInstance =>
             s_instance != null &&

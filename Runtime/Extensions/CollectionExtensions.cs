@@ -376,7 +376,22 @@ namespace NekoLib.Extensions
         /// <summary>Returns a random element from the list using weighted selection.</summary>
         public static T RandWeighted<T>(this List<T> list, Func<T, float> weightSelector)
         {
-            return list.ToArray().RandWeighted(weightSelector);
+            if (list.IsNullOrEmpty())
+                throw new InvalidOperationException("Cannot get random element from null or empty list");
+
+            float totalWeight = 0f;
+            for (int i = 0; i < list.Count; i++) totalWeight += weightSelector(list[i]);
+            if (totalWeight <= 0)
+                throw new InvalidOperationException("Total weight must be greater than 0");
+
+            float randomValue = Random.Range(0f, totalWeight);
+            float currentWeight = 0f;
+            foreach (T item in list)
+            {
+                currentWeight += weightSelector(item);
+                if (randomValue <= currentWeight) return item;
+            }
+            return list[^1];
         }
         #endregion
 
@@ -386,7 +401,10 @@ namespace NekoLib.Extensions
         {
             if (dict.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random value from null or empty dictionary");
-            return dict.Values.ToArray().Rand();
+            int target = Random.Range(0, dict.Count);
+            int i = 0;
+            foreach (var v in dict.Values) { if (i++ == target) return v; }
+            return default;
         }
 
         /// <summary>Returns a random key from a dictionary.</summary>
@@ -394,7 +412,10 @@ namespace NekoLib.Extensions
         {
             if (dict.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random key from null or empty dictionary");
-            return dict.Keys.ToArray().Rand();
+            int target = Random.Range(0, dict.Count);
+            int i = 0;
+            foreach (var k in dict.Keys) { if (i++ == target) return k; }
+            return default;
         }
 
         /// <summary>Checks if the dictionary contains any null values.</summary>

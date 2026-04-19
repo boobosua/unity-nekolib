@@ -83,9 +83,7 @@ namespace NekoLib.Components
         protected virtual void Start()
         {
             if (_playOnAwake)
-            {
-                Play();
-            }
+                Play(_loopMode);
         }
 
         protected virtual void Update()
@@ -197,15 +195,11 @@ namespace NekoLib.Components
             }
         }
 
-        /// <summary>Set the loop mode for the animation.</summary>
-        protected void SetLoopMode(SpriteAnimatorLoopMode loopMode)
+        /// <summary>Play the animation with the given loop mode. Sets and applies the loop mode immediately (like Rigidbody.isKinematic). Defaults to Once.</summary>
+        public virtual void Play(SpriteAnimatorLoopMode loopMode = SpriteAnimatorLoopMode.Once)
         {
             _loopMode = loopMode;
-        }
 
-        /// <summary>Play the animation.</summary>
-        public virtual void Play()
-        {
             if (_spriteCount == 0)
             {
                 Log.Warn("No sprites assigned to " + GetType().Name + " on " + gameObject.name);
@@ -231,14 +225,14 @@ namespace NekoLib.Components
             _frameTimer = 0f;
         }
 
-        /// <summary>Restart the animation.</summary>
+        /// <summary>Restart the animation from frame 0 using the current loop mode.</summary>
         public virtual void Restart()
         {
             _currentFrame = 0;
             _frameTimer = 0f;
             _isReversed = false;
             UpdateSprite();
-            Play();
+            Play(_loopMode);
         }
 
         /// <summary>Set the frame rate of the animation.</summary>
@@ -257,11 +251,7 @@ namespace NekoLib.Components
             UpdateSprite();
         }
 
-        /// <summary>Play the animation once.</summary>
-        public void PlayOneShot()
-        {
-            SetLoopMode(SpriteAnimatorLoopMode.Once);
-            Restart();
-        }
+        /// <summary>Convenience shorthand for Play(SpriteAnimatorLoopMode.Once).</summary>
+        public void PlayOneShot() => Play(SpriteAnimatorLoopMode.Once);
     }
 }

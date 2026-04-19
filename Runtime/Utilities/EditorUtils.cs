@@ -109,7 +109,7 @@ namespace NekoLib.Utilities
         }
 
         /// <summary>Checks if the reload domain is disabled in the editor.</summary>
-        public static bool IsReloadDomainDisabled()
+        internal static bool IsReloadDomainDisabled()
         {
             return EditorSettings.enterPlayModeOptionsEnabled &&
                     EditorSettings.enterPlayModeOptions.HasFlag(EnterPlayModeOptions.DisableDomainReload);

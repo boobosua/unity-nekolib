@@ -52,7 +52,7 @@ GameManager.Instance.Score += 100;",
                     Title = "LazySingleton<T>",
                     Namespace = "NekoLib.Singleton",
                     Summary = "Auto-created singleton. A new GameObject is spawned on first access if none exists.",
-                    Description = "Ideal for utility managers (audio, pooling, etc.) that do not need to be pre-placed in any scene. The instance is created lazily and destroyed when the application quits.",
+                    Description = "Ideal for utility managers (audio, pooling, etc.) that do not need to be pre-placed in any scene. The instance is created lazily and destroyed when the application quits. Safe to use with Enter Play Mode / Disable Domain Reload in the Editor.",
                     Code =
 @"public class AudioManager : LazySingleton<AudioManager>
 {
@@ -760,8 +760,8 @@ Color dark      = Swatch.DG;",
                 {
                     Title = "Log",
                     Namespace = "NekoLib.Logger",
-                    Summary = "Conditional logger — stripped in release builds unless NEKOLIB_LOG is defined.",
-                    Description = "Log.Info, Log.Warn, and Log.Error mirror Debug.Log but are compiled only in the Editor, Development builds, or when NEKOLIB_LOG is defined. Supports an optional context object to ping it in the Console.",
+                    Summary = "Conditional logger — Info, Warn, and Assert are stripped in release builds. Error and Exception always fire so crash reporters receive them.",
+                    Description = "Log.Info and Log.Warn are compiled only in the Editor, Development builds, or when NEKOLIB_LOG is defined. Log.Error and Log.Exception always fire in all builds so crash reporters (e.g. Firebase Crashlytics, Sentry) capture them via Application.logMessageReceived. Supports an optional context object to ping it in the Console.",
                     Code =
 @"using NekoLib.Logger;
 
@@ -803,7 +803,7 @@ Log.Info(""Found target"", enemyGameObject);",
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Error(string message)",
-                            Summary = "Logs an error (red). Stripped in non-development builds.",
+                            Summary = "Logs an error (red). Always fires in all builds so crash reporters can capture it.",
                             Code =
 @"Log.Error($""Failed to load asset: {assetName}"");"
                         },
@@ -819,7 +819,7 @@ Log.Info(""Found target"", enemyGameObject);",
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Exception(Exception exception)",
-                            Summary = "Logs an exception with full stack trace.",
+                            Summary = "Logs an exception with full stack trace. Always fires in all builds so crash reporters can capture it.",
                             Code =
 @"try { RiskyOperation(); }
 catch (Exception e) { Log.Exception(e); }"
@@ -836,8 +836,9 @@ catch (Exception e) { Log.Exception(e); }"
                     Description = "Loop modes: Once (stops on last frame), Loop (wraps back), PingPong (reverses). Add per-frame UnityEvent callbacks via the Frame Events inspector tab. OnCycleComplete fires at each cycle boundary.",
                     Code =
 @"var anim = GetComponent<SpriteAnimator>();
-anim.Play();
-anim.PlayOneShot();       // Once mode — stops at end
+anim.Play();                                       // Once mode (default)
+anim.Play(SpriteAnimatorLoopMode.Loop);            // explicit loop
+anim.PlayOneShot();                                // convenience — same as Play()
 anim.Restart();
 anim.Stop();
 anim.SetFrameRate(24f);
@@ -883,16 +884,18 @@ anim.OnCycleComplete.AddListener(() => Debug.Log(""Cycle done!""));",
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Play()",
-                            Summary = "Starts playback from the current frame using the configured loop mode.",
+                            Signature = "Play(SpriteAnimatorLoopMode loopMode = Once)",
+                            Summary = "Starts playback. Sets and applies the given loop mode immediately (like Rigidbody.isKinematic). Defaults to Once.",
                             Code =
-@"anim.Play();"
+@"anim.Play();                                    // Once — stops at last frame
+anim.Play(SpriteAnimatorLoopMode.Loop);         // continuous loop
+anim.Play(SpriteAnimatorLoopMode.PingPong);     // bounces back and forth"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "PlayOneShot()",
-                            Summary = "Plays once in Once mode and stops on the last frame.",
+                            Summary = "Convenience shorthand for Play(SpriteAnimatorLoopMode.Once). Starts from the current frame and stops at the last.",
                             Code =
 @"// Play a hit flash and leave on last frame
 anim.PlayOneShot();"
