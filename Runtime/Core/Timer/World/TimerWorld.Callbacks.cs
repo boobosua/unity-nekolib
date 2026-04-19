@@ -62,22 +62,8 @@ namespace NekoLib.Timer
             if (!TryGetSlot(handle, out int slot)) return;
             ref var c = ref _coldSlots[slot].OnStop;
             c.Target = target;
-            c.Target2 = null;
             c.TargetDelegate = cb;
             c.Invoker = cb != null ? Invokers<T>.Action0 : null;
-            c.Invoker2 = null;
-        }
-
-        public static void SetOnStop<T1, T2>(TimerHandle handle, T1 target1, T2 target2, Action<T1, T2> cb)
-            where T1 : class where T2 : class
-        {
-            if (!TryGetSlot(handle, out int slot)) return;
-            ref var c = ref _coldSlots[slot].OnStop;
-            c.Target = target1;
-            c.Target2 = target2;
-            c.TargetDelegate = cb;
-            c.Invoker = null;
-            c.Invoker2 = cb != null ? Invokers<T1, T2>.Action0 : null;
         }
     }
 }

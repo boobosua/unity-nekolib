@@ -18,33 +18,25 @@ namespace NekoLib.Timer
             public Action Action;
 
             public object Target;
-            public object Target2;
             public Delegate TargetDelegate;
             public Action<object, Delegate> Invoker;
-            public Action<object, object, Delegate> Invoker2;
 
             public void Clear()
             {
                 Action = null;
                 Target = null;
-                Target2 = null;
                 TargetDelegate = null;
                 Invoker = null;
-                Invoker2 = null;
             }
 
             public readonly void Invoke()
             {
                 Action?.Invoke();
-                if (Target == null || TargetDelegate == null) return;
-                if (Target2 != null && Invoker2 != null)
-                    Invoker2(Target, Target2, TargetDelegate);
-                else if (Invoker != null)
+                if (Target != null && TargetDelegate != null && Invoker != null)
                     Invoker(Target, TargetDelegate);
             }
 
-            public readonly bool HasAny => Action != null ||
-                (Target != null && TargetDelegate != null && (Invoker != null || Invoker2 != null));
+            public readonly bool HasAny => Action != null || (Target != null && TargetDelegate != null && Invoker != null);
         }
 
         private struct Callback1
@@ -115,14 +107,6 @@ namespace NekoLib.Timer
             private static void InvokeAction0(object target, Delegate del) => ((Action<T>)del).Invoke((T)target);
             private static void InvokeAction1(object target, Delegate del, float v) => ((Action<T, float>)del).Invoke((T)target, v);
             private static bool InvokeFuncBool(object target, Delegate del) => ((Func<T, bool>)del).Invoke((T)target);
-        }
-
-        private static class Invokers<T1, T2> where T1 : class where T2 : class
-        {
-            public static readonly Action<object, object, Delegate> Action0 = InvokeAction0;
-
-            private static void InvokeAction0(object t1, object t2, Delegate del)
-                => ((Action<T1, T2>)del).Invoke((T1)t1, (T2)t2);
         }
 
         // ─── Hot slot (~64 bytes, one cache line) ────────────────────────────────

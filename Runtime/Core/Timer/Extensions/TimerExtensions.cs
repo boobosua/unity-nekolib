@@ -27,29 +27,6 @@ namespace NekoLib.Timer
             return cd.AsTimerToken();
         }
 
-        /// <summary>Invokes <paramref name="action"/> once after <paramref name="delay"/> seconds (two-target non-capturing).
-        /// Returns a <see cref="TimerToken"/> to cancel the call before it fires.</summary>
-        public static TimerToken CallAfter<T1, T2>(this MonoBehaviour owner, float delay,
-            T1 target1, T2 target2, Action<T1, T2> action,
-            bool useUnscaledTime = false) where T1 : class where T2 : class
-        {
-            if (owner == null) throw new ArgumentNullException(nameof(owner));
-            if (action == null) throw new ArgumentNullException(nameof(action));
-
-            if (delay <= 0f)
-            {
-                action.Invoke(target1, target2);
-                return default;
-            }
-
-            var cd = Countdown.Create(owner, delay)
-                .SetUnscaledTime(useUnscaledTime)
-                .OnStop(target1, target2, action);
-
-            cd.Start();
-            return cd.AsTimerToken();
-        }
-
         /// <summary>Invokes <paramref name="action"/> once after <paramref name="delay"/> seconds (non-capturing).
         /// Returns a <see cref="TimerToken"/> to cancel the call before it fires.</summary>
         public static TimerToken CallAfter<T>(this MonoBehaviour owner, float delay, T target, Action<T> action,
