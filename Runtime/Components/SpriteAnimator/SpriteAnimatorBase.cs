@@ -251,7 +251,5 @@ namespace NekoLib.Components
             UpdateSprite();
         }
 
-        /// <summary>Convenience shorthand for Play(SpriteAnimatorLoopMode.Once).</summary>
-        public void PlayOneShot() => Play(SpriteAnimatorLoopMode.Once);
     }
 }

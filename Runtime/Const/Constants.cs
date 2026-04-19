@@ -1,7 +1,7 @@
 namespace NekoLib.Constant
 {
     /// <summary>Constants referenced in two or more scripts across NekoLib.</summary>
-    internal static class Constants
+    public static class Constants
     {
         /// <summary>Minimum sqrMagnitude to treat a vector as non-zero (avoids division by zero in normalisation).</summary>
         public const float NearZeroSqrMagnitude = 0.0001f;

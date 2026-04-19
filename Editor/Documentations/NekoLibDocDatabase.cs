@@ -838,7 +838,6 @@ catch (Exception e) { Log.Exception(e); }"
 @"var anim = GetComponent<SpriteAnimator>();
 anim.Play();                                       // Once mode (default)
 anim.Play(SpriteAnimatorLoopMode.Loop);            // explicit loop
-anim.PlayOneShot();                                // convenience — same as Play()
 anim.Restart();
 anim.Stop();
 anim.SetFrameRate(24f);
@@ -890,15 +889,6 @@ anim.OnCycleComplete.AddListener(() => Debug.Log(""Cycle done!""));",
 @"anim.Play();                                    // Once — stops at last frame
 anim.Play(SpriteAnimatorLoopMode.Loop);         // continuous loop
 anim.Play(SpriteAnimatorLoopMode.PingPong);     // bounces back and forth"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
-                            Signature = "PlayOneShot()",
-                            Summary = "Convenience shorthand for Play(SpriteAnimatorLoopMode.Once). Starts from the current frame and stops at the last.",
-                            Code =
-@"// Play a hit flash and leave on last frame
-anim.PlayOneShot();"
                         },
                         new DocMember
                         {
@@ -970,11 +960,11 @@ anim.Stop();
                         new DocMember { Kind = DocMemberKind.Property, Signature = "CurrentFrame / FrameCount",
                             Summary = "Zero-based current frame index and total number of frames.",
                             Code = @"progressBar.fillAmount = (float)anim.CurrentFrame / anim.FrameCount;" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Play() / PlayOneShot() / Stop() / Restart()",
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "Play() / Stop() / Restart()",
                             Summary = "Same playback control API as SpriteAnimator.",
                             Code =
 @"anim.Play();
-anim.PlayOneShot();  // stops on last frame
+anim.Play(SpriteAnimatorLoopMode.Loop);
 anim.Stop();
 anim.Restart();" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "SetFrameRate(float fps) / GoToFrame(int index)",
