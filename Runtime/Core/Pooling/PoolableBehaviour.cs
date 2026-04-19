@@ -15,6 +15,9 @@ namespace NekoLib.Pooling
     public abstract class PoolableBehaviour : MonoBehaviour, IPoolable
 #endif
     {
+        private static readonly Action<PoolableBehaviour> s_delayedRelease =
+            target => target._pool?.Despawn(target);
+
         private IPoolReleaser _pool;
 
         public void ReleaseSelf()
@@ -42,7 +45,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            this.CallAfter(delay, this, target => _pool.Despawn(this), false);
+            this.CallAfter(delay, this, s_delayedRelease, false);
         }
 
         internal void SetPool(IPoolReleaser pool) => _pool = pool;
