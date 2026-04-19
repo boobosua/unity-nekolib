@@ -13,6 +13,9 @@ namespace NekoLib.Pooling
     /// </summary>
     public sealed class PrefabPool<T> : IPoolReleaser where T : MonoBehaviour, IPoolable
     {
+        private static readonly Action<ObjectPool<T>, T> s_delayedDespawn =
+            (pool, inst) => { if (inst != null) pool.Release(inst); };
+
         private readonly T _prefab;
         private readonly Transform _poolRoot;
         private readonly ObjectPool<T> _pool;
@@ -105,13 +108,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            instance.CallAfter(delay, this, target =>
-            {
-                if (instance != null)
-                {
-                    _pool.Release(instance);
-                }
-            });
+            instance.CallAfter(delay, _pool, instance, s_delayedDespawn);
         }
 
         /// <summary>Pre-creates and returns <paramref name="count"/> instances to populate the pool.</summary>

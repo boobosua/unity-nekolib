@@ -76,6 +76,9 @@ namespace NekoLib.Timer
         /// <summary>Invokes <paramref name="callback"/> when the countdown stops naturally (non-capturing style).</summary>
         public Countdown OnStop<T>(T target, Action<T> callback) where T : class { TimerWorld.SetOnStop(_handle, target, callback); return this; }
 
+        /// <summary>Invokes <paramref name="callback"/> when the countdown stops naturally (two-target non-capturing style).</summary>
+        public Countdown OnStop<T1, T2>(T1 target1, T2 target2, Action<T1, T2> callback) where T1 : class where T2 : class { TimerWorld.SetOnStop(_handle, target1, target2, callback); return this; }
+
         /// <summary>Starts the countdown.</summary>
         public void Start() => TimerWorld.Start(_handle);
 
