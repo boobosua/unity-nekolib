@@ -94,7 +94,7 @@ namespace NekoLib.Timer
         /// <summary>Adds time to the remaining seconds.</summary>
         public void AddTime(float seconds) => TimerWorld.AddCountdownTime(_handle, seconds);
 
-        /// <summary>Reduces time from the remaining seconds. If remaining reaches zero the timer stops and fires OnStop; loop conditions are NOT evaluated and the timer does not re-loop.</summary>
+        /// <summary>Reduces remaining seconds. Overflow carries into the next loop iteration — e.g. 5 s remaining reduced by 10 s starts the next loop at total−5 s. Respects loop count and stop conditions. Fires OnStop and stops if not looping.</summary>
         public void ReduceTime(float seconds) => TimerWorld.ReduceCountdownTime(_handle, seconds);
 
         /// <summary>Returns a <see cref="TimerToken"/> that can only cancel this countdown — prevents misuse of the full timer API.</summary>
