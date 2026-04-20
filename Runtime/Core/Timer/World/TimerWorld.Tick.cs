@@ -111,14 +111,14 @@ namespace NekoLib.Timer
 
             if (shouldLoop)
             {
-                c.OnLoop.Invoke();
                 h.CountdownRemaining += c.CountdownTotal; // carry overflow into next iteration
+                c.OnLoop.Invoke();
                 return;
             }
 
             h.IsRunning = false;
-            c.OnStop.Invoke();
             KillSlot(slot);
+            c.OnStop.Invoke();
         }
 
         private static void TickStopwatch(int slot, ref TimerSlotHot h, float dt)
@@ -141,8 +141,8 @@ namespace NekoLib.Timer
             if (!shouldStop) return;
 
             h.IsRunning = false;
-            _coldSlots[slot].OnStop.Invoke();
             KillSlot(slot);
+            _coldSlots[slot].OnStop.Invoke();
         }
     }
 }

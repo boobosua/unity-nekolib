@@ -244,8 +244,16 @@ namespace NekoLib.Components
         /// <summary>Go to a specific frame in the animation.</summary>
         public void GoToFrame(int frameIndex)
         {
-            if (frameIndex < 0 || frameIndex >= _spriteCount) return;
-
+            if (_spriteCount == 0)
+            {
+                Log.Warn($"[SpriteAnimator] GoToFrame({frameIndex}): no sprites assigned on '{gameObject.name}'.");
+                return;
+            }
+            if (frameIndex < 0 || frameIndex >= _spriteCount)
+            {
+                Log.Warn($"[SpriteAnimator] GoToFrame({frameIndex}): index out of range [0, {_spriteCount - 1}] on '{gameObject.name}'.");
+                return;
+            }
             _currentFrame = frameIndex;
             _frameTimer = 0f;
             UpdateSprite();
