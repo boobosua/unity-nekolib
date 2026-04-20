@@ -71,6 +71,7 @@ namespace NekoLib.Extensions
         /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, string stateName, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.Play(stateName, layerIndex);
             yield return animator.WaitForAnimation(stateName, layerIndex);
         }
@@ -78,6 +79,7 @@ namespace NekoLib.Extensions
         /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, int stateHash, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.Play(stateHash, layerIndex);
             yield return animator.WaitForAnimation(stateHash, layerIndex);
         }
@@ -85,6 +87,7 @@ namespace NekoLib.Extensions
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, string stateName, float transitionDuration, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.CrossFade(stateName, transitionDuration, layerIndex);
             yield return animator.WaitForAnimation(stateName, layerIndex);
         }
@@ -92,6 +95,7 @@ namespace NekoLib.Extensions
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, int stateHash, float transitionDuration, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.CrossFade(stateHash, transitionDuration, layerIndex);
             yield return animator.WaitForAnimation(stateHash, layerIndex);
         }

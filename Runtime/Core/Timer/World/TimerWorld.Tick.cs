@@ -96,7 +96,7 @@ namespace NekoLib.Timer
                     break;
             }
 
-            if (!shouldLoop && c.LoopStopWhen.HasAny)
+            if (c.LoopStopWhen.HasAny)
             {
                 bool stopNow;
                 try { stopNow = c.LoopStopWhen.InvokeOrFalse(); }
@@ -106,7 +106,7 @@ namespace NekoLib.Timer
                     c.LoopStopWhen.Clear();
                     stopNow = true;
                 }
-                shouldLoop = !stopNow;
+                if (stopNow) shouldLoop = false;
             }
 
             if (shouldLoop)

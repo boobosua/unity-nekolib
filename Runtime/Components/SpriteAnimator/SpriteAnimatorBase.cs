@@ -206,6 +206,9 @@ namespace NekoLib.Components
                 return;
             }
 
+            if (_spriteCount < 2 && _loopMode == SpriteAnimatorLoopMode.PingPong)
+                Log.Warn($"[SpriteAnimator] PingPong mode requires at least 2 sprites on '{gameObject.name}'; OnCycleComplete will fire every frame.");
+
             _isReversed = false;
 
             if (_startAtRandomFrame && !_isPlaying)

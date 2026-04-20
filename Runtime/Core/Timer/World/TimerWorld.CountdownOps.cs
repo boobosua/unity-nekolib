@@ -7,6 +7,7 @@ namespace NekoLib.Timer
             if (!TryGetSlot(handle, out int slot)) return;
             ref var h = ref _hotSlots[slot];
             if (h.Kind != TimerKind.Countdown) return;
+            if (h.IsPendingKill) return;
 
             if (seconds < 0f) return;
 
@@ -25,6 +26,7 @@ namespace NekoLib.Timer
             if (!TryGetSlot(handle, out int slot)) return;
             ref var h = ref _hotSlots[slot];
             if (h.Kind != TimerKind.Countdown) return;
+            if (h.IsPendingKill) return;
 
             if (seconds < 0f) return;
 

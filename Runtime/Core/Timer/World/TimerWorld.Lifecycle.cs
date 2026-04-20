@@ -75,7 +75,9 @@ namespace NekoLib.Timer
         public static void Pause(TimerHandle handle)
         {
             if (!TryGetSlot(handle, out int slot)) return;
-            _hotSlots[slot].IsRunning = false;
+            ref var h = ref _hotSlots[slot];
+            if (h.IsPendingKill) return;
+            h.IsRunning = false;
         }
 
         public static void Resume(TimerHandle handle)
@@ -108,8 +110,8 @@ namespace NekoLib.Timer
             }
 
             h.IsRunning = false;
-            _coldSlots[slot].OnStop.Invoke();
             KillSlot(slot);
+            _coldSlots[slot].OnStop.Invoke();
         }
 
         public static void Cancel(TimerHandle handle)
