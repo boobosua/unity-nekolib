@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -33,6 +34,8 @@ namespace NekoLib
         private List<AssetEntry> _prefabs = new();
         private int _selectedSceneCount;
         private int _selectedPrefabCount;
+        private bool _hasScanned;
+        private bool _hasStaleResults;
 
         // --- Exclusions ---
         private List<DefaultAsset> _excludedFolders = new();
@@ -79,6 +82,7 @@ namespace NekoLib
 
         private class ObjectEntry
         {
+            public string HierarchyPath;
             public string Name;
             public string FontName;
             public string MaterialName;
@@ -97,40 +101,11 @@ namespace NekoLib
         {
             LoadSettings();
             RebuildMaterialList();
-
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-
-            // Defer scan until after Unity finishes initializing. If the window was
-            // left open from a previous session, OnEnable fires during early editor
-            // boot before AssetDatabase and EditorSceneManager are ready.
-            EditorApplication.delayCall += () =>
-            {
-                if (this == null) return;
-                Scan();
-                Repaint();
-            };
-        }
-
-        private void OnPlayModeStateChanged(PlayModeStateChange state)
-        {
-            if (state == PlayModeStateChange.ExitingEditMode)
-            {
-                _scenes = new List<AssetEntry>();
-                _prefabs = new List<AssetEntry>();
-                _selectedSceneCount = 0;
-                _selectedPrefabCount = 0;
-                Repaint();
-            }
-            else if (state == PlayModeStateChange.EnteredEditMode)
-            {
-                Scan();
-                Repaint();
-            }
+            LoadScanResults();
         }
 
         private void OnDisable()
         {
-            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             DestroyTexture(ref _rowEvenTex);
             DestroyTexture(ref _rowOddTex);
             DestroyTexture(ref _rowChildEvenTex);
@@ -311,22 +286,31 @@ namespace NekoLib
 
             _selectedSceneCount = 0;
             _selectedPrefabCount = 0;
+            _hasScanned = true;
+            _hasStaleResults = false;
+            SaveScanResults();
         }
 
-        // Opens the scene additively, collects all GameObjects with TMP_Text
-        // along with their current font/material info, then closes it.
-        // NOTE: Two GameObjects with the same name in the same scene will both
-        // be processed when either is selected — known name-collision limitation.
+        // Opens the scene additively (if not already loaded), collects all GameObjects
+        // with TMP_Text along with their current font/material info, then closes it.
+        // Checking all loaded scenes first avoids opening a duplicate of a scene that
+        // is already open in a multi-scene setup, which would discard in-memory edits.
         private static AssetEntry BuildSceneEntry(string path)
         {
-            bool isActive = SceneManager.GetActiveScene().path == path;
-            Scene scene;
-
-            if (isActive)
+            Scene scene = default;
+            bool alreadyLoaded = false;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                scene = SceneManager.GetActiveScene();
+                var s = SceneManager.GetSceneAt(i);
+                if (s.path == path && s.isLoaded)
+                {
+                    scene = s;
+                    alreadyLoaded = true;
+                    break;
+                }
             }
-            else
+
+            if (!alreadyLoaded)
             {
                 scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
                 if (!scene.IsValid())
@@ -339,7 +323,7 @@ namespace NekoLib
                 .Select(g => MakeObjectEntry(g.First()))
                 .ToList();
 
-            if (!isActive)
+            if (!alreadyLoaded)
                 EditorSceneManager.CloseScene(scene, true);
 
             return new AssetEntry
@@ -369,8 +353,18 @@ namespace NekoLib
             };
         }
 
+        private static string GetHierarchyPath(GameObject go)
+        {
+            var parts = new List<string>();
+            var t = go.transform;
+            while (t != null) { parts.Add(t.name); t = t.parent; }
+            parts.Reverse();
+            return string.Join("/", parts);
+        }
+
         private static ObjectEntry MakeObjectEntry(TMP_Text text) => new ObjectEntry
         {
+            HierarchyPath = GetHierarchyPath(text.gameObject),
             Name = text.gameObject.name,
             FontName = text.font != null ? text.font.name : "None",
             MaterialName = text.fontSharedMaterial != null
@@ -441,6 +435,91 @@ namespace NekoLib
 
         private Material SelectedMaterial
             => _sdfMaterials.Length > 0 ? _sdfMaterials[_sdfMatIndex] : null;
+
+        // -------------------------------------------------------------------------
+        // Scan result persistence — survives play mode and window reopen via SO.
+        // -------------------------------------------------------------------------
+
+        private void SaveScanResults()
+        {
+            if (_settings == null) return;
+            _settings.lastScanCompleted = true;
+            _settings.lastScanTimestamp = DateTime.UtcNow.Ticks;
+            _settings.lastScanScenes = _scenes.Select(ToSerialized).ToList();
+            _settings.lastScanPrefabs = _prefabs.Select(ToSerialized).ToList();
+            _settings.Save();
+        }
+
+        private void LoadScanResults()
+        {
+            if (_settings == null || !_settings.lastScanCompleted) return;
+            _scenes = (_settings.lastScanScenes ?? new()).Select(FromSerialized).ToList();
+            _prefabs = (_settings.lastScanPrefabs ?? new()).Select(FromSerialized).ToList();
+            _selectedSceneCount = 0;
+            _selectedPrefabCount = 0;
+            _hasScanned = true;
+            ValidateScanResults();
+        }
+
+        // Removes entries whose assets have been deleted since the last scan.
+        // Cheap: only checks GUIDs, never opens a scene or loads a prefab.
+        private void ValidateScanResults()
+        {
+            int removedS = _scenes.RemoveAll(e =>
+                string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(e.Path)));
+            int removedP = _prefabs.RemoveAll(e =>
+                string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(e.Path)));
+
+            if (removedS > 0 || removedP > 0)
+            {
+                _hasStaleResults = true;
+                SaveScanResults(); // persist the pruned list
+            }
+        }
+
+        private string GetScanAgeText()
+        {
+            if (_settings == null || _settings.lastScanTimestamp == 0) return null;
+            var elapsed = DateTime.UtcNow -
+                new DateTime(_settings.lastScanTimestamp, DateTimeKind.Utc);
+            if (elapsed.TotalMinutes < 1) return "just now";
+            if (elapsed.TotalHours < 1) return $"{(int)elapsed.TotalMinutes}m ago";
+            if (elapsed.TotalDays < 1) return $"{(int)elapsed.TotalHours}h ago";
+            if (elapsed.TotalDays < 30) return $"{(int)elapsed.TotalDays}d ago";
+            return $"{(int)(elapsed.TotalDays / 30)}mo ago";
+        }
+
+        private static TmpFontReplacerSettings.SerializedAssetEntry ToSerialized(AssetEntry e) =>
+            new TmpFontReplacerSettings.SerializedAssetEntry
+            {
+                Path = e.Path,
+                Name = e.Name,
+                Objects = e.Objects.Select(o =>
+                    new TmpFontReplacerSettings.SerializedObjectEntry
+                    {
+                        HierarchyPath = o.HierarchyPath,
+                        Name = o.Name,
+                        FontName = o.FontName,
+                        MaterialName = o.MaterialName,
+                    }).ToList(),
+            };
+
+        private static AssetEntry FromSerialized(TmpFontReplacerSettings.SerializedAssetEntry s) =>
+            new AssetEntry
+            {
+                Path = s.Path,
+                Name = s.Name,
+                Objects = s.Objects.Select(o =>
+                    new ObjectEntry
+                    {
+                        HierarchyPath = o.HierarchyPath,
+                        Name = o.Name,
+                        FontName = o.FontName,
+                        MaterialName = o.MaterialName,
+                        Selected = false,
+                        CachedInfoWidth = 0f,
+                    }).ToList(),
+            };
 
         // -------------------------------------------------------------------------
         // Selection helpers
@@ -607,10 +686,13 @@ namespace NekoLib
                 new Rect(hr.x + 6f, hr.y, hr.width - 80f, hr.height),
                 _exclusionFoldout, "Excluded Folders", true, EditorStyles.boldLabel);
 
-            if (GUI.Button(
-                    new Rect(hr.xMax - 72f, hr.y + 3f, 68f, 16f),
-                    "Rescan", EditorStyles.miniButton))
-                Scan();
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlaying))
+            {
+                if (GUI.Button(
+                        new Rect(hr.xMax - 72f, hr.y + 3f, 68f, 16f),
+                        "Rescan", EditorStyles.miniButton))
+                    Scan();
+            }
 
             if (!_exclusionFoldout) return;
 
@@ -720,6 +802,19 @@ namespace NekoLib
                     SetAllSelected(list, false);
             }
 
+            if (_hasScanned)
+            {
+                string ageText = GetScanAgeText();
+                if (ageText != null)
+                    EditorGUILayout.LabelField($"Last scanned: {ageText}",
+                        EditorStyles.centeredGreyMiniLabel);
+
+                if (_hasStaleResults)
+                    EditorGUILayout.HelpBox(
+                        "Some scanned assets no longer exist. Rescan to refresh.",
+                        MessageType.Warning);
+            }
+
             var currentList = _tab == 0 ? scenes : prefabs;
 
             // Plain loop — avoids per-frame LINQ allocation.
@@ -741,7 +836,8 @@ namespace NekoLib
                 if (currentList.Count == 0)
                 {
                     EditorGUILayout.Space(8);
-                    EditorGUILayout.LabelField("No assets found.",
+                    EditorGUILayout.LabelField(
+                        _hasScanned ? "No assets found." : "Press Rescan to scan the project.",
                         EditorStyles.centeredGreyMiniLabel);
                 }
                 else
@@ -788,7 +884,7 @@ namespace NekoLib
                         new GUIContent("→", "Ping in Project window"),
                         _iconBtnStyle))
                     EditorGUIUtility.PingObject(
-                        AssetDatabase.LoadAssetAtPath<Object>(entry.Path));
+                        AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(entry.Path));
             }
 
             if (!entry.Foldout) return;
@@ -870,7 +966,9 @@ namespace NekoLib
                 EditorGUILayout.LabelField(
                     _targetFont == null
                         ? "Assign a Font Asset to continue."
-                        : "Select at least one scene or prefab.",
+                        : EditorApplication.isPlaying
+                            ? "Exit play mode to replace fonts."
+                            : "Select at least one scene or prefab.",
                     EditorStyles.centeredGreyMiniLabel);
             }
 
@@ -906,18 +1004,13 @@ namespace NekoLib
             string newFontName = _targetFont.name;
             string newMatName = mat != null ? mat.name : "None";
 
-            // Two GameObjects with the same name in the same asset will both be
-            // processed when either is selected — known name-collision limitation.
-            bool ShouldProcess(AssetEntry asset, TMP_Text text)
-                => asset.Objects.Any(o => o.Selected && o.Name == text.gameObject.name);
-
             // Updates display strings in-place and invalidates cached width so
             // the info label remeasures on next draw without a rescan.
-            void UpdateEntryInfo(AssetEntry asset, string goName)
+            void UpdateEntryInfo(AssetEntry asset, string hierarchyPath)
             {
                 foreach (var obj in asset.Objects)
                 {
-                    if (obj.Name != goName) continue;
+                    if (obj.HierarchyPath != hierarchyPath) continue;
                     obj.FontName = newFontName;
                     obj.MaterialName = newMatName;
                     obj.InvalidateInfoWidth();
@@ -948,7 +1041,7 @@ namespace NekoLib
                 if (changed)
                 {
                     totalReplaced++;
-                    UpdateEntryInfo(entry, text.gameObject.name);
+                    UpdateEntryInfo(entry, GetHierarchyPath(text.gameObject));
                 }
             }
 
@@ -976,30 +1069,46 @@ namespace NekoLib
                 if (changed)
                 {
                     totalReplaced++;
-                    UpdateEntryInfo(entry, text.gameObject.name);
+                    UpdateEntryInfo(entry, GetHierarchyPath(text.gameObject));
                 }
             }
 
             // --- Prefabs ---
             foreach (var entry in _prefabs.Where(e => e.Selected))
             {
+                var selectedPaths = new HashSet<string>(
+                    entry.Objects.Where(o => o.Selected).Select(o => o.HierarchyPath));
+
                 using var scope = new PrefabUtility.EditPrefabContentsScope(entry.Path);
                 foreach (var text in scope.prefabContentsRoot
                     .GetComponentsInChildren<TMP_Text>(true))
                 {
-                    if (ShouldProcess(entry, text))
+                    if (selectedPaths.Contains(GetHierarchyPath(text.gameObject)))
                         ProcessTextInPrefab(text, entry);
                 }
             }
 
             // --- Scenes ---
-            string activeScenePath = SceneManager.GetActiveScene().path;
             foreach (var entry in _scenes.Where(e => e.Selected))
             {
-                bool isActive = entry.Path == activeScenePath;
-                var scene = isActive
-                    ? SceneManager.GetActiveScene()
-                    : EditorSceneManager.OpenScene(entry.Path, OpenSceneMode.Additive);
+                var selectedPaths = new HashSet<string>(
+                    entry.Objects.Where(o => o.Selected).Select(o => o.HierarchyPath));
+
+                // Check all currently loaded scenes before opening additively.
+                Scene scene = default;
+                bool alreadyLoaded = false;
+                for (int i = 0; i < SceneManager.sceneCount; i++)
+                {
+                    var s = SceneManager.GetSceneAt(i);
+                    if (s.path == entry.Path && s.isLoaded)
+                    {
+                        scene = s;
+                        alreadyLoaded = true;
+                        break;
+                    }
+                }
+                if (!alreadyLoaded)
+                    scene = EditorSceneManager.OpenScene(entry.Path, OpenSceneMode.Additive);
 
                 if (!scene.IsValid()) continue;
 
@@ -1007,17 +1116,18 @@ namespace NekoLib
                 foreach (var root in scene.GetRootGameObjects())
                     foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
                     {
-                        if (!ShouldProcess(entry, text)) continue;
+                        if (!selectedPaths.Contains(GetHierarchyPath(text.gameObject))) continue;
                         int before = totalReplaced;
                         ProcessTextInScene(text, entry);
                         if (totalReplaced > before) dirty = true;
                     }
 
                 if (dirty) EditorSceneManager.SaveScene(scene);
-                if (!isActive) EditorSceneManager.CloseScene(scene, true);
+                if (!alreadyLoaded) EditorSceneManager.CloseScene(scene, true);
             }
 
             AssetDatabase.SaveAssets();
+            SaveScanResults();
 
             string message = totalFound == 0
                 ? "No TMP_Text components found in the selected assets."
