@@ -11,7 +11,7 @@ namespace NekoLib.Components
     public abstract class SpriteAnimatorBase : MonoBehaviour
     {
         [Serializable]
-        private sealed class FrameEvent
+        protected sealed class FrameEvent
         {
             [SerializeField] private int _frameIndex;
             [SerializeField, Space(6)] private UnityEvent _onFrame;

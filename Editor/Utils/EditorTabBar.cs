@@ -7,7 +7,7 @@ namespace NekoLib
     /// <summary>
     /// Unified tab bar drawing helper for Neko editor windows.
     /// </summary>
-    internal static class EditorTabBar
+    public static class EditorTabBar
     {
         /// <summary>
         /// Draws a styled tab bar and returns the (possibly) updated selected index.
