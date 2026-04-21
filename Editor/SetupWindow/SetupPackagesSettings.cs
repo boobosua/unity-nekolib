@@ -78,19 +78,12 @@ namespace NekoLib
             if (settings != null)
                 return settings;
 
-            if (settings == null)
-            {
-                EnsureFolders();
+            EnsureFolders();
 
-                settings = CreateInstance<SetupPackagesSettings>();
-                settings.SetDefaults();
-                AssetDatabase.CreateAsset(settings, assetPath);
-                AssetDatabase.SaveAssets();
-            }
-            else
-            {
-                // no-op; do not modify existing asset; fields are hidden via [HideInInspector]
-            }
+            settings = CreateInstance<SetupPackagesSettings>();
+            settings.SetDefaults();
+            AssetDatabase.CreateAsset(settings, assetPath);
+            AssetDatabase.SaveAssets();
             return settings;
         }
 
