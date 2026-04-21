@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NekoLib.Timer
 {
-    public partial class TimerTrackerWindow : EditorWindow
+    internal partial class TimerTrackerWindow : EditorWindow
     {
         [MenuItem("Tools/Neko Framework/Timer Tracker")]
         public static void ShowWindow() => GetWindow<TimerTrackerWindow>("Timer Tracker");

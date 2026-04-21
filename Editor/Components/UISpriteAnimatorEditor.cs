@@ -7,7 +7,7 @@ namespace NekoLib.Components
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(UISpriteAnimator))]
-    public class UISpriteAnimatorEditor : SpriteAnimatorEditorBase
+    internal class UISpriteAnimatorEditor : SpriteAnimatorEditorBase
     {
         private SerializedProperty _canvasGroups;
 

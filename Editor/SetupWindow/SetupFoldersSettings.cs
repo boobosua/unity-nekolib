@@ -9,13 +9,13 @@ using UnityEngine;
 namespace NekoLib
 {
     [Serializable]
-    public class SetupFoldersSettings : ScriptableObject
+    internal class SetupFoldersSettings : ScriptableObject
     {
         private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
         private const string AssetName = "SetupFoldersSettings.asset";
 
         [Serializable]
-        public class FolderOption
+        internal class FolderOption
         {
             public string name;
             public bool enabled = true;

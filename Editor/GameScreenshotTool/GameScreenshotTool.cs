@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace NekoLib
 {
-    public class GameScreenshotTool : EditorWindow
+    internal class GameScreenshotTool : EditorWindow
     {
         private const int MinSupersize = 1;
         private const int MaxSupersize = 4; // 1080p x4 = 4K, 4K x4 = 8K

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NekoLib
 {
-    public sealed class NekoLibDocumentationWindow : EditorWindow
+    internal sealed class NekoLibDocumentationWindow : EditorWindow
     {
         [MenuItem("Tools/Neko Framework/Documentation", priority = 100)]
         public static void Open()

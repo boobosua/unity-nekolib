@@ -11,7 +11,7 @@ using Sirenix.OdinInspector.Editor;
 namespace NekoLib.Components
 {
     [CustomEditor(typeof(SpriteAnimatorBase), true)]
-    public class SpriteAnimatorEditorBase :
+    internal class SpriteAnimatorEditorBase :
 #if ODIN_INSPECTOR
         OdinEditor
 #else

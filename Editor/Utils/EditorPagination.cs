@@ -22,7 +22,7 @@ namespace NekoLib
     /// var slice = PaginationEditor.Draw(ref state, totalItems, itemsPerPage: 10);
     /// </code>
     /// </summary>
-    public static class PaginationEditor
+    internal static class PaginationEditor
     {
         // Visual constants tuned for compact inspector toolbars
         private static readonly Color BorderColor = new(0.5f, 0.5f, 0.5f, 0.3f);

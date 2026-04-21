@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace NekoLib
 {
-    public static class SetupPackagesTool
+    internal static class SetupPackagesTool
     {
         /// <summary>
         /// Normalize a Git URL to a comparable form (lowercase host/path, strip scheme and .git, unify separators).

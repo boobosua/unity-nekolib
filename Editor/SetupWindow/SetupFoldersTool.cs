@@ -11,7 +11,7 @@ namespace NekoLib
     /// Utility methods for creating project folders under a chosen Assets-relative root.
     /// Editor-only.
     /// </summary>
-    public static class SetupFoldersTool
+    internal static class SetupFoldersTool
     {
         private const string DefaultRoot = "Assets/Project";
 

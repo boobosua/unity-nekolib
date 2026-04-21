@@ -8,7 +8,7 @@ namespace NekoLib.Utilities
 
     }
 
-    public class YieldTask : CustomYieldInstruction
+    internal class YieldTask : CustomYieldInstruction
     {
         public Task Task { get; }
 

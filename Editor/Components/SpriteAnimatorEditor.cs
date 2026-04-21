@@ -6,7 +6,7 @@ namespace NekoLib.Components
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(SpriteAnimator))]
-    public class SpriteAnimatorEditor : SpriteAnimatorEditorBase
+    internal class SpriteAnimatorEditor : SpriteAnimatorEditorBase
     {
         protected override void SetSprite0AsPreview(Sprite sprite)
         {

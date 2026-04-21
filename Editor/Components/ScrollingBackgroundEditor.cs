@@ -10,7 +10,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ScrollingRawImage))]
 #if ODIN_INSPECTOR
-    public class ScrollingRawImageEditor : OdinEditor
+    internal class ScrollingRawImageEditor : OdinEditor
     {
         private PropertyTree _tree;
 
@@ -49,7 +49,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class ScrollingRawImageEditor : Editor
+    internal class ScrollingRawImageEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -71,7 +71,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ScrollingImage))]
 #if ODIN_INSPECTOR
-    public class ScrollingImageEditor : OdinEditor
+    internal class ScrollingImageEditor : OdinEditor
     {
         private PropertyTree _tree;
 
@@ -112,7 +112,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class ScrollingImageEditor : Editor
+    internal class ScrollingImageEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -136,7 +136,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ScrollingSpriteRenderer))]
 #if ODIN_INSPECTOR
-    public class ScrollingSpriteRendererEditor : OdinEditor
+    internal class ScrollingSpriteRendererEditor : OdinEditor
     {
         private PropertyTree _tree;
 
@@ -177,7 +177,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class ScrollingSpriteRendererEditor : Editor
+    internal class ScrollingSpriteRendererEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -201,7 +201,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ScrollingMeshRenderer))]
 #if ODIN_INSPECTOR
-    public class ScrollingMeshRendererEditor : OdinEditor
+    internal class ScrollingMeshRendererEditor : OdinEditor
     {
         private PropertyTree _tree;
 
@@ -242,7 +242,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class ScrollingMeshRendererEditor : Editor
+    internal class ScrollingMeshRendererEditor : Editor
     {
         public override void OnInspectorGUI()
         {

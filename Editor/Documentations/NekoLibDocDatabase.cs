@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NekoLib
 {
-    public static class NekoLibDocDatabase
+    internal static class NekoLibDocDatabase
     {
         public static List<NekoLibDocEntry> GetEntries()
         {

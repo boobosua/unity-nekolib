@@ -10,7 +10,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(LookAtCamera))]
 #if ODIN_INSPECTOR
-    public class LookAtCameraEditor : OdinEditor
+    internal class LookAtCameraEditor : OdinEditor
     {
         private PropertyTree _tree;
         private InspectorProperty _mode;
@@ -66,7 +66,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class LookAtCameraEditor : Editor
+    internal class LookAtCameraEditor : Editor
     {
         private SerializedProperty _modeProperty;
         private SerializedProperty _useCustomCameraProperty;

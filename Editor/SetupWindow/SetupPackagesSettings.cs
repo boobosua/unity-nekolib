@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NekoLib
 {
     [Serializable]
-    public class SetupPackagesSettings : ScriptableObject
+    internal class SetupPackagesSettings : ScriptableObject
     {
         private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
         private const string AssetName = "SetupPackagesSettings.asset";
@@ -21,7 +21,7 @@ namespace NekoLib
         };
 
         [Serializable]
-        public class GitPackage
+        internal class GitPackage
         {
             public string url;
         }

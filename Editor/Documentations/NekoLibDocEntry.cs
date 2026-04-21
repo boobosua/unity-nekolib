@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace NekoLib
 {
-    public enum DocCategory { Core, Components, Extensions, Services, Utilities, EditorTools, NekoSignal, NekoFlow, NekoSerializer }
-    public enum DocMemberKind { Property, Method, Callback }
+    internal enum DocCategory { Core, Components, Extensions, Services, Utilities, EditorTools, NekoSignal, NekoFlow, NekoSerializer }
+    internal enum DocMemberKind { Property, Method, Callback }
 
     [Serializable]
-    public sealed class DocMember
+    internal sealed class DocMember
     {
         public DocMemberKind Kind;
         /// <summary>Short signature shown in the Name column, e.g. "RemainingTime" or "Start()" or "OnStop(Action)".</summary>
@@ -20,7 +20,7 @@ namespace NekoLib
     }
 
     [Serializable]
-    public sealed class NekoLibDocEntry
+    internal sealed class NekoLibDocEntry
     {
         public string Title;
         public string Namespace;

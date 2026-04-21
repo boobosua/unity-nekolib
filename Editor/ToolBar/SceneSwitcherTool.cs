@@ -21,7 +21,7 @@ namespace NekoLib
     /// Unity versions including Unity 6 (6000.x). Falls back to a DropdownField if needed.
     /// </summary>
     [InitializeOnLoad]
-    public static class SceneSwitcherToolbar
+    internal static class SceneSwitcherToolbar
     {
         #region Fields
 #if UNITY_2020_1_OR_NEWER
