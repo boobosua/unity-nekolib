@@ -560,10 +560,10 @@ TimerToken hb = this.CallEvery(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                 },
                 new NekoLibDocEntry
                 {
-                    Title = "PrefabPool<T>",
+                    Title = "Pool<T>",
                     Namespace = "NekoLib.Pooling",
-                    Summary = "Deterministic prefab object pool wrapping Unity's ObjectPool<T>. Use Spawn/Despawn instead of Instantiate/Destroy.",
-                    Description = "Implement IPoolable on your MonoBehaviour to receive OnSpawned() and OnDespawned() lifecycle callbacks. PrefabPool<T> handles parenting, transforms, and activation automatically.\n\nLifecycle: OnSpawned → parenting/activation (Spawn) → use → OnDespawned → pool reparent/deactivate (Despawn).",
+                    Summary = "Deterministic object pool wrapping Unity's ObjectPool<T>. Use Spawn/Despawn instead of Instantiate/Destroy.",
+                    Description = "Implement IPoolable on your MonoBehaviour to receive OnSpawned() and OnDespawned() lifecycle callbacks. Pool<T> handles parenting, transforms, and activation automatically.\n\nLifecycle: OnSpawned → parenting/activation (Spawn) → use → OnDespawned → pool reparent/deactivate (Despawn).",
                     Code =
 @"public sealed class Bullet : MonoBehaviour, IPoolable
 {
@@ -572,7 +572,7 @@ TimerToken hb = this.CallEvery(0.5f, PulseHeartIcon, useUnscaledTime: true);"
 }
 
 // Setup
-_pool = new PrefabPool<Bullet>(
+_pool = new Pool<Bullet>(
     bulletPrefab, poolRoot,
     defaultCapacity: 32, maxSize: 256);
 _pool.Prewarm(32);
@@ -669,12 +669,12 @@ _pool.Prewarm(50);"
                 },
                 new NekoLibDocEntry
                 {
-                    Title = "PoolableBehaviour",
+                    Title = "PoolableObject",
                     Namespace = "NekoLib.Pooling",
                     Summary = "Base class for poolable objects that need to return themselves to their pool without holding a reference.",
-                    Description = "Inherit from PoolableBehaviour instead of MonoBehaviour + IPoolable when your object needs to self-release. Falls back to Destroy() if not managed by a PrefabPool.",
+                    Description = "Inherit from PoolableObject instead of MonoBehaviour + IPoolable when your object needs to self-release. Falls back to Destroy() if not managed by a Pool<T>.",
                     Code =
-@"public sealed class EnemyProjectile : PoolableBehaviour
+@"public sealed class EnemyProjectile : PoolableObject
 {
     public override void OnSpawned()   { /* reset */ }
     public override void OnDespawned() { /* cleanup */ }
@@ -2420,6 +2420,11 @@ private void OnDisable() => SignalHub.Unbind(this);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "SignalHub.Unbind(MonoBehaviour owner)",
                             Summary = "Unregisters all [OnSignal] handlers for this owner. Call in OnDisable to prevent memory leaks.",
                             Code = @"private void OnDisable() => SignalHub.Unbind(this);" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SignalHub.IsBound(MonoBehaviour owner)",
+                            Summary = "Returns true if the target currently has active [OnSignal] bindings registered via SignalHub.Bind.",
+                            Code =
+@"if (!SignalHub.IsBound(this))
+    SignalHub.Bind(this);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "[OnSignal]",
                             Summary = "Attribute that marks a method as a signal handler. The parameter type determines which signal it receives.",
                             Code =
@@ -2490,7 +2495,10 @@ public class TemporaryListener : MonoBehaviour
 
     private void OnEnable()
     {
+        // Default priority (0)
         _receiver = this.Listen<GameStarted>(OnGameStarted);
+        // With priority — higher runs first
+        _receiver = this.Listen<GameStarted>(OnGameStarted, priority: 10);
     }
 
     private void OnDisable()
@@ -2503,12 +2511,13 @@ public class TemporaryListener : MonoBehaviour
 
 // From anywhere
 var rx = SignalBus.Listen<PlayerDied>(owner, OnPlayerDied);
+var rxPri = SignalBus.Listen<PlayerDied>(owner, OnPlayerDied, priority: 5);
 rx.Dispose(); // unsubscribe",
                     Tags = new[] { "Subscribe", "Listen", "Receiver", "Dispose" },
                     Category = DocCategory.NekoSignal,
                     Members = new[]
                     {
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "this.Listen<T>(Action<T> handler)",
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "this.Listen<T>(Action<T> callback)",
                             Summary = "Subscribes to signal T from a MonoBehaviour. Returns a SignalReceiver.",
                             Code =
 @"private SignalReceiver _rx;
@@ -2517,20 +2526,38 @@ private void OnEnable()  => _rx = this.Listen<GameStarted>(OnGameStarted);
 private void OnDisable() => _rx.Dispose();
 
 private void OnGameStarted(GameStarted s) { }" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "SignalBus.Listen<T>(MonoBehaviour owner, Action<T> handler)",
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "this.Listen<T>(Action<T> callback, int priority)",
+                            Summary = "Same as Listen<T> but sets dispatch priority. Higher values are invoked first. Default is 0.",
+                            Code =
+@"// Runs before default-priority subscribers
+_rx = this.Listen<PlayerDied>(OnPlayerDied, priority: 10);" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SignalBus.Listen<T>(MonoBehaviour owner, Action<T> callback)",
                             Summary = "Subscribes from any context. Owner is used for tracker display and leak detection.",
                             Code =
 @"var rx = SignalBus.Listen<PlayerDied>(this, OnPlayerDied);
 rx.Dispose(); // unsubscribe later" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SignalBus.Listen<T>(MonoBehaviour owner, Action<T> callback, int priority)",
+                            Summary = "Same as SignalBus.Listen<T> but sets dispatch priority.",
+                            Code =
+@"var rx = SignalBus.Listen<PlayerDied>(this, OnPlayerDied, priority: 5);" },
                         new DocMember { Kind = DocMemberKind.Property, Signature = "receiver.IsActive",
                             Summary = "True while the receiver is live. Becomes false after Dispose() is called.",
                             Code =
 @"if (_rx.IsActive)
     Debug.Log(""Still listening"");" },
+                        new DocMember { Kind = DocMemberKind.Property, Signature = "receiver.SignalType",
+                            Summary = "The System.Type of the signal this receiver is subscribed to.",
+                            Code =
+@"Debug.Log($""Subscribed to: {_rx.SignalType.Name}"");" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "receiver.Dispose()",
                             Summary = "Unsubscribes and marks the receiver inactive. Safe to call multiple times.",
                             Code =
 @"_rx.Dispose(); // idempotent — safe to call again" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SignalBus.GetSubscriberCount<T>()",
+                            Summary = "Returns the number of active subscribers for signal type T.",
+                            Code =
+@"int count = SignalBus.GetSubscriberCount<PlayerDied>();
+Debug.Log($""{count} listeners registered for PlayerDied"");" },
                     }
                 },
                 new NekoLibDocEntry
@@ -2830,88 +2857,6 @@ _sm.StartWith(idle);" },
                             Code =
 @"var patrol = _sm.Get<PatrolState>();
 patrol?.SetNextWaypoint(wp);" },
-                    }
-                },
-                new NekoLibDocEntry
-                {
-                    Title = "SimpleFlow",
-                    Namespace = "NekoFlow.Conditional",
-                    Summary = "Run one action when a predicate is true, optionally another when false. Returns bool.",
-                    Description = "SimpleFlow is a standalone helper — not tied to the state machine. Import NekoFlow.Conditional. Execute() returns true if the predicate matched.",
-                    Code =
-@"using NekoFlow.Conditional;
-
-var flow = new SimpleFlow(
-    predicate: () => Time.timeScale > 0,
-    onSuccess: () => Debug.Log(""Running""),
-    onFailure: () => Debug.Log(""Paused"")
-);
-
-bool ran = flow.Execute();",
-                    Tags = new[] { "Flow", "Conditional", "SimpleFlow" },
-                    Category = DocCategory.NekoFlow,
-                    Members = new[]
-                    {
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "new SimpleFlow(Func<bool> predicate, Action onSuccess, Action onFailure)",
-                            Summary = "Creates a flow with a predicate and two optional callbacks.",
-                            Code =
-@"var flow = new SimpleFlow(
-    predicate:  () => Time.timeScale > 0,
-    onSuccess:  () => Debug.Log(""Running""),
-    onFailure:  () => Debug.Log(""Paused"")
-);" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Execute()",
-                            Summary = "Evaluates the predicate and runs onSuccess or onFailure. Returns true if the predicate passed.",
-                            Code =
-@"bool ran = flow.Execute();
-if (!ran) Debug.Log(""Predicate was false"");" },
-                    }
-                },
-                new NekoLibDocEntry
-                {
-                    Title = "BranchFlow",
-                    Namespace = "NekoFlow.Conditional",
-                    Summary = "Try branches in order; execute the first match. Returns FlowResult: Matched, Fallback, or None.",
-                    Description = "BranchFlow evaluates When() branches in registration order and executes the first matching one. Otherwise() runs when no branch matches. Clear() resets all branches. Reusable across frames.",
-                    Code =
-@"using NekoFlow.Conditional;
-
-var flow = new BranchFlow()
-    .When(() => Input.GetKey(KeyCode.Space),     () => Debug.Log(""Jump""))
-    .When(() => Input.GetKey(KeyCode.LeftArrow), () => Debug.Log(""Left""))
-    .Otherwise(() => Debug.Log(""Idle""));
-
-FlowResult result = flow.Execute();
-// FlowResult.Matched  — a When() branch ran
-// FlowResult.Fallback — Otherwise() ran
-// FlowResult.None     — nothing matched, no fallback
-
-flow.Clear(); // reset all branches",
-                    Tags = new[] { "Flow", "Conditional", "BranchFlow" },
-                    Category = DocCategory.NekoFlow,
-                    Members = new[]
-                    {
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "When(Func<bool> predicate, Action action)",
-                            Summary = "Adds a conditional branch. Branches are checked in registration order.",
-                            Code =
-@"var flow = new BranchFlow()
-    .When(() => Input.GetKey(KeyCode.Space),     () => Jump())
-    .When(() => Input.GetKey(KeyCode.LeftArrow), () => MoveLeft());" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Otherwise(Action action)",
-                            Summary = "Sets the fallback action run when no When() branch matches.",
-                            Code =
-@".Otherwise(() => Idle());" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Execute()",
-                            Summary = "Evaluates branches in order. Returns FlowResult.Matched, Fallback, or None.",
-                            Code =
-@"FlowResult result = flow.Execute();
-// FlowResult.Matched  — a When() branch ran
-// FlowResult.Fallback — Otherwise() ran
-// FlowResult.None     — nothing matched, no fallback" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Clear()",
-                            Summary = "Removes all registered branches and the fallback.",
-                            Code =
-@"flow.Clear(); // reset and rebuild branches for next phase" },
                     }
                 },
 

@@ -1,5 +1,4 @@
 using System;
-using NekoLib.Extensions;
 using NekoLib.Logger;
 using NekoLib.Timer;
 using UnityEngine;
@@ -11,16 +10,18 @@ namespace NekoLib.Pooling
     /// Generic prefab pool for IPoolable MonoBehaviour instances. 
     /// Handles spawning, despawning, and pooling logic.
     /// </summary>
-    public sealed class PrefabPool<T> : IPoolReleaser where T : MonoBehaviour, IPoolable
+    public sealed class Pool<T> : IPoolReleaser where T : MonoBehaviour, IPoolable
     {
         private readonly T _prefab;
         private readonly Transform _poolRoot;
         private readonly ObjectPool<T> _pool;
+        private readonly Action<T> _releaseDelegate;
+        private bool _isPrewarming;
 
         public int CountInactive => _pool.CountInactive;
         public bool IsValid => _poolRoot != null;
 
-        public PrefabPool(
+        public Pool(
             T prefab,
             Transform poolRoot,
             int defaultCapacity = 16,
@@ -42,6 +43,8 @@ namespace NekoLib.Pooling
                 defaultCapacity: Mathf.Max(0, defaultCapacity),
                 maxSize: maxSize
             );
+
+            _releaseDelegate = _pool.Release;
         }
 
         /// <summary>Spawns an instance from the pool.</summary>
@@ -105,13 +108,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            instance.CallAfter(delay, this, target =>
-            {
-                if (instance != null)
-                {
-                    _pool.Release(instance);
-                }
-            });
+            instance.CallAfter(delay, instance, _releaseDelegate);
         }
 
         /// <summary>Pre-creates and returns <paramref name="count"/> instances to populate the pool.</summary>
@@ -119,11 +116,13 @@ namespace NekoLib.Pooling
         {
             if (count <= 0) return;
 
+            _isPrewarming = true;
             for (int i = 0; i < count; i++)
             {
                 var instance = _pool.Get();
                 _pool.Release(instance);
             }
+            _isPrewarming = false;
         }
 
         /// <summary>Destroys all currently pooled inactive instances.</summary>
@@ -158,20 +157,25 @@ namespace NekoLib.Pooling
             var instance = UnityEngine.Object.Instantiate(_prefab, _poolRoot);
             instance.gameObject.SetActive(false);
 
-            if (instance is PoolableBehaviour poolableBehaviour)
+            if (instance is PoolableObject poolableObject)
             {
-                poolableBehaviour.SetPool(this);
+                poolableObject.SetPool(this);
             }
 
             return instance;
         }
 
-        private static void OnGet(T instance) => instance.OnSpawned();
+        private void OnGet(T instance)
+        {
+            if (!_isPrewarming) instance.OnSpawned();
+        }
 
         private void OnRelease(T instance)
         {
-            instance.OnDespawned();
-            instance.transform.SetParent(_poolRoot, worldPositionStays: false);
+            if (instance is PoolableObject pb) pb.CancelPendingRelease();
+            if (!_isPrewarming) instance.OnDespawned();
+            if (instance.transform.parent != _poolRoot)
+                instance.transform.SetParent(_poolRoot, worldPositionStays: false);
             instance.gameObject.SetActive(false);
         }
 

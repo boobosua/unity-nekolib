@@ -1,8 +1,5 @@
 using System;
-using NekoLib.Extensions;
-using UnityEngine;
 using NekoLib.Timer;
-
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -11,18 +8,21 @@ using Sirenix.OdinInspector;
 namespace NekoLib.Pooling
 {
 #if ODIN_INSPECTOR
-    public abstract class PoolableBehaviour : SerializedMonoBehaviour, IPoolable
+    public abstract class PoolableObject : SerializedMonoBehaviour, IPoolable
 #else
-    public abstract class PoolableBehaviour : MonoBehaviour, IPoolable
+    public abstract class PoolableObject : MonoBehaviour, IPoolable
 #endif
     {
-        private static readonly Action<PoolableBehaviour> s_delayedRelease =
+        private static readonly Action<PoolableObject> s_delayedRelease =
             target => target._pool?.Despawn(target);
 
         private IPoolReleaser _pool;
+        private TimerToken _releaseToken;
 
         public void ReleaseSelf()
         {
+            _releaseToken.Cancel();
+
             if (_pool == null)
             {
                 Destroy(gameObject);
@@ -34,6 +34,8 @@ namespace NekoLib.Pooling
 
         public void ReleaseSelf(float delay)
         {
+            _releaseToken.Cancel();
+
             if (_pool == null)
             {
                 Destroy(gameObject, delay);
@@ -46,10 +48,12 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            this.CallAfter(delay, this, s_delayedRelease, false);
+            _releaseToken = this.CallAfter(delay, this, s_delayedRelease);
         }
 
         internal void SetPool(IPoolReleaser pool) => _pool = pool;
+
+        internal void CancelPendingRelease() => _releaseToken.Cancel();
 
         public abstract void OnSpawned();
         public abstract void OnDespawned();
