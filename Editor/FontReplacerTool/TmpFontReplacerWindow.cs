@@ -98,6 +98,8 @@ namespace NekoLib
             LoadSettings();
             RebuildMaterialList();
 
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+
             // Defer scan until after Unity finishes initializing. If the window was
             // left open from a previous session, OnEnable fires during early editor
             // boot before AssetDatabase and EditorSceneManager are ready.
@@ -109,8 +111,26 @@ namespace NekoLib
             };
         }
 
+        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingEditMode)
+            {
+                _scenes = new List<AssetEntry>();
+                _prefabs = new List<AssetEntry>();
+                _selectedSceneCount = 0;
+                _selectedPrefabCount = 0;
+                Repaint();
+            }
+            else if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                Scan();
+                Repaint();
+            }
+        }
+
         private void OnDisable()
         {
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             DestroyTexture(ref _rowEvenTex);
             DestroyTexture(ref _rowOddTex);
             DestroyTexture(ref _rowChildEvenTex);
@@ -229,6 +249,8 @@ namespace NekoLib
 
         private void Scan()
         {
+            if (EditorApplication.isPlaying) return;
+
             var excludedPaths = _excludedFolders
                 .Where(f => f != null)
                 .Select(f => AssetDatabase.GetAssetPath(f))
@@ -828,7 +850,7 @@ namespace NekoLib
             EditorGUILayout.Space(4);
 
             int totalSelected = _selectedSceneCount + _selectedPrefabCount;
-            bool canRun = _targetFont != null && totalSelected > 0;
+            bool canRun = _targetFont != null && totalSelected > 0 && !EditorApplication.isPlaying;
 
             EditorGUILayout.LabelField(
                 $"{_selectedSceneCount} scene(s)  ·  {_selectedPrefabCount} prefab(s) selected",
@@ -861,6 +883,13 @@ namespace NekoLib
 
         private void RunReplacement()
         {
+            if (EditorApplication.isPlaying)
+            {
+                EditorUtility.DisplayDialog("Cannot Replace",
+                    "Font replacement is not available during play mode.", "OK");
+                return;
+            }
+
             Material mat = SelectedMaterial;
 
             bool confirm = EditorUtility.DisplayDialog(

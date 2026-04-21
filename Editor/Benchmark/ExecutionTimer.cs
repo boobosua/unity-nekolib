@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace NekoLib.Benchmark
 {
     /// <summary> A simple utility to measure execution time of a code block.</summary>
-    public sealed class ExecutionTimer
+    internal sealed class ExecutionTimer
     {
         private Stopwatch _sw;
 

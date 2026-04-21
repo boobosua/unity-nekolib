@@ -71,6 +71,7 @@ namespace NekoLib.Extensions
         /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, string stateName, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.Play(stateName, layerIndex);
             yield return animator.WaitForAnimation(stateName, layerIndex);
         }
@@ -78,6 +79,7 @@ namespace NekoLib.Extensions
         /// <summary>Play an animation and wait for it to complete.</summary>
         public static IEnumerator PlayAndWait(this Animator animator, int stateHash, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.Play(stateHash, layerIndex);
             yield return animator.WaitForAnimation(stateHash, layerIndex);
         }
@@ -85,6 +87,7 @@ namespace NekoLib.Extensions
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, string stateName, float transitionDuration, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.CrossFade(stateName, transitionDuration, layerIndex);
             yield return animator.WaitForAnimation(stateName, layerIndex);
         }
@@ -92,6 +95,7 @@ namespace NekoLib.Extensions
         /// <summary>Cross-fade to an animation and wait for it to complete.</summary>
         public static IEnumerator CrossFadeAndWait(this Animator animator, int stateHash, float transitionDuration, int layerIndex = 0)
         {
+            if (animator == null) yield break;
             animator.CrossFade(stateHash, transitionDuration, layerIndex);
             yield return animator.WaitForAnimation(stateHash, layerIndex);
         }
@@ -104,8 +108,10 @@ namespace NekoLib.Extensions
             yield return new WaitForEndOfFrame();
 
             // Wait for transition to complete.
-            while (animator.IsInTransition(layerIndex))
+            while (animator != null && animator.IsInTransition(layerIndex))
                 yield return null;
+
+            if (animator == null) yield break;
 
             // Check if animation is looped - if so, don't wait.
             var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
@@ -118,6 +124,7 @@ namespace NekoLib.Extensions
             // Wait for non-looped animation to complete.
             while (true)
             {
+                if (animator == null) yield break;
                 var info = animator.GetCurrentAnimatorStateInfo(layerIndex);
                 if (!info.IsName(stateName) || info.normalizedTime >= AnimationCompleted)
                     break;
@@ -131,8 +138,10 @@ namespace NekoLib.Extensions
             yield return new WaitForEndOfFrame();
 
             // Wait for transition to complete.
-            while (animator.IsInTransition(layerIndex))
+            while (animator != null && animator.IsInTransition(layerIndex))
                 yield return null;
+
+            if (animator == null) yield break;
 
             // Check if animation is looped - if so, don't wait.
             var stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
@@ -145,6 +154,7 @@ namespace NekoLib.Extensions
             // Wait for non-looped animation to complete.
             while (true)
             {
+                if (animator == null) yield break;
                 var info = animator.GetCurrentAnimatorStateInfo(layerIndex);
                 if (info.shortNameHash != stateHash || info.normalizedTime >= AnimationCompleted)
                     break;

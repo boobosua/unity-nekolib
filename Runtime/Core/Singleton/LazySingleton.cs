@@ -14,12 +14,17 @@ namespace NekoLib.Singleton
 {
     /// <summary>
     /// Lazy singleton automatically creates a new singleton game object when a script uses it.
-    /// Do not use this if you use multi-threading.
+    /// Instance creation must be triggered from the main thread.
     /// </summary>
     [DisallowMultipleComponent]
     public abstract class LazySingleton<T> : BaseBehaviour where T : MonoBehaviour
     {
-        private static readonly Lazy<T> s_lazyInstance = new(CreateSingleton);
+        private static Lazy<T> s_lazyInstance = new(CreateSingleton);
+
+#if UNITY_EDITOR
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetDomain() => s_lazyInstance = new Lazy<T>(CreateSingleton);
+#endif
 
         public static T Instance => s_lazyInstance.Value;
 

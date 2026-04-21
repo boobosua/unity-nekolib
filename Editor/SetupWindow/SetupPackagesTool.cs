@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace NekoLib
 {
-    public static class SetupPackagesTool
+    internal static class SetupPackagesTool
     {
         /// <summary>
         /// Normalize a Git URL to a comparable form (lowercase host/path, strip scheme and .git, unify separators).
@@ -148,48 +148,6 @@ namespace NekoLib
             Debug.Log($"Removing package: {packageName}");
             return Client.Remove(packageName.Trim());
         }
-
-        /// <summary>
-        /// Get the installed package name for a given Git URL if present, otherwise null.
-        /// This uses Client.List to sync with UPM.
-        /// </summary>
-        public static string GetInstalledPackageNameForGit(string gitUrl)
-        {
-            if (string.IsNullOrWhiteSpace(gitUrl)) return null;
-            try
-            {
-                var listReq = Client.List(true, true);
-                while (!listReq.IsCompleted) { }
-                if (listReq.Status == StatusCode.Success && listReq.Result != null)
-                {
-                    // Match by package.source == Git or match repository URL when available
-                    foreach (var p in listReq.Result)
-                    {
-                        if (p == null) continue;
-                        if (p.source == PackageSource.Git)
-                        {
-                            // Extract the URL portion from packageId (format: name@git+https://host/repo.git#hash)
-                            string afterAt = ExtractGitUrlFromPackageId(p.packageId);
-                            if (!string.IsNullOrEmpty(afterAt))
-                            {
-                                if (NormalizeGitUrl(afterAt) == NormalizeGitUrl(gitUrl))
-                                    return p.name; // canonical package name
-                            }
-                        }
-                    }
-                }
-                else if (listReq.Status >= StatusCode.Failure)
-                {
-                    Debug.LogError($"UPM List failed: {listReq.Error?.message}");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-            return null;
-        }
-
 
         /// <summary>
         /// Validate a package identifier. Determines if it's a Git URL or a package name.

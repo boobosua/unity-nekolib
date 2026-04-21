@@ -10,7 +10,7 @@ using NekoLib.Logger;
 
 namespace NekoLib
 {
-    public class SetupWindow : EditorWindow
+    internal class SetupWindow : EditorWindow
     {
         private const string WindowTitle = "Project Setup";
         private static readonly string[] Tabs = new[] { "Folders", "Packages", "Settings" };

@@ -69,10 +69,11 @@ namespace NekoLib.Extensions
             return vector.sqrMagnitude > Constants.NearZeroSqrMagnitude ? vector.normalized * magnitude : Vector3.zero;
         }
 
-        /// <summary>Returns the direction from this vector to the target vector.</summary>
+        /// <summary>Returns the direction from this vector to the target vector. Returns zero vector if both vectors are equal.</summary>
         public static Vector3 DirectionTo(this Vector3 from, Vector3 to)
         {
-            return (to - from).normalized;
+            Vector3 dir = to - from;
+            return dir.sqrMagnitude > 0f ? dir.normalized : Vector3.zero;
         }
 
         /// <summary>Returns the distance to the target vector.</summary>

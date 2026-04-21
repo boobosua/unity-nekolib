@@ -11,7 +11,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(AutoOrbitAround))]
 #if ODIN_INSPECTOR
-    public class AutoOrbitAroundEditor : OdinEditor
+    internal class AutoOrbitAroundEditor : OdinEditor
     {
         private PropertyTree _tree;
         private InspectorProperty _target;
@@ -98,7 +98,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class AutoOrbitAroundEditor : Editor
+    internal class AutoOrbitAroundEditor : Editor
     {
         private SerializedProperty _targetProperty;
         private SerializedProperty _distanceProperty;

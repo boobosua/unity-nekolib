@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace NekoLib.Timer
 {
-    public partial class TimerTrackerWindow
+    internal partial class TimerTrackerWindow
     {
         private void DrawStopwatchTable(PaginationEditor.Slice slice)
         {

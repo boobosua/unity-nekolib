@@ -7,6 +7,7 @@ namespace NekoLib.Timer
             if (!TryGetSlot(handle, out int slot)) return;
             ref var h = ref _hotSlots[slot];
             if (h.Kind != TimerKind.Countdown) return;
+            if (h.IsPendingKill) return;
 
             if (seconds < 0f) return;
 
@@ -25,6 +26,7 @@ namespace NekoLib.Timer
             if (!TryGetSlot(handle, out int slot)) return;
             ref var h = ref _hotSlots[slot];
             if (h.Kind != TimerKind.Countdown) return;
+            if (h.IsPendingKill) return;
 
             if (seconds < 0f) return;
 
@@ -35,16 +37,26 @@ namespace NekoLib.Timer
             }
 
             float next = h.CountdownRemaining - seconds;
-            h.CountdownRemaining = next > 0f ? next : 0f;
 
-            h.OnUpdate.Invoke(h.CountdownRemaining);
-
-            if (h.CountdownRemaining <= 0f)
+            if (next > 0f)
             {
-                h.IsRunning = false;
-                _coldSlots[slot].OnStop.Invoke();
-                KillSlot(slot);
+                h.CountdownRemaining = next;
+                h.OnUpdate.Invoke(h.CountdownRemaining);
+                return;
             }
+
+            // Keep as negative — overflow is carried forward through loop iterations.
+            h.CountdownRemaining = next;
+            h.OnUpdate.Invoke(0f);
+
+            do
+            {
+                HandleCountdownExpired(slot, ref h);
+            }
+            while (h.IsRunning && h.CountdownRemaining <= 0f);
+
+            if (h.IsRunning)
+                h.OnUpdate.Invoke(h.CountdownRemaining);
         }
     }
 }

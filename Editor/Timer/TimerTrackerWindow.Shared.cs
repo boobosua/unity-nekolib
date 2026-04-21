@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace NekoLib.Timer
 {
-    public partial class TimerTrackerWindow
+    internal partial class TimerTrackerWindow
     {
         // ─── Layout constants ────────────────────────────────────────────────────────
         private const int ItemsPerPage = 20;

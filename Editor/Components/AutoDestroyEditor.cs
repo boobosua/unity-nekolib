@@ -10,7 +10,7 @@ namespace NekoLib.Components
     [CanEditMultipleObjects]
     [CustomEditor(typeof(AutoDestroy))]
 #if ODIN_INSPECTOR
-    public class AutoDestroyEditor : OdinEditor
+    internal class AutoDestroyEditor : OdinEditor
     {
         private PropertyTree _tree;
 
@@ -43,7 +43,7 @@ namespace NekoLib.Components
         }
     }
 #else
-    public class AutoDestroyEditor : Editor
+    internal class AutoDestroyEditor : Editor
     {
         public override void OnInspectorGUI()
         {

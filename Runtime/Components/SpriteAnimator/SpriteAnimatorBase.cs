@@ -83,9 +83,7 @@ namespace NekoLib.Components
         protected virtual void Start()
         {
             if (_playOnAwake)
-            {
-                Play();
-            }
+                Play(_loopMode);
         }
 
         protected virtual void Update()
@@ -197,20 +195,19 @@ namespace NekoLib.Components
             }
         }
 
-        /// <summary>Set the loop mode for the animation.</summary>
-        protected void SetLoopMode(SpriteAnimatorLoopMode loopMode)
+        /// <summary>Play the animation with the given loop mode. Sets and applies the loop mode immediately (like Rigidbody.isKinematic). Defaults to Once.</summary>
+        public virtual void Play(SpriteAnimatorLoopMode loopMode = SpriteAnimatorLoopMode.Once)
         {
             _loopMode = loopMode;
-        }
 
-        /// <summary>Play the animation.</summary>
-        public virtual void Play()
-        {
             if (_spriteCount == 0)
             {
                 Log.Warn("No sprites assigned to " + GetType().Name + " on " + gameObject.name);
                 return;
             }
+
+            if (_spriteCount < 2 && _loopMode == SpriteAnimatorLoopMode.PingPong)
+                Log.Warn($"[SpriteAnimator] PingPong mode requires at least 2 sprites on '{gameObject.name}'; OnCycleComplete will fire every frame.");
 
             _isReversed = false;
 
@@ -231,14 +228,14 @@ namespace NekoLib.Components
             _frameTimer = 0f;
         }
 
-        /// <summary>Restart the animation.</summary>
+        /// <summary>Restart the animation from frame 0 using the current loop mode.</summary>
         public virtual void Restart()
         {
             _currentFrame = 0;
             _frameTimer = 0f;
             _isReversed = false;
             UpdateSprite();
-            Play();
+            Play(_loopMode);
         }
 
         /// <summary>Set the frame rate of the animation.</summary>
@@ -250,18 +247,20 @@ namespace NekoLib.Components
         /// <summary>Go to a specific frame in the animation.</summary>
         public void GoToFrame(int frameIndex)
         {
-            if (frameIndex < 0 || frameIndex >= _spriteCount) return;
-
+            if (_spriteCount == 0)
+            {
+                Log.Warn($"[SpriteAnimator] GoToFrame({frameIndex}): no sprites assigned on '{gameObject.name}'.");
+                return;
+            }
+            if (frameIndex < 0 || frameIndex >= _spriteCount)
+            {
+                Log.Warn($"[SpriteAnimator] GoToFrame({frameIndex}): index out of range [0, {_spriteCount - 1}] on '{gameObject.name}'.");
+                return;
+            }
             _currentFrame = frameIndex;
             _frameTimer = 0f;
             UpdateSprite();
         }
 
-        /// <summary>Play the animation once.</summary>
-        public void PlayOneShot()
-        {
-            SetLoopMode(SpriteAnimatorLoopMode.Once);
-            Restart();
-        }
     }
 }

@@ -9,13 +9,13 @@ using UnityEngine;
 namespace NekoLib
 {
     [Serializable]
-    public class SetupFoldersSettings : ScriptableObject
+    internal class SetupFoldersSettings : ScriptableObject
     {
         private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
         private const string AssetName = "SetupFoldersSettings.asset";
 
         [Serializable]
-        public class FolderOption
+        internal class FolderOption
         {
             public string name;
             public bool enabled = true;
@@ -70,21 +70,14 @@ namespace NekoLib
             if (settings != null)
                 return settings;
 
-            if (settings == null)
-            {
-                EnsureFolders();
+            EnsureFolders();
 
-                settings = CreateInstance<SetupFoldersSettings>();
-                settings.SetDefaults();
-                // initialize namespace root from project settings or derived default
-                settings._namespaceRoot = settings.DeriveInitialNamespaceRoot();
-                AssetDatabase.CreateAsset(settings, assetPath);
-                AssetDatabase.SaveAssets();
-            }
-            else
-            {
-                // no-op; fields are hidden via [HideInInspector]
-            }
+            settings = CreateInstance<SetupFoldersSettings>();
+            settings.SetDefaults();
+            // initialize namespace root from project settings or derived default
+            settings._namespaceRoot = settings.DeriveInitialNamespaceRoot();
+            AssetDatabase.CreateAsset(settings, assetPath);
+            AssetDatabase.SaveAssets();
             return settings;
         }
 

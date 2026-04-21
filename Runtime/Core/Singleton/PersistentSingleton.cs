@@ -20,8 +20,10 @@ namespace NekoLib.Singleton
     public abstract class PersistentSingleton<T> : BaseBehaviour where T : MonoBehaviour
     {
         private static T s_instance;
-        protected static bool s_applicationIsQuitting = false;
+        private static bool s_applicationIsQuitting = false;
         private static bool s_isInitializing = false;
+
+        protected static bool IsApplicationQuitting => s_applicationIsQuitting;
 
         public static bool HasInstance =>
             s_instance != null &&
@@ -85,6 +87,9 @@ namespace NekoLib.Singleton
             if (s_instance == null && !s_isInitializing)
             {
                 s_instance = this as T;
+                // Application.quitting fires before any OnApplicationQuit, guaranteeing the flag
+                // is set before other objects run their quit logic and access Instance.
+                Application.quitting += HandleQuitting;
             }
             else if (s_instance != null && s_instance != this && !s_isInitializing)
             {
@@ -98,6 +103,12 @@ namespace NekoLib.Singleton
                 transform.SetParent(null);
 
             DontDestroyOnLoad(gameObject);
+        }
+
+        private static void HandleQuitting()
+        {
+            s_applicationIsQuitting = true;
+            Application.quitting -= HandleQuitting;
         }
 
 #if UNITY_EDITOR

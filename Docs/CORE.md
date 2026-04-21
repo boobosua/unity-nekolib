@@ -137,7 +137,7 @@ using NekoLib.Pooling;
 NekoLib provides a small, deterministic prefab pooling helper built on Unity's `UnityEngine.Pool.ObjectPool<T>`.
 
 - `IPoolable` gives you lifecycle hooks: `OnSpawned()` and `OnDespawned()`.
-- `PrefabPool<T>` manages instances of a prefab `T : MonoBehaviour, IPoolable`.
+- `Pool<T>` manages instances of a prefab `T : MonoBehaviour, IPoolable`.
 - Use `Spawn(...)` / `Despawn(...)` (older `Get()` / `Release()` naming was removed).
 
 Lifecycle ordering (important when writing your hooks):
@@ -168,11 +168,11 @@ public sealed class BulletSpawner : MonoBehaviour
     [SerializeField] private Bullet bulletPrefab;
     [SerializeField] private Transform poolRoot;
 
-    private PrefabPool<Bullet> _pool;
+    private Pool<Bullet> _pool;
 
     private void Awake()
     {
-        _pool = new PrefabPool<Bullet>(
+        _pool = new Pool<Bullet>(
             prefab: bulletPrefab,
             poolRoot: poolRoot,
             defaultCapacity: 32,
@@ -196,13 +196,13 @@ public sealed class BulletSpawner : MonoBehaviour
 }
 ```
 
-If you want pooled objects to be able to return themselves without holding a pool reference, inherit from `PoolableBehaviour`:
+If you want pooled objects to be able to return themselves without holding a pool reference, inherit from `PoolableObject`:
 
 ```csharp
 using NekoLib.Pooling;
 using UnityEngine;
 
-public sealed class EnemyProjectile : PoolableBehaviour
+public sealed class EnemyProjectile : PoolableObject
 {
     public override void OnSpawned()
     {
@@ -216,7 +216,7 @@ public sealed class EnemyProjectile : PoolableBehaviour
 
     private void OnCollisionEnter(Collision _)
     {
-        // If created by PrefabPool, returns to pool; otherwise Destroy(gameObject).
+        // If created by Pool<T>, returns to pool; otherwise Destroy(gameObject).
         ReleaseSelf();
         // Delayed release is also available:
         // ReleaseSelf(delay: 2f);
@@ -224,7 +224,7 @@ public sealed class EnemyProjectile : PoolableBehaviour
 }
 ```
 
-Other useful APIs on `PrefabPool<T>`:
+Other useful APIs on `Pool<T>`:
 
 - `Spawn()` / `Spawn(Transform parent)` / `Spawn(Vector3, Quaternion)` / `Spawn(Vector3, Quaternion, Transform parent)`
 - `Despawn(T instance, float delaySeconds)`
