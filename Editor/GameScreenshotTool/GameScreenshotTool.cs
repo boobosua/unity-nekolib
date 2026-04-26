@@ -68,7 +68,7 @@ namespace NekoLib
             {
                 _settings.saveFolder = EnsureScreenshotsFolder();
                 EditorUtility.SetDirty(_settings);
-                AssetDatabase.SaveAssets();
+                EditorApplication.delayCall += () => AssetDatabase.SaveAssets();
             }
         }
 
@@ -124,7 +124,7 @@ namespace NekoLib
             {
                 EditorUtility.SetDirty(_settings);
                 if (GUIUtility.hotControl == 0)
-                    AssetDatabase.SaveAssets();
+                    EditorApplication.delayCall += () => AssetDatabase.SaveAssets();
             }
 
             GUILayout.FlexibleSpace();
@@ -166,6 +166,8 @@ namespace NekoLib
             return "< HD";
         }
 
+        private static bool s_reflectionWarned;
+
         // Screen.width/height inside an EditorWindow returns the window's own pixel size, not the Game View's.
         private static Vector2 GetGameViewSize()
         {
@@ -175,7 +177,14 @@ namespace NekoLib
                 var m = t?.GetMethod("GetSizeOfMainGameView", BindingFlags.NonPublic | BindingFlags.Static);
                 if (m != null) return (Vector2)m.Invoke(null, null);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                if (!s_reflectionWarned)
+                {
+                    s_reflectionWarned = true;
+                    Debug.LogWarning($"{LogPrefix} Failed to query Game View size via reflection; using fallback {FallbackWidth}×{FallbackHeight}. {ex.Message}");
+                }
+            }
             return new Vector2(FallbackWidth, FallbackHeight);
         }
 
