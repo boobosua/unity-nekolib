@@ -14,7 +14,7 @@ namespace NekoLib.Singleton
 {
     /// <summary>
     /// DontDestroy singleton can be created and placed in a persistent scene and it will exist across scenes.
-    /// Do not reference the instance in OnDestroy(), OnDisable() or OnApplicationQuit().
+    /// Do not reference the instance in OnDestroy() or OnDisable().
     /// </summary>
     [DisallowMultipleComponent]
     public abstract class PersistentSingleton<T> : BaseBehaviour where T : MonoBehaviour
@@ -63,6 +63,7 @@ namespace NekoLib.Singleton
                     };
 
                     s_instance = obj.AddComponent<T>();
+                    Application.quitting += HandleQuitting;
                     Log.Info($"Create a new singleton of type {typeof(T).Name.Colorize(Swatch.LA)}.");
                 }
                 else
@@ -109,6 +110,13 @@ namespace NekoLib.Singleton
         {
             s_applicationIsQuitting = true;
             Application.quitting -= HandleQuitting;
+#if UNITY_EDITOR
+            if (Utils.IsReloadDomainDisabled())
+            {
+                ResetFields();
+                Log.Info($"Resetting static fields of {typeof(T).Name.Colorize(Swatch.GA)} because domain reload is disabled.");
+            }
+#endif
         }
 
 #if UNITY_EDITOR
@@ -125,20 +133,5 @@ namespace NekoLib.Singleton
             s_isInitializing = false;
         }
 #endif
-
-        protected virtual void OnApplicationQuit()
-        {
-            // Prevent others from referencing this instance when the application is quitting.
-            s_applicationIsQuitting = true;
-
-#if UNITY_EDITOR
-            if (Utils.IsReloadDomainDisabled())
-            {
-                // If domain reload is disabled, we need to reset static fields manually.
-                ResetFields();
-                Log.Info($"Resetting static fields of {typeof(T).Name.Colorize(Swatch.GA)} because domain reload is disabled.");
-            }
-#endif
-        }
     }
 }
