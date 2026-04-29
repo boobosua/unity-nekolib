@@ -3,7 +3,7 @@ using NekoLib.Constant;
 using NekoLib.Extensions;
 using UnityEngine;
 
-namespace NekoLib
+namespace NekoLib.Components
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("NekoLib/Auto Orbit Around")]
@@ -35,6 +35,13 @@ namespace NekoLib
 
         private float _currentAngle = 0f;
 
+        private Vector3 OrbitAxis => Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
+
+        private static Vector3 GetPerp(Vector3 axis) =>
+            Mathf.Abs(Vector3.Dot(axis, Vector3.forward)) < 0.99f
+                ? Vector3.Cross(axis, Vector3.forward).normalized
+                : Vector3.Cross(axis, Vector3.right).normalized;
+
         private void Awake()
         {
             _currentAngle = _startAngle;
@@ -49,11 +56,8 @@ namespace NekoLib
             if (_currentAngle >= Constants.FullRotation) _currentAngle -= Constants.FullRotation;
             if (_currentAngle < 0f) _currentAngle += Constants.FullRotation;
 
-            // Orbit axis: world Y tilted by elevation, then rotated by bearing.
-            Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
-                ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
-                : Vector3.Cross(orbitAxis, Vector3.right).normalized;
+            Vector3 orbitAxis = OrbitAxis;
+            Vector3 perp = GetPerp(orbitAxis);
             transform.position = _target.position + Quaternion.AngleAxis(_currentAngle, orbitAxis) * perp * _distance;
             ApplyFacing();
         }
@@ -72,7 +76,7 @@ namespace NekoLib
 
                 case FacingMode.FaceHeading:
                 case FacingMode.FaceOppositeHeading:
-                    Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
+                    Vector3 orbitAxis = OrbitAxis;
                     Vector3 radial = transform.position - _target.position;
                     Vector3 heading = Vector3.Cross(orbitAxis, radial) * Mathf.Sign(_speed);
                     if (heading.sqrMagnitude > Constants.NearZeroSqrMagnitude)
@@ -90,10 +94,8 @@ namespace NekoLib
             if (_target == null || Application.isPlaying)
                 return;
 
-            Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
-                ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
-                : Vector3.Cross(orbitAxis, Vector3.right).normalized;
+            Vector3 orbitAxis = OrbitAxis;
+            Vector3 perp = GetPerp(orbitAxis);
             transform.position = _target.position + Quaternion.AngleAxis(_startAngle, orbitAxis) * perp * _distance;
             UnityEditor.SceneView.RepaintAll();
         }
@@ -110,10 +112,8 @@ namespace NekoLib
             const int segments = 64;
             Vector3 center = _target.position;
 
-            Vector3 orbitAxis = Vector3.up.RotateX(_elevationAngle).RotateY(_bearingAngle);
-            Vector3 perp = Mathf.Abs(Vector3.Dot(orbitAxis, Vector3.forward)) < 0.99f
-                ? Vector3.Cross(orbitAxis, Vector3.forward).normalized
-                : Vector3.Cross(orbitAxis, Vector3.right).normalized;
+            Vector3 orbitAxis = OrbitAxis;
+            Vector3 perp = GetPerp(orbitAxis);
 
             Vector3 prevPoint = center + perp * _distance;
             for (int i = 1; i <= segments; i++)

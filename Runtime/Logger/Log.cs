@@ -11,6 +11,7 @@ namespace NekoLib.Logger
     /// </summary>
     public static class Log
     {
+        /// <summary>Logs an info message.</summary>
         [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD"), Conditional("NEKOLIB_LOG")]
         public static void Info(object message) => Debug.Log(message);
 

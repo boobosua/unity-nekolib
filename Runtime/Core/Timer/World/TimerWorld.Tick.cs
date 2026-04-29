@@ -6,7 +6,7 @@ namespace NekoLib.Timer
 {
     internal static partial class TimerWorld
     {
-        public static void TickPlayerLoop()
+        internal static void TickPlayerLoop()
         {
             if (_hotSlots == null) return;
 

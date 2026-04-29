@@ -54,9 +54,6 @@ namespace NekoLib.Timer
                 HandleCountdownExpired(slot, ref h);
             }
             while (h.IsRunning && h.CountdownRemaining <= 0f);
-
-            if (h.IsRunning)
-                h.OnUpdate.Invoke(h.CountdownRemaining);
         }
     }
 }

@@ -2,7 +2,7 @@ using NekoLib.Extensions;
 using NekoLib.Logger;
 using UnityEngine;
 
-namespace NekoLib
+namespace NekoLib.Components
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("NekoLib/Look At Camera")]

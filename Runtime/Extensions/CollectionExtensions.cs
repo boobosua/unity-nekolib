@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Random = UnityEngine.Random;
 
@@ -183,7 +182,8 @@ namespace NekoLib.Extensions
             if (arr.IsNullOrEmpty())
                 throw new InvalidOperationException("Cannot get random element from null or empty array");
 
-            float totalWeight = arr.Sum(weightSelector);
+            float totalWeight = 0f;
+            for (int i = 0; i < arr.Length; i++) totalWeight += weightSelector(arr[i]);
             if (totalWeight <= 0)
                 throw new InvalidOperationException("Total weight must be greater than 0");
 
@@ -370,7 +370,7 @@ namespace NekoLib.Extensions
                 return new List<T>();
 
             var shuffled = list.Shuffle();
-            return shuffled.Take(count).ToList();
+            return shuffled.GetRange(0, count);
         }
 
         /// <summary>Returns a random element from the list using weighted selection.</summary>
@@ -440,7 +440,9 @@ namespace NekoLib.Extensions
         /// <summary>Returns a new copy of the dictionary.</summary>
         public static Dictionary<K, V> AsNewCopy<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
-            return dict.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var copy = new Dictionary<K, V>(dict.Count);
+            foreach (var kvp in dict) copy[kvp.Key] = kvp.Value;
+            return copy;
         }
 
         /// <summary>Returns a string representation of a dictionary. Does not work on nested dictionaries or dictionary that is nested in other structures.</summary>
@@ -454,27 +456,35 @@ namespace NekoLib.Extensions
             if (dict.Count == 0)
                 return "{}";
 
-            return "{" + string.Join(", ", dict
-                .Select(kvp => $"{kvp.Key}: {kvp.Value}")) + "}";
+            var sb2 = new StringBuilder("{");
+            bool first = true;
+            foreach (var kvp in dict)
+            {
+                if (!first) sb2.Append(", ");
+                sb2.Append(kvp.Key).Append(": ").Append(kvp.Value);
+                first = false;
+            }
+            sb2.Append("}");
+            return sb2.ToString();
         }
         #endregion
 
         /// <summary>Returns a string representation of a queue. Does not work on nested queues or queue that is nested in other structures.</summary>
         public static string ToLiteral<T>(this Queue<T> queue)
         {
-            return queue.ToList().ToLiteral();
+            return new List<T>(queue).ToLiteral();
         }
 
         /// <summary>Returns a string representation of a stack. Does not work on nested stacks or stack that is nested in other structures.</summary>
         public static string ToLiteral<T>(this Stack<T> stack)
         {
-            return stack.ToList().ToLiteral();
+            return new List<T>(stack).ToLiteral();
         }
 
         /// <summary>Returns a string representation of a hashset. Does not work on nested hashsets or hashset that is nested in other structures.</summary>
         public static string ToLiteral<T>(this HashSet<T> set)
         {
-            return set.ToList().ToLiteral();
+            return new List<T>(set).ToLiteral();
         }
     }
 }
