@@ -5,7 +5,7 @@ using UnityEngine.Profiling;
 namespace NekoLib.Benchmark
 {
     /// <summary> A simple utility to count GC allocations in a code block. </summary>
-    internal sealed class AllocCounter
+    public sealed class AllocCounter
     {
         private Recorder _rec;
 
