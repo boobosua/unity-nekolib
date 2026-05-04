@@ -81,22 +81,20 @@ AudioManager.Instance.PlayMusic(clip);"
                     Title = "Countdown",
                     Namespace = "NekoLib.Timer",
                     Summary = "PlayerLoop-driven countdown timer handle. No coroutines. Supports loops, callbacks, and conditional ticking.",
-                    Description = "Countdown is a lightweight readonly struct handle. Create with Countdown.Create(owner, duration), chain builder methods, then call .Start(). Ticks via Unity's PlayerLoop — no MonoBehaviour Update overhead.\n\nKey state: IsAlive, IsRunning, IsPaused, RemainingTime, TotalTime, CurrentLoopIteration.\nKey controls: Start(), Stop(), Cancel() (silent — no OnStop), Pause(), Resume(), AddTime(), ReduceTime().",
+                    Description = "Countdown is a lightweight readonly struct handle. Create with Countdown.Create(owner, duration), chain builder methods, then call .Start(). Ticks via Unity's PlayerLoop — no MonoBehaviour Update overhead.\n\nKey state: IsAlive, IsRunning, IsPaused, RemainingTime, TotalTime, CurrentLoopIteration.\nKey controls: Start(), Pause(), Resume(), Cancel() (silent — no callbacks), AddTime(), ReduceTime().",
                     Code =
 @"var countdown = Countdown.Create(this, 10f)
     .SetLoop(3)
-    .OnStart(() => Debug.Log(""Started!""))
     .OnUpdateWhen(() => !isPaused)
     .OnUpdate(t => Debug.Log($""Remaining: {t:F2}s""))
-    .OnLoop(() => Debug.Log(""Loop!""))
-    .OnStop(() => Debug.Log(""Finished!""));
+    .OnElapsed(() => Debug.Log(""Period elapsed""));
 
 countdown.Start();
 
 // Control
 countdown.Pause();
 countdown.Resume();
-countdown.Cancel();      // silent teardown — no OnStop fired
+countdown.Cancel();      // silent teardown — no callbacks
 countdown.AddTime(5f);
 countdown.ReduceTime(2f);
 
@@ -155,9 +153,9 @@ progressBar.fillAmount = pct;"
                         {
                             Kind = DocMemberKind.Property,
                             Signature = "CurrentLoopIteration",
-                            Summary = "Zero-based count of completed loop iterations.",
+                            Summary = "Number of iterations that have completed and fired OnElapsed (1 after the first iteration ends, N after the last for SetLoop(N)).",
                             Code =
-@"Debug.Log($""Loop {cd.CurrentLoopIteration + 1} of {loopCount}"");"
+@"Debug.Log($""Iteration {cd.CurrentLoopIteration} of {loopCount}"");"
                         },
                         // Methods
                         new DocMember
@@ -167,33 +165,23 @@ progressBar.fillAmount = pct;"
                             Summary = "Creates a new countdown attached to a MonoBehaviour owner.",
                             Code =
 @"var cd = Countdown.Create(this, 10f)
-    .OnStop(() => OnTimerDone())
+    .OnElapsed(() => OnTimerDone())
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Start()",
-                            Summary = "Starts (or restarts) the countdown from TotalTime.",
+                            Summary = "Starts the countdown from TotalTime. No-op if already running.",
                             Code =
-@"var cd = Countdown.Create(this, 5f).OnStop(OnDone);
-cd.Start();
-// restart later
+@"var cd = Countdown.Create(this, 5f).OnElapsed(OnDone);
 cd.Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Stop()",
-                            Summary = "Stops the timer and fires the OnStop callback.",
-                            Code =
-@"cd.Stop(); // OnStop fires"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
                             Signature = "Cancel()",
-                            Summary = "Stops the timer silently — no OnStop callback is fired.",
+                            Summary = "Cancels the timer silently — no callbacks fire.",
                             Code =
 @"cd.Cancel(); // silent teardown — no callbacks"
                         },
@@ -228,7 +216,7 @@ cd.AddTime(5f);"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "ReduceTime(float seconds)",
-                            Summary = "Subtracts seconds from the remaining time. Clamps to zero.",
+                            Summary = "Subtracts seconds from the remaining time. Clamps to zero on overshoot — no carry-over into subsequent loop iterations. Triggers OnElapsed when reaching zero. NaN and negative values are ignored.",
                             Code =
 @"// Penalty: -3s
 cd.ReduceTime(3f);"
@@ -237,38 +225,31 @@ cd.ReduceTime(3f);"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "SetLoop(int count)",
-                            Summary = "Sets how many times the countdown repeats. Use -1 for infinite.",
+                            Summary = "Sets how many times the countdown fires OnElapsed. Use -1 for infinite, 0 (default) for one-shot.",
                             Code =
-@"// Repeat 3 times, then fire OnStop
+@"// SpawnWave 3 times, then GameOver after the 3rd
+var waveIndex = 0;
 var cd = Countdown.Create(this, 2f)
     .SetLoop(3)
-    .OnLoop(() => SpawnWave())
-    .OnStop(() => GameOver())
+    .OnElapsed(() => {
+        SpawnWave();
+        if (++waveIndex == 3) GameOver();
+    })
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "SetUseUnscaledTime(bool value)",
+                            Signature = "SetUnscaledTime(bool value)",
                             Summary = "When true the timer ticks using unscaled time (ignores Time.timeScale).",
                             Code =
 @"// Pause menu timer — unaffected by slow-motion
 var cd = Countdown.Create(this, 30f)
-    .SetUseUnscaledTime(true)
-    .OnStop(OnTimeout)
+    .SetUnscaledTime(true)
+    .OnElapsed(OnTimeout)
     .Start();"
                         },
                         // Callbacks
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Callback,
-                            Signature = "OnStart(Action)",
-                            Summary = "Fires once when Start() is called.",
-                            Code =
-@"Countdown.Create(this, 5f)
-    .OnStart(() => sfx.PlayOneShot(countdownBeep))
-    .Start();"
-                        },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
@@ -287,28 +268,24 @@ var cd = Countdown.Create(this, 30f)
                             Code =
 @"Countdown.Create(this, 30f)
     .OnUpdateWhen(() => !isPaused && isInRound)
-    .OnStop(OnRoundEnd)
+    .OnElapsed(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
-                            Signature = "OnLoop(Action)",
-                            Summary = "Fires at the end of each loop iteration (before restarting).",
+                            Signature = "OnElapsed(Action)",
+                            Summary = "Fires when the period elapses — once at zero for one-shot, once per iteration including the final one for SetLoop(N), every iteration forever for SetLoop(-1). Not fired on Cancel() or owner-MonoBehaviour destruction.",
                             Code =
-@"Countdown.Create(this, 5f)
+@"// Infinite spawner — fires every 5 seconds until cancelled
+Countdown.Create(this, 5f)
     .SetLoop(-1)
-    .OnLoop(() => SpawnEnemy())
-    .Start();"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Callback,
-                            Signature = "OnStop(Action)",
-                            Summary = "Fires when the last loop ends or Stop() is called. Not fired on Cancel().",
-                            Code =
-@"Countdown.Create(this, 10f)
-    .OnStop(() => ShowTimeUpScreen())
+    .OnElapsed(() => SpawnEnemy())
+    .Start();
+
+// One-shot — fires once at zero
+Countdown.Create(this, 10f)
+    .OnElapsed(() => ShowTimeUpScreen())
     .Start();"
                         },
                     }
@@ -317,14 +294,14 @@ var cd = Countdown.Create(this, 30f)
                 {
                     Title = "Stopwatch",
                     Namespace = "NekoLib.Timer",
-                    Summary = "Counts elapsed time upward. Stops when a predicate becomes true or you call Stop()/Cancel().",
-                    Description = "Mirrors Countdown's builder API but measures elapsed time rather than remaining time. Use .SetStopWhen(predicate) to auto-stop on a condition.",
+                    Summary = "Counts elapsed time upward. Auto-fires OnElapsed when a stop predicate becomes true, or stays alive until Cancel() is called.",
+                    Description = "Mirrors Countdown's builder API but measures elapsed time rather than remaining time. Use .SetStopWhen(predicate) to auto-fire OnElapsed on a condition.",
                     Code =
 @"var stopwatch = Stopwatch.Create(this)
     .SetStopWhen(() => gameIsOver)
     .OnUpdateWhen(() => isActiveState)
     .OnUpdate(elapsed => Debug.Log($""Elapsed: {elapsed:F2}s""))
-    .OnStop(() => Debug.Log(""Stopped!""));
+    .OnElapsed(() => Debug.Log(""Stop predicate triggered""));
 
 stopwatch.Start();
 
@@ -376,31 +353,23 @@ float elapsed = stopwatch.ElapsedTime;",
                             Code =
 @"var sw = Stopwatch.Create(this)
     .OnUpdate(t => label.text = t.ToClock())
-    .OnStop(OnRoundEnd)
+    .SetStopWhen(() => roundEnded)
+    .OnElapsed(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Start()",
-                            Summary = "Starts (or restarts) the stopwatch from zero.",
+                            Summary = "Starts the stopwatch. No-op if already running.",
                             Code =
 @"stopwatch.Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Stop()",
-                            Summary = "Stops the stopwatch and fires OnStop.",
-                            Code =
-@"stopwatch.Stop();
-Debug.Log($""Final time: {stopwatch.ElapsedTime:F2}s"");"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
                             Signature = "Cancel()",
-                            Summary = "Stops silently — no OnStop callback is fired.",
+                            Summary = "Cancels the stopwatch silently — no callbacks fire.",
                             Code =
 @"stopwatch.Cancel();"
                         },
@@ -418,35 +387,25 @@ stopwatch.Resume();"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "SetStopWhen(Func<bool>)",
-                            Summary = "Auto-stops the stopwatch when the predicate returns true.",
+                            Summary = "Auto-fires OnElapsed and stops the stopwatch when the predicate returns true.",
                             Code =
 @"Stopwatch.Create(this)
     .SetStopWhen(() => playerDead)
-    .OnStop(ShowDeathScreen)
+    .OnElapsed(ShowDeathScreen)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "SetUseUnscaledTime(bool value)",
+                            Signature = "SetUnscaledTime(bool value)",
                             Summary = "When true the stopwatch ticks using unscaled time (ignores Time.timeScale).",
                             Code =
 @"Stopwatch.Create(this)
-    .SetUseUnscaledTime(true)
+    .SetUnscaledTime(true)
     .OnUpdate(t => realTimeLabel.text = t.ToClock())
     .Start();"
                         },
                         // Callbacks
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Callback,
-                            Signature = "OnStart(Action)",
-                            Summary = "Fires once when Start() is called.",
-                            Code =
-@"Stopwatch.Create(this)
-    .OnStart(() => startPanel.SetActive(false))
-    .Start();"
-                        },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
@@ -465,18 +424,19 @@ stopwatch.Resume();"
                             Code =
 @"Stopwatch.Create(this)
     .OnUpdateWhen(() => roundActive && !isPaused)
-    .OnStop(OnRoundEnd)
+    .SetStopWhen(() => roundEnded)
+    .OnElapsed(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
-                            Signature = "OnStop(Action)",
-                            Summary = "Fires when Stop() is called or SetStopWhen predicate becomes true.",
+                            Signature = "OnElapsed(Action)",
+                            Summary = "Fires when SetStopWhen predicate becomes true. Never fires without a predicate. Not fired on Cancel() or owner-MonoBehaviour destruction.",
                             Code =
 @"Stopwatch.Create(this)
     .SetStopWhen(() => reachedGoal)
-    .OnStop(() => SaveBestTime(stopwatch.ElapsedTime))
+    .OnElapsed(() => SaveBestTime(stopwatch.ElapsedTime))
     .Start();"
                         },
                     }
@@ -2248,7 +2208,7 @@ onPauseToggled.Invoke(isPaused);" },
 @"// Open: Window > Neko Framework > Timer Tracker
 
 // Timers appear automatically when created via Countdown/Stopwatch:
-var countdown = Countdown.Create(this, 10f).OnStop(() => { });
+var countdown = Countdown.Create(this, 10f).OnElapsed(() => { });
 countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Debug", "Timer" },
                     Category = DocCategory.EditorTools

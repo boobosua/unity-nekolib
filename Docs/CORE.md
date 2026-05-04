@@ -53,23 +53,21 @@ Both are lightweight `readonly struct` handles in `NekoLib.Timer`.
 using NekoLib.Timer;
 using UnityEngine;
 
-// Countdown — loops 3 times, only ticks when not paused
+// Countdown — fires OnElapsed 3 times, only ticks when not paused
 var countdown = Countdown.Create(this, 10f)
     .SetLoop(3)
-    .OnStart(() => Debug.Log("Started!"))
     .OnUpdateWhen(() => !isPaused)
     .OnUpdate(remaining => Debug.Log($"Remaining: {remaining:F2}s"))
-    .OnLoop(() => Debug.Log("Loop restarted"))
-    .OnStop(() => Debug.Log("Countdown finished"));
+    .OnElapsed(() => Debug.Log("Period elapsed"));
 
 countdown.Start();
 
-// Stopwatch — stops when a condition becomes true
+// Stopwatch — fires OnElapsed when stopWhen becomes true
 var stopwatch = Stopwatch.Create(this)
     .SetStopWhen(() => gameIsOver)
     .OnUpdateWhen(() => isActiveState)
     .OnUpdate(elapsed => Debug.Log($"Elapsed: {elapsed:F2}s"))
-    .OnStop(() => Debug.Log("Stopwatch stopped"));
+    .OnElapsed(() => Debug.Log("Stopwatch reached its stop condition"));
 
 stopwatch.Start();
 ```
@@ -85,24 +83,33 @@ bool paused = countdown.IsPaused;
 // Countdown values
 float remaining = countdown.RemainingTime;
 float total = countdown.TotalTime;
-int loopIteration = countdown.CurrentLoopIteration;
+int iteration = countdown.CurrentLoopIteration;
 
-// Countdown time adjustments
+// Countdown time adjustments — NaN/negative are ignored; ReduceTime clamps to 0
 countdown.AddTime(5f);    // add seconds to remaining time
-countdown.ReduceTime(2f); // remove seconds from remaining time
+countdown.ReduceTime(2f); // subtract seconds from remaining time
 
 // Stopwatch values
 float elapsed = stopwatch.ElapsedTime;
 
-// Control
+// Control — Cancel is silent (no callbacks fire)
 countdown.Pause();
 countdown.Resume();
-countdown.Stop();   // invokes OnStop callbacks
-countdown.Cancel(); // silent (does NOT invoke OnStop callbacks)
+countdown.Cancel();
 
 // Conditional updates — timer only ticks when condition is true
 countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
+
+### Callback Semantics
+
+| Callback | Countdown | Stopwatch |
+|---|---|---|
+| `OnUpdate(remaining)` / `OnUpdate(elapsed)` | Every tick frame | Every tick frame |
+| `OnElapsed()` | Every iteration boundary including the final one (1× for one-shot, N× for `SetLoop(N)`, ∞ for `SetLoop(-1)`) | Once when `SetStopWhen` predicate becomes true |
+| `OnUpdateWhen(predicate)` | Gates ticking; the timer pauses internally while the predicate is false | Same |
+
+`Cancel()` and owner-MonoBehaviour destruction are silent — no callback fires. `OnElapsed` is the only natural-completion event.
 
 ### Invoke Helpers
 

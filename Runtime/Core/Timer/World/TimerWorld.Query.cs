@@ -27,7 +27,8 @@ namespace NekoLib.Timer
         {
             if (!TryGetSlot(handle, out int slot)) return 0f;
             ref var h = ref _hotSlots[slot];
-            return h.Kind == TimerKind.Countdown ? h.CountdownRemaining : 0f;
+            if (h.Kind != TimerKind.Countdown) return 0f;
+            return h.CountdownRemaining > 0f ? h.CountdownRemaining : 0f;
         }
 
         public static float GetCountdownTotal(TimerHandle handle)

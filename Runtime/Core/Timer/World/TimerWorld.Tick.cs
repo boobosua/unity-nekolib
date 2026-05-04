@@ -71,54 +71,38 @@ namespace NekoLib.Timer
             }
 
             h.OnUpdate.Invoke(0f);
+            if (h.IsPendingKill) return;
 
-            do
-            {
-                HandleCountdownExpired(slot, ref h);
-            }
-            while (h.IsRunning && h.CountdownRemaining <= 0f);
+            HandleCountdownExpired(slot, ref h);
         }
 
-        // Shared expiry handler — called by both TickCountdown and ReduceCountdownTime.
-        // h.CountdownRemaining is expected to be <= 0 on entry; overflow is carried forward via +=.
+        // Shared expiry handler — called by TickCountdown, ReduceCountdownTime, and the
+        // immediate-completion path in Start. Fires OnElapsed on every iteration boundary
+        // including the final one. Resets remaining to CountdownTotal when looping;
+        // kills the slot when not.
         private static void HandleCountdownExpired(int slot, ref TimerSlotHot h)
         {
             ref var c = ref _coldSlots[slot];
 
-            bool shouldLoop;
-            switch (c.LoopCount)
-            {
-                case -1: shouldLoop = true; break;
-                case  0: shouldLoop = false; break;
-                default:
-                    c.LoopIteration++;
-                    shouldLoop = c.LoopIteration < c.LoopCount;
-                    break;
-            }
+            c.LoopIteration++;
 
-            if (c.LoopStopWhen.HasAny)
+            bool shouldLoop = c.LoopCount switch
             {
-                bool stopNow;
-                try { stopNow = c.LoopStopWhen.InvokeOrFalse(); }
-                catch (Exception ex)
-                {
-                    Log.Error($"[NekoLib.Timer] loop stopWhen threw; stopping loop. {ex}");
-                    c.LoopStopWhen.Clear();
-                    stopNow = true;
-                }
-                if (stopNow) shouldLoop = false;
-            }
+                -1 => true,
+                 0 => false,
+                 _ => c.LoopIteration < c.LoopCount
+            };
+
+            c.OnElapsed.Invoke();
+            if (h.IsPendingKill) return;
 
             if (shouldLoop)
             {
-                h.CountdownRemaining += c.CountdownTotal; // carry overflow into next iteration
-                c.OnLoop.Invoke();
+                h.CountdownRemaining = c.CountdownTotal;
                 return;
             }
 
-            h.IsRunning = false;
             KillSlot(slot);
-            c.OnStop.Invoke();
         }
 
         private static void TickStopwatch(int slot, ref TimerSlotHot h, float dt)
@@ -126,6 +110,7 @@ namespace NekoLib.Timer
             h.StopwatchElapsed += dt;
             h.OnUpdate.Invoke(h.StopwatchElapsed);
 
+            if (h.IsPendingKill) return;
             if (!h.HasStopWhen) return;
 
             bool shouldStop;
@@ -140,9 +125,9 @@ namespace NekoLib.Timer
 
             if (!shouldStop) return;
 
-            h.IsRunning = false;
+            _coldSlots[slot].OnElapsed.Invoke();
+            if (h.IsPendingKill) return;
             KillSlot(slot);
-            _coldSlots[slot].OnStop.Invoke();
         }
     }
 }

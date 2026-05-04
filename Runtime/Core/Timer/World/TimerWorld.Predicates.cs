@@ -36,39 +36,6 @@ namespace NekoLib.Timer
             ref var c = ref _coldSlots[slot];
             c.LoopCount = loopCount;
             c.LoopIteration = 0;
-            c.LoopStopWhen.Clear();
-        }
-
-        public static void SetCountdownLoopCondition(TimerHandle handle, Func<bool> stopWhen)
-        {
-            if (!TryGetSlot(handle, out int slot)) return;
-            if (_hotSlots[slot].Kind != TimerKind.Countdown) return;
-
-            if (stopWhen == null) throw new ArgumentNullException(nameof(stopWhen));
-
-            ref var c = ref _coldSlots[slot];
-            c.LoopStopWhen.Func = stopWhen;
-            c.LoopStopWhen.Target = null;
-            c.LoopStopWhen.TargetDelegate = null;
-            c.LoopStopWhen.Invoker = null;
-            c.LoopCount = 0;
-            c.LoopIteration = 0;
-        }
-
-        public static void SetCountdownLoopCondition<T>(TimerHandle handle, T target, Func<T, bool> stopWhen) where T : class
-        {
-            if (!TryGetSlot(handle, out int slot)) return;
-            if (_hotSlots[slot].Kind != TimerKind.Countdown) return;
-
-            if (stopWhen == null) throw new ArgumentNullException(nameof(stopWhen));
-
-            ref var c = ref _coldSlots[slot];
-            c.LoopStopWhen.Func = null;
-            c.LoopStopWhen.Target = target;
-            c.LoopStopWhen.TargetDelegate = stopWhen;
-            c.LoopStopWhen.Invoker = Invokers<T>.FuncBool;
-            c.LoopCount = 0;
-            c.LoopIteration = 0;
         }
 
         public static void SetStopwatchStopCondition(TimerHandle handle, Func<bool> stopWhen)

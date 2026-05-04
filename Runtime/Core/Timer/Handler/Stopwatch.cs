@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NekoLib.Timer
 {
-    /// <summary>A timer that measures elapsed time until stopped.</summary>
+    /// <summary>A timer that measures elapsed time until cancelled or its stop predicate becomes true.</summary>
     public readonly struct Stopwatch
     {
         private readonly TimerHandle _handle;
@@ -37,17 +37,11 @@ namespace NekoLib.Timer
         /// <summary>Ticks only while <paramref name="predicate"/> is true (non-capturing style).</summary>
         public Stopwatch OnUpdateWhen<T>(T target, Func<T, bool> predicate) where T : class { TimerWorld.SetUpdateWhen(_handle, target, predicate); return this; }
 
-        /// <summary>Stops when <paramref name="stopWhen"/> becomes true.</summary>
+        /// <summary>Auto-fires OnElapsed and stops the stopwatch when <paramref name="stopWhen"/> becomes true.</summary>
         public Stopwatch SetStopWhen(Func<bool> stopWhen) { TimerWorld.SetStopwatchStopCondition(_handle, stopWhen); return this; }
 
-        /// <summary>Stops when <paramref name="stopWhen"/> becomes true (non-capturing style).</summary>
+        /// <summary>Auto-fires OnElapsed and stops the stopwatch when <paramref name="stopWhen"/> becomes true (non-capturing style).</summary>
         public Stopwatch SetStopWhen<T>(T target, Func<T, bool> stopWhen) where T : class { TimerWorld.SetStopwatchStopCondition(_handle, target, stopWhen); return this; }
-
-        /// <summary>Invokes <paramref name="callback"/> when the stopwatch starts.</summary>
-        public Stopwatch OnStart(Action callback) { TimerWorld.SetOnStart(_handle, callback); return this; }
-
-        /// <summary>Invokes <paramref name="callback"/> when the stopwatch starts (non-capturing style).</summary>
-        public Stopwatch OnStart<T>(T target, Action<T> callback) where T : class { TimerWorld.SetOnStart(_handle, target, callback); return this; }
 
         /// <summary>Invokes <paramref name="callback"/> every tick with elapsed seconds.</summary>
         public Stopwatch OnUpdate(Action<float> callback) { TimerWorld.SetOnUpdate(_handle, callback); return this; }
@@ -55,11 +49,8 @@ namespace NekoLib.Timer
         /// <summary>Invokes <paramref name="callback"/> every tick with elapsed seconds (non-capturing style).</summary>
         public Stopwatch OnUpdate<T>(T target, Action<T, float> callback) where T : class { TimerWorld.SetOnUpdate(_handle, target, callback); return this; }
 
-        /// <summary>Invokes <paramref name="callback"/> when the stopwatch stops naturally.</summary>
-        public Stopwatch OnStop(Action callback) { TimerWorld.SetOnStop(_handle, callback); return this; }
-
-        /// <summary>Invokes <paramref name="callback"/> when the stopwatch stops naturally (non-capturing style).</summary>
-        public Stopwatch OnStop<T>(T target, Action<T> callback) where T : class { TimerWorld.SetOnStop(_handle, target, callback); return this; }
+        /// <summary>Invokes <paramref name="callback"/> when the stop predicate becomes true. Never fires without a predicate set via <see cref="SetStopWhen(Func{bool})"/>.</summary>
+        public Stopwatch OnElapsed(Action callback) { TimerWorld.SetOnElapsed(_handle, callback); return this; }
 
         /// <summary>Starts the stopwatch.</summary>
         public void Start() => TimerWorld.Start(_handle);
@@ -70,10 +61,7 @@ namespace NekoLib.Timer
         /// <summary>Resumes the stopwatch.</summary>
         public void Resume() => TimerWorld.Resume(_handle);
 
-        /// <summary>Stops the stopwatch and invokes stop callbacks.</summary>
-        public void Stop() => TimerWorld.Stop(_handle);
-
-        /// <summary>Cancels the stopwatch without invoking stop callbacks.</summary>
+        /// <summary>Cancels the stopwatch silently — no callbacks are invoked.</summary>
         public void Cancel() => TimerWorld.Cancel(_handle);
 
         /// <summary>Returns concise debugging info.</summary>

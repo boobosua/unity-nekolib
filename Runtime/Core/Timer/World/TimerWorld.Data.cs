@@ -144,8 +144,8 @@ namespace NekoLib.Timer
             }
         }
 
-        // ─── Cold slot (~208 bytes) ──────────────────────────────────────────────
-        // Accessed only when a timer fires, loops, or stops.
+        // ─── Cold slot ───────────────────────────────────────────────────────────
+        // Accessed only when a timer fires its OnElapsed event.
         private struct TimerSlotCold
         {
             public BoolPredicate UpdateWhen;
@@ -153,13 +153,10 @@ namespace NekoLib.Timer
             public float CountdownTotal;
             public int LoopCount;
             public int LoopIteration;
-            public BoolPredicate LoopStopWhen;
 
             public BoolPredicate StopwatchStopWhen;
 
-            public Callback0 OnStart;
-            public Callback0 OnLoop;
-            public Callback0 OnStop;
+            public Callback0 OnElapsed;
 
             public void ClearCold()
             {
@@ -167,11 +164,8 @@ namespace NekoLib.Timer
                 CountdownTotal = 0f;
                 LoopCount = 0;
                 LoopIteration = 0;
-                LoopStopWhen.Clear();
                 StopwatchStopWhen.Clear();
-                OnStart.Clear();
-                OnLoop.Clear();
-                OnStop.Clear();
+                OnElapsed.Clear();
             }
         }
 

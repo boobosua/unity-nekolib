@@ -21,7 +21,6 @@ namespace NekoLib.Timer
 
             cold.LoopCount = 0;
             cold.LoopIteration = 0;
-            cold.LoopStopWhen.Clear();
 
             RegisterActive(handle.Slot);
             return handle;
@@ -58,18 +57,18 @@ namespace NekoLib.Timer
 
             if (h.IsRunning) return;
 
+            // Countdown with non-positive duration completes immediately.
             if (h.Kind == TimerKind.Countdown && _coldSlots[slot].CountdownTotal <= 0f)
             {
                 Log.Warn("[NekoLib.Timer] Countdown duration is 0; it will complete immediately.");
                 h.IsRunning = true;
-                _coldSlots[slot].OnStart.Invoke();
                 h.OnUpdate.Invoke(0f);
-                Stop(handle);
+                if (h.IsPendingKill) return;
+                HandleCountdownExpired(slot, ref h);
                 return;
             }
 
             h.IsRunning = true;
-            _coldSlots[slot].OnStart.Invoke();
         }
 
         public static void Pause(TimerHandle handle)
@@ -94,24 +93,6 @@ namespace NekoLib.Timer
             }
 
             h.IsRunning = true;
-        }
-
-        public static void Stop(TimerHandle handle)
-        {
-            if (!TryGetSlot(handle, out int slot)) return;
-
-            ref var h = ref _hotSlots[slot];
-            if (h.IsPendingKill) return;
-
-            if (h.Owner == null)
-            {
-                KillSlot(slot);
-                return;
-            }
-
-            h.IsRunning = false;
-            KillSlot(slot);
-            _coldSlots[slot].OnStop.Invoke();
         }
 
         public static void Cancel(TimerHandle handle)

@@ -30,20 +30,23 @@ namespace NekoLib.Timer
                 var loop = PlayerLoop.GetCurrentPlayerLoop();
                 if (!InjectIntoUpdateRecursive(ref loop))
                 {
-                    Log.Error("[NekoLib.Timer] Failed to locate Update loop in PlayerLoop.");
-                    FallbackBehaviour.EnsureExists();
-                    _installed = true;
+                    Log.Error("[NekoLib.Timer] PlayerLoop injection failed: Update subsystem not found. Timers will not tick.");
                     return;
                 }
 
                 PlayerLoop.SetPlayerLoop(loop);
+
+                if (!VerifyInjected())
+                {
+                    Log.Error("[NekoLib.Timer] PlayerLoop injection failed verification: TickPlayerLoop entry missing after SetPlayerLoop. Timers will not tick.");
+                    return;
+                }
+
                 _installed = true;
             }
             catch (Exception ex)
             {
-                Log.Error($"[NekoLib.Timer] Failed to inject into PlayerLoop: {ex}");
-                FallbackBehaviour.EnsureExists();
-                _installed = true;
+                Log.Error($"[NekoLib.Timer] PlayerLoop injection threw an exception. Timers will not tick. {ex}");
             }
         }
 
@@ -96,28 +99,24 @@ namespace NekoLib.Timer
             updateNode.subSystemList = filtered.ToArray();
         }
 
-        private static class FallbackBehaviour
+        private static bool VerifyInjected()
         {
-            private static GameObject _go;
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+            return ContainsTimerWorld(loop);
+        }
 
-            internal static void EnsureExists()
+        private static bool ContainsTimerWorld(PlayerLoopSystem node)
+        {
+            if (node.type == typeof(TimerWorld) && node.updateDelegate == TickPlayerLoop) return true;
+
+            var list = node.subSystemList;
+            if (list == null) return false;
+
+            for (int i = 0; i < list.Length; i++)
             {
-                if (_go != null) return;
-
-                _go = new GameObject("__NekoLib.TimerFallbackDriver")
-                {
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-
-                UnityEngine.Object.DontDestroyOnLoad(_go);
-                _go.AddComponent<FallbackComponent>();
+                if (ContainsTimerWorld(list[i])) return true;
             }
-
-            private sealed class FallbackComponent : MonoBehaviour
-            {
-                private void Update() => TickPlayerLoop();
-                private void OnDestroy() => _go = null;
-            }
+            return false;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace NekoLib.Timer
             if (h.Kind != TimerKind.Countdown) return;
             if (h.IsPendingKill) return;
 
-            if (seconds < 0f) return;
+            if (float.IsNaN(seconds) || seconds < 0f) return;
 
             if (h.Owner == null)
             {
@@ -18,7 +18,9 @@ namespace NekoLib.Timer
             }
 
             h.CountdownRemaining += seconds;
-            h.OnUpdate.Invoke(h.CountdownRemaining);
+
+            // Fire OnUpdate only when paused; while running, the next Tick reports the value.
+            if (!h.IsRunning) h.OnUpdate.Invoke(h.CountdownRemaining);
         }
 
         public static void ReduceCountdownTime(TimerHandle handle, float seconds)
@@ -28,7 +30,7 @@ namespace NekoLib.Timer
             if (h.Kind != TimerKind.Countdown) return;
             if (h.IsPendingKill) return;
 
-            if (seconds < 0f) return;
+            if (float.IsNaN(seconds) || seconds < 0f) return;
 
             if (h.Owner == null)
             {
@@ -41,19 +43,16 @@ namespace NekoLib.Timer
             if (next > 0f)
             {
                 h.CountdownRemaining = next;
-                h.OnUpdate.Invoke(h.CountdownRemaining);
+                if (!h.IsRunning) h.OnUpdate.Invoke(next);
                 return;
             }
 
-            // Keep as negative — overflow is carried forward through loop iterations.
-            h.CountdownRemaining = next;
-            h.OnUpdate.Invoke(0f);
+            // Clamp to zero — no overshoot carry into subsequent loop iterations.
+            h.CountdownRemaining = 0f;
+            if (!h.IsRunning) h.OnUpdate.Invoke(0f);
+            if (h.IsPendingKill) return;
 
-            do
-            {
-                HandleCountdownExpired(slot, ref h);
-            }
-            while (h.IsRunning && h.CountdownRemaining <= 0f);
+            HandleCountdownExpired(slot, ref h);
         }
     }
 }

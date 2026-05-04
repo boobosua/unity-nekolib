@@ -122,6 +122,7 @@ namespace NekoLib.Timer
             ref var h = ref _hotSlots[slot];
             if (h.IsPendingKill) return;
             h.IsPendingKill = true;
+            h.IsRunning = false;
         }
 
         private static void CleanupPending()
