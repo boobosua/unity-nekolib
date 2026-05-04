@@ -116,7 +116,7 @@ Visualises all active **Countdowns** and **Stopwatches** created via the NekoLib
 - Paginated at 20 items per page for large timer counts
 - Clears automatically on exiting Play mode
 
-> Timers are created via `Countdown.Create` / `Stopwatch.Create`, or the `CallAfter` / `CallEvery` extension methods on `MonoBehaviour` — see [TimerExtensions](EXTENSIONS.md#timerextensions).
+> Timers are created via `Countdown.Create` / `Stopwatch.Create`, or the `Defer` / `Recur` extension methods on `MonoBehaviour` — see [TimerExtensions](EXTENSIONS.md#timerextensions).
 
 ---
 

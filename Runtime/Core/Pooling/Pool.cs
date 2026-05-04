@@ -108,7 +108,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            instance.CallAfter(delay, instance, _releaseDelegate);
+            instance.Defer(delay, instance, _releaseDelegate);
         }
 
         /// <summary>Pre-creates and returns <paramref name="count"/> instances to populate the pool.</summary>

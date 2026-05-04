@@ -4,7 +4,7 @@
 
 - Rearchitect timer internals to a flat ECS-style slot array, replacing the old per-type pool model.
 - Move all timer types and extensions into the `NekoLib.Timer` namespace.
-- Replace `InvokeAfterDelay`, `InvokeEvery`, and `InvokeEverySeconds` with `CallAfter` and `CallEvery`.
+- Replace `InvokeAfterDelay`, `InvokeEvery`, and `InvokeEverySeconds` with `Defer` and `Recur`.
 - Replace `CancelHandler` with `TimerToken` readonly struct.
 - Add non-capturing generic overloads to all fluent timer callbacks to reduce allocations.
 - Remove `TimerUtils` prewarm helpers.

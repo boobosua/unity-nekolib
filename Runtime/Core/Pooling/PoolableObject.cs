@@ -48,7 +48,7 @@ namespace NekoLib.Pooling
                 return;
             }
 
-            _releaseToken = this.CallAfter(delay, this, s_delayedRelease);
+            _releaseToken = this.Defer(delay, this, s_delayedRelease);
         }
 
         internal void SetPool(IPoolReleaser pool) => _pool = pool;

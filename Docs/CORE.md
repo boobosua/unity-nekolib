@@ -103,11 +103,11 @@ countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 
 ### Callback Semantics
 
-| Callback | Countdown | Stopwatch |
-|---|---|---|
-| `OnUpdate(remaining)` / `OnUpdate(elapsed)` | Every tick frame | Every tick frame |
-| `OnElapsed()` | Every iteration boundary including the final one (1× for one-shot, N× for `SetLoop(N)`, ∞ for `SetLoop(-1)`) | Once when `SetStopWhen` predicate becomes true |
-| `OnUpdateWhen(predicate)` | Gates ticking; the timer pauses internally while the predicate is false | Same |
+| Callback                                    | Countdown                                                                                                    | Stopwatch                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `OnUpdate(remaining)` / `OnUpdate(elapsed)` | Every tick frame                                                                                             | Every tick frame                               |
+| `OnElapsed()`                               | Every iteration boundary including the final one (1× for one-shot, N× for `SetLoop(N)`, ∞ for `SetLoop(-1)`) | Once when `SetStopWhen` predicate becomes true |
+| `OnUpdateWhen(predicate)`                   | Gates ticking; the timer pauses internally while the predicate is false                                      | Same                                           |
 
 `Cancel()` and owner-MonoBehaviour destruction are silent — no callback fires. `OnElapsed` is the only natural-completion event.
 
@@ -119,13 +119,13 @@ Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Timer`) tha
 using NekoLib.Timer;
 
 // Invoke once after a delay; returns a token to cancel before it fires
-TimerToken token = this.CallAfter(2f, () => Debug.Log("Fired after 2s"));
-TimerToken unscaled = this.CallAfter(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
+TimerToken token = this.Defer(2f, () => Debug.Log("Fired after 2s"));
+TimerToken unscaled = this.Defer(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
 token.Cancel(); // cancels before it fires — silent, no callbacks
 
 // Repeat every interval; returns a token to stop the loop
-TimerToken ticker = this.CallEvery(1f, () => Debug.Log("Tick each second"));
-TimerToken unscaledTicker = this.CallEvery(1f, () => Debug.Log("Tick"), useUnscaledTime: true);
+TimerToken ticker = this.Recur(1f, () => Debug.Log("Tick each second"));
+TimerToken unscaledTicker = this.Recur(1f, () => Debug.Log("Tick"), useUnscaledTime: true);
 
 ticker.Cancel(); // stops the loop without invoking stop callbacks
 ```

@@ -7,7 +7,7 @@ namespace NekoLib.Timer
     {
         /// <summary>Invokes <paramref name="action"/> once after <paramref name="delay"/> seconds.
         /// Returns a <see cref="TimerToken"/> to cancel the call before it fires.</summary>
-        public static TimerToken CallAfter(this MonoBehaviour owner, float delay, Action action,
+        public static TimerToken Defer(this MonoBehaviour owner, float delay, Action action,
             bool useUnscaledTime = false)
         {
             if (owner == null) throw new ArgumentNullException(nameof(owner));
@@ -29,7 +29,7 @@ namespace NekoLib.Timer
 
         /// <summary>Invokes <paramref name="action"/> repeatedly every <paramref name="interval"/> seconds.
         /// Returns a <see cref="TimerToken"/> to stop the loop permanently.</summary>
-        public static TimerToken CallEvery(this MonoBehaviour owner, float interval, Action action,
+        public static TimerToken Recur(this MonoBehaviour owner, float interval, Action action,
             bool useUnscaledTime = false)
         {
             if (owner == null) throw new ArgumentNullException(nameof(owner));

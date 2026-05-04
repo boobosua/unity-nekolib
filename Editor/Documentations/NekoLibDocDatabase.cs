@@ -443,19 +443,19 @@ stopwatch.Resume();"
                 },
                 new NekoLibDocEntry
                 {
-                    Title = "CallAfter / CallEvery",
+                    Title = "Defer / Recur",
                     Namespace = "NekoLib.Timer",
                     Summary = "MonoBehaviour extension helpers for fire-once or repeating timer calls without coroutines.",
-                    Description = "CallAfter and CallEvery are extension methods on MonoBehaviour. They return a TimerToken which can be cancelled silently before firing. Both support an optional useUnscaledTime parameter.",
+                    Description = "Defer and Recur are extension methods on MonoBehaviour. They return a TimerToken which can be cancelled silently before firing. Both support an optional useUnscaledTime parameter.",
                     Code =
 @"// One-shot after delay
-TimerToken token    = this.CallAfter(2f, () => Debug.Log(""Fired!""));
-TimerToken unscaled = this.CallAfter(2f, () => Debug.Log(""Unscaled""),
+TimerToken token    = this.Defer(2f, () => Debug.Log(""Fired!""));
+TimerToken unscaled = this.Defer(2f, () => Debug.Log(""Unscaled""),
     useUnscaledTime: true);
 token.Cancel();   // cancel before it fires — no callbacks
 
 // Repeating tick
-TimerToken ticker = this.CallEvery(1f, () => Debug.Log(""Tick""));
+TimerToken ticker = this.Recur(1f, () => Debug.Log(""Tick""));
 ticker.Cancel();  // stop the loop",
                     Tags = new[] { "Timer", "Invoke", "Repeat" },
                     Category = DocCategory.Core,
@@ -464,40 +464,40 @@ ticker.Cancel();  // stop the loop",
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "CallAfter(float delay, Action action)",
+                            Signature = "Defer(float delay, Action action)",
                             Summary = "Fires action once after delay seconds. Returns a token to cancel before firing.",
                             Code =
-@"TimerToken token = this.CallAfter(3f, () => SpawnBoss());
+@"TimerToken token = this.Defer(3f, () => SpawnBoss());
 // Cancel if the round ends early
 void OnRoundEnd() => token.Cancel();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "CallAfter(float delay, Action action, bool useUnscaledTime)",
-                            Summary = "Same as CallAfter but ticks with unscaled time when useUnscaledTime is true.",
+                            Signature = "Defer(float delay, Action action, bool useUnscaledTime)",
+                            Summary = "Same as Defer but ticks with unscaled time when useUnscaledTime is true.",
                             Code =
 @"// Fires after 2 real-world seconds regardless of Time.timeScale
-TimerToken t = this.CallAfter(2f, ShowTip, useUnscaledTime: true);"
+TimerToken t = this.Defer(2f, ShowTip, useUnscaledTime: true);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "CallEvery(float interval, Action action)",
+                            Signature = "Recur(float interval, Action action)",
                             Summary = "Fires action repeatedly every interval seconds. Returns a token to stop the loop.",
                             Code =
-@"TimerToken ticker = this.CallEvery(1f, () => IncrementScore(1));
+@"TimerToken ticker = this.Recur(1f, () => IncrementScore(1));
 // Stop when player dies
 void OnPlayerDied() => ticker.Cancel();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "CallEvery(float interval, Action action, bool useUnscaledTime)",
-                            Summary = "Same as CallEvery but ticks with unscaled time when useUnscaledTime is true.",
+                            Signature = "Recur(float interval, Action action, bool useUnscaledTime)",
+                            Summary = "Same as Recur but ticks with unscaled time when useUnscaledTime is true.",
                             Code =
 @"// UI heartbeat — unaffected by slow-motion
-TimerToken hb = this.CallEvery(0.5f, PulseHeartIcon, useUnscaledTime: true);"
+TimerToken hb = this.Recur(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                         },
                         new DocMember
                         {
@@ -1642,7 +1642,7 @@ yield return animator.WaitForAnimation(""Death"");",
                             Summary = "Returns the clip length in seconds for the named animation state.",
                             Code =
 @"float attackDur = animator.GetAnimationLength(""Attack"");
-this.CallAfter(attackDur, OnAttackEnd);" },
+this.Defer(attackDur, OnAttackEnd);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "GetCurrentAnimationProgress(int layer)",
                             Summary = "Returns the normalized playback position (0–1) of the current state on the given layer.",
                             Code =
@@ -1652,7 +1652,7 @@ progressBar.fillAmount = prog;" },
                             Summary = "Returns the remaining clip time in seconds for the current animation state.",
                             Code =
 @"float left = animator.GetCurrentAnimationRemainingTime(0);
-this.CallAfter(left, SpawnHitEffect);" },
+this.Defer(left, SpawnHitEffect);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "IsPlayingAnimation(string name)",
                             Summary = "Returns true if the animator is currently in the named state.",
                             Code = @"if (!animator.IsPlayingAnimation(""Idle"")) return;" },
