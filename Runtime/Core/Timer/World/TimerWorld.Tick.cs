@@ -77,7 +77,7 @@ namespace NekoLib.Timer
         }
 
         // Shared expiry handler — called by TickCountdown, ReduceCountdownTime, and the
-        // immediate-completion path in Start. Fires OnElapsed on every iteration boundary
+        // immediate-completion path in Start. Fires OnComplete on every iteration boundary
         // including the final one. Resets remaining to CountdownTotal when looping;
         // kills the slot when not.
         private static void HandleCountdownExpired(int slot, ref TimerSlotHot h)
@@ -89,11 +89,11 @@ namespace NekoLib.Timer
             bool shouldLoop = c.LoopCount switch
             {
                 -1 => true,
-                 0 => false,
-                 _ => c.LoopIteration < c.LoopCount
+                0 => false,
+                _ => c.LoopIteration < c.LoopCount
             };
 
-            c.OnElapsed.Invoke();
+            c.OnComplete.Invoke();
             if (h.IsPendingKill) return;
 
             if (shouldLoop)
@@ -125,7 +125,7 @@ namespace NekoLib.Timer
 
             if (!shouldStop) return;
 
-            _coldSlots[slot].OnElapsed.Invoke();
+            _coldSlots[slot].OnComplete.Invoke();
             if (h.IsPendingKill) return;
             KillSlot(slot);
         }

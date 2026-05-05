@@ -53,21 +53,21 @@ Both are lightweight `readonly struct` handles in `NekoLib.Timer`.
 using NekoLib.Timer;
 using UnityEngine;
 
-// Countdown — fires OnElapsed 3 times, only ticks when not paused
+// Countdown — fires OnComplete 3 times, only ticks when not paused
 var countdown = Countdown.Create(this, 10f)
     .SetLoop(3)
     .OnUpdateWhen(() => !isPaused)
     .OnUpdate(remaining => Debug.Log($"Remaining: {remaining:F2}s"))
-    .OnElapsed(() => Debug.Log("Period elapsed"));
+    .OnComplete(() => Debug.Log("Period elapsed"));
 
 countdown.Start();
 
-// Stopwatch — fires OnElapsed when stopWhen becomes true
+// Stopwatch — fires OnComplete when stopWhen becomes true
 var stopwatch = Stopwatch.Create(this)
     .SetStopWhen(() => gameIsOver)
     .OnUpdateWhen(() => isActiveState)
     .OnUpdate(elapsed => Debug.Log($"Elapsed: {elapsed:F2}s"))
-    .OnElapsed(() => Debug.Log("Stopwatch reached its stop condition"));
+    .OnComplete(() => Debug.Log("Stopwatch reached its stop condition"));
 
 stopwatch.Start();
 ```
@@ -106,10 +106,10 @@ countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 | Callback                                    | Countdown                                                                                                    | Stopwatch                                      |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | `OnUpdate(remaining)` / `OnUpdate(elapsed)` | Every tick frame                                                                                             | Every tick frame                               |
-| `OnElapsed()`                               | Every iteration boundary including the final one (1× for one-shot, N× for `SetLoop(N)`, ∞ for `SetLoop(-1)`) | Once when `SetStopWhen` predicate becomes true |
+| `OnComplete()`                               | Every iteration boundary including the final one (1× for one-shot, N× for `SetLoop(N)`, ∞ for `SetLoop(-1)`) | Once when `SetStopWhen` predicate becomes true |
 | `OnUpdateWhen(predicate)`                   | Gates ticking; the timer pauses internally while the predicate is false                                      | Same                                           |
 
-`Cancel()` and owner-MonoBehaviour destruction are silent — no callback fires. `OnElapsed` is the only natural-completion event.
+`Cancel()` and owner-MonoBehaviour destruction are silent — no callback fires. `OnComplete` is the only natural-completion event.
 
 ### Invoke Helpers
 
@@ -119,13 +119,13 @@ Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Timer`) tha
 using NekoLib.Timer;
 
 // Invoke once after a delay; returns a token to cancel before it fires
-TimerToken token = this.Defer(2f, () => Debug.Log("Fired after 2s"));
-TimerToken unscaled = this.Defer(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
+TimerToken token = this.Delay(2f, () => Debug.Log("Fired after 2s"));
+TimerToken unscaled = this.Delay(2f, () => Debug.Log("Unscaled after 2s"), useUnscaledTime: true);
 token.Cancel(); // cancels before it fires — silent, no callbacks
 
 // Repeat every interval; returns a token to stop the loop
-TimerToken ticker = this.Recur(1f, () => Debug.Log("Tick each second"));
-TimerToken unscaledTicker = this.Recur(1f, () => Debug.Log("Tick"), useUnscaledTime: true);
+TimerToken ticker = this.Repeat(1f, () => Debug.Log("Tick each second"));
+TimerToken unscaledTicker = this.Repeat(1f, () => Debug.Log("Tick"), useUnscaledTime: true);
 
 ticker.Cancel(); // stops the loop without invoking stop callbacks
 ```

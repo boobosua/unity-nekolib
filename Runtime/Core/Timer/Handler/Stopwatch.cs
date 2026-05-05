@@ -37,10 +37,10 @@ namespace NekoLib.Timer
         /// <summary>Ticks only while <paramref name="predicate"/> is true (non-capturing style).</summary>
         public Stopwatch OnUpdateWhen<T>(T target, Func<T, bool> predicate) where T : class { TimerWorld.SetUpdateWhen(_handle, target, predicate); return this; }
 
-        /// <summary>Auto-fires OnElapsed and stops the stopwatch when <paramref name="stopWhen"/> becomes true.</summary>
+        /// <summary>Auto-fires OnComplete and stops the stopwatch when <paramref name="stopWhen"/> becomes true.</summary>
         public Stopwatch SetStopWhen(Func<bool> stopWhen) { TimerWorld.SetStopwatchStopCondition(_handle, stopWhen); return this; }
 
-        /// <summary>Auto-fires OnElapsed and stops the stopwatch when <paramref name="stopWhen"/> becomes true (non-capturing style).</summary>
+        /// <summary>Auto-fires OnComplete and stops the stopwatch when <paramref name="stopWhen"/> becomes true (non-capturing style).</summary>
         public Stopwatch SetStopWhen<T>(T target, Func<T, bool> stopWhen) where T : class { TimerWorld.SetStopwatchStopCondition(_handle, target, stopWhen); return this; }
 
         /// <summary>Invokes <paramref name="callback"/> every tick with elapsed seconds.</summary>
@@ -50,7 +50,7 @@ namespace NekoLib.Timer
         public Stopwatch OnUpdate<T>(T target, Action<T, float> callback) where T : class { TimerWorld.SetOnUpdate(_handle, target, callback); return this; }
 
         /// <summary>Invokes <paramref name="callback"/> when the stop predicate becomes true. Never fires without a predicate set via <see cref="SetStopWhen(Func{bool})"/>.</summary>
-        public Stopwatch OnElapsed(Action callback) { TimerWorld.SetOnElapsed(_handle, callback); return this; }
+        public Stopwatch OnComplete(Action callback) { TimerWorld.SetOnComplete(_handle, callback); return this; }
 
         /// <summary>Starts the stopwatch.</summary>
         public void Start() => TimerWorld.Start(_handle);

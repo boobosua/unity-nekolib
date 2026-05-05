@@ -145,7 +145,7 @@ namespace NekoLib.Timer
         }
 
         // ─── Cold slot ───────────────────────────────────────────────────────────
-        // Accessed only when a timer fires its OnElapsed event.
+        // Accessed only when a timer fires its OnComplete event.
         private struct TimerSlotCold
         {
             public BoolPredicate UpdateWhen;
@@ -156,7 +156,7 @@ namespace NekoLib.Timer
 
             public BoolPredicate StopwatchStopWhen;
 
-            public Callback0 OnElapsed;
+            public Callback0 OnComplete;
 
             public void ClearCold()
             {
@@ -165,7 +165,7 @@ namespace NekoLib.Timer
                 LoopCount = 0;
                 LoopIteration = 0;
                 StopwatchStopWhen.Clear();
-                OnElapsed.Clear();
+                OnComplete.Clear();
             }
         }
 

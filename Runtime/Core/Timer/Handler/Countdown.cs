@@ -53,7 +53,7 @@ namespace NekoLib.Timer
         public Countdown OnUpdate<T>(T target, Action<T, float> callback) where T : class { TimerWorld.SetOnUpdate(_handle, target, callback); return this; }
 
         /// <summary>Invokes <paramref name="callback"/> when the countdown's period elapses — for one-shot, once at zero; for finite loops, once per iteration including the final one; for infinite loops, every iteration.</summary>
-        public Countdown OnElapsed(Action callback) { TimerWorld.SetOnElapsed(_handle, callback); return this; }
+        public Countdown OnComplete(Action callback) { TimerWorld.SetOnComplete(_handle, callback); return this; }
 
         /// <summary>Starts the countdown.</summary>
         public void Start() => TimerWorld.Start(_handle);
@@ -70,7 +70,7 @@ namespace NekoLib.Timer
         /// <summary>Adds time to the remaining seconds. NaN and negative values are ignored.</summary>
         public void AddTime(float seconds) => TimerWorld.AddCountdownTime(_handle, seconds);
 
-        /// <summary>Reduces remaining seconds. Clamps to zero on overshoot — no carry-over into subsequent loop iterations. Triggers OnElapsed and respects loop count when reaching zero. NaN and negative values are ignored.</summary>
+        /// <summary>Reduces remaining seconds. Clamps to zero on overshoot — no carry-over into subsequent loop iterations. Triggers OnComplete and respects loop count when reaching zero. NaN and negative values are ignored.</summary>
         public void ReduceTime(float seconds) => TimerWorld.ReduceCountdownTime(_handle, seconds);
 
         /// <summary>Returns a <see cref="TimerToken"/> that can only cancel this countdown — prevents misuse of the full timer API.</summary>

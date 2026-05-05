@@ -391,12 +391,12 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 ```csharp
 
 // Invoke once after a delay; returns a token to cancel before it fires
-TimerToken token = this.Defer(2f, () => Log.Info("Delayed"));
-TimerToken unscaled = this.Defer(2f, () => Log.Info("Unscaled"), useUnscaledTime: true);
+TimerToken token = this.Delay(2f, () => Log.Info("Delayed"));
+TimerToken unscaled = this.Delay(2f, () => Log.Info("Unscaled"), useUnscaledTime: true);
 token.Cancel(); // cancels before it fires — silent, no callbacks
 
 // Repeat every interval; returns a token to stop the loop
-TimerToken ticker = this.Recur(1f, () => Log.Info("Tick"));
+TimerToken ticker = this.Repeat(1f, () => Log.Info("Tick"));
 ticker.Cancel();
 ```
 

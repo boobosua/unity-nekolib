@@ -1,5 +1,5 @@
 using System;
-using NekoLib.Timer;
+using UnityEngine;
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -8,54 +8,29 @@ using Sirenix.OdinInspector;
 namespace NekoLib.Pooling
 {
 #if ODIN_INSPECTOR
-    public abstract class PoolableObject : SerializedMonoBehaviour, IPoolable
+    public abstract class PoolableObject : SerializedMonoBehaviour
 #else
-    public abstract class PoolableObject : MonoBehaviour, IPoolable
+    public abstract class PoolableObject : MonoBehaviour
 #endif
     {
-        private static readonly Action<PoolableObject> s_delayedRelease =
-            target => target._pool?.Despawn(target);
+        private Action<PoolableObject> _releaseCallback;
+        private bool _despawning;
 
-        private IPoolReleaser _pool;
-        private TimerToken _releaseToken;
+        public bool IsSpawned { get; private set; }
 
-        public void ReleaseSelf()
+        public void Despawn()
         {
-            _releaseToken.Cancel();
+            if (_despawning) return;
+            _despawning = true;
 
-            if (_pool == null)
-            {
+            if (_releaseCallback != null)
+                _releaseCallback(this);
+            else
                 Destroy(gameObject);
-                return;
-            }
-
-            _pool.Despawn(this);
         }
 
-        public void ReleaseSelf(float delay)
-        {
-            _releaseToken.Cancel();
-
-            if (_pool == null)
-            {
-                Destroy(gameObject, delay);
-                return;
-            }
-
-            if (delay <= 0f)
-            {
-                _pool.Despawn(this);
-                return;
-            }
-
-            _releaseToken = this.Defer(delay, this, s_delayedRelease);
-        }
-
-        internal void SetPool(IPoolReleaser pool) => _pool = pool;
-
-        internal void CancelPendingRelease() => _releaseToken.Cancel();
-
-        public abstract void OnSpawned();
-        public abstract void OnDespawned();
+        internal void Bind(Action<PoolableObject> callback) => _releaseCallback = callback;
+        internal void MarkSpawned() { _despawning = false; IsSpawned = true; }
+        internal void MarkDespawned() { IsSpawned = false; }
     }
 }

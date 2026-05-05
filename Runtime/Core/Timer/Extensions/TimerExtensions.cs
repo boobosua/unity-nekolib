@@ -7,7 +7,7 @@ namespace NekoLib.Timer
     {
         /// <summary>Invokes <paramref name="action"/> once after <paramref name="delay"/> seconds.
         /// Returns a <see cref="TimerToken"/> to cancel the call before it fires.</summary>
-        public static TimerToken Defer(this MonoBehaviour owner, float delay, Action action,
+        public static TimerToken Delay(this MonoBehaviour owner, float delay, Action action,
             bool useUnscaledTime = false)
         {
             if (owner == null) throw new ArgumentNullException(nameof(owner));
@@ -21,7 +21,7 @@ namespace NekoLib.Timer
 
             var cd = Countdown.Create(owner, delay)
                 .SetUnscaledTime(useUnscaledTime)
-                .OnElapsed(action);
+                .OnComplete(action);
 
             cd.Start();
             return cd.AsTimerToken();
@@ -29,7 +29,7 @@ namespace NekoLib.Timer
 
         /// <summary>Invokes <paramref name="action"/> repeatedly every <paramref name="interval"/> seconds.
         /// Returns a <see cref="TimerToken"/> to stop the loop permanently.</summary>
-        public static TimerToken Recur(this MonoBehaviour owner, float interval, Action action,
+        public static TimerToken Repeat(this MonoBehaviour owner, float interval, Action action,
             bool useUnscaledTime = false)
         {
             if (owner == null) throw new ArgumentNullException(nameof(owner));
@@ -39,7 +39,7 @@ namespace NekoLib.Timer
             var cd = Countdown.Create(owner, interval)
                 .SetUnscaledTime(useUnscaledTime)
                 .SetLoop()
-                .OnElapsed(action);
+                .OnComplete(action);
 
             cd.Start();
             return cd.AsTimerToken();

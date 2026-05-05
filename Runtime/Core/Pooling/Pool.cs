@@ -1,188 +1,164 @@
 using System;
+using System.Collections.Generic;
 using NekoLib.Logger;
-using NekoLib.Timer;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace NekoLib.Pooling
 {
-    /// <summary>
-    /// Generic prefab pool for IPoolable MonoBehaviour instances. 
-    /// Handles spawning, despawning, and pooling logic.
-    /// </summary>
-    public sealed class Pool<T> : IPoolReleaser where T : MonoBehaviour, IPoolable
+    public sealed class Pool<T> : IDisposable where T : PoolableObject
     {
-        private readonly T _prefab;
-        private readonly Transform _poolRoot;
-        private readonly ObjectPool<T> _pool;
-        private readonly Action<T> _releaseDelegate;
-        private bool _isPrewarming;
+        private const int DefaultCapacity = 16;
+        private const int DefaultMaxSize = 256;
 
-        public int CountInactive => _pool.CountInactive;
-        public bool IsValid => _poolRoot != null;
+        private readonly T Prefab;
+        private readonly int MaxStackSize;
+        private readonly Stack<T> InactiveStack;
+        private readonly Transform Root;
+        private readonly bool OwnsRoot;
+        private readonly Action<PoolableObject> ReleaseCallback;
 
-        public Pool(
-            T prefab,
-            Transform poolRoot,
-            int defaultCapacity = 16,
-            int maxSize = 256,
-            bool collectionCheck = true)
+        private int _countActive;
+        private bool _isDisposed;
+
+        public int CountInactive => InactiveStack.Count;
+        public int CountActive => _countActive;
+        public int CountAll => _countActive + InactiveStack.Count;
+        public int MaxSize => MaxStackSize;
+        public bool IsDisposed => _isDisposed || (OwnsRoot && Root == null);
+
+        public Pool(T prefab, int capacity = DefaultCapacity, int maxSize = DefaultMaxSize)
+            : this(prefab, capacity, maxSize, null) { }
+
+        public Pool(T prefab, int capacity, int maxSize, Transform root)
         {
-            if (poolRoot == null) throw new ArgumentNullException(nameof(poolRoot));
-            if (maxSize <= 0) throw new ArgumentOutOfRangeException(nameof(maxSize), "Max size must be > 0.");
+            if (prefab == null)
+                throw new ArgumentNullException(nameof(prefab));
+            if (capacity < 0)
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+            if (maxSize <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxSize));
 
-            _prefab = prefab ?? throw new ArgumentNullException(nameof(prefab));
-            _poolRoot = poolRoot;
+            Prefab = prefab;
+            MaxStackSize = maxSize;
+            InactiveStack = new Stack<T>(capacity);
 
-            _pool = new ObjectPool<T>(
-                createFunc: Create,
-                actionOnGet: OnGet,
-                actionOnRelease: OnRelease,
-                actionOnDestroy: OnDestroy,
-                collectionCheck: collectionCheck,
-                defaultCapacity: Mathf.Max(0, defaultCapacity),
-                maxSize: maxSize
-            );
+            if (root != null)
+            {
+                Root = root;
+                OwnsRoot = false;
+            }
+            else
+            {
+                Root = CreateAutoRoot(prefab.name);
+                OwnsRoot = true;
+            }
 
-            _releaseDelegate = _pool.Release;
+            ReleaseCallback = ReleaseFromCallback;
         }
 
-        /// <summary>Spawns an instance from the pool.</summary>
-        public T Spawn()
-        {
-            var instance = _pool.Get();
-            instance.gameObject.SetActive(true);
-            return instance;
-        }
+        public T Spawn() =>
+            SpawnInternal(Prefab.transform.position, Prefab.transform.rotation, Root);
 
-        /// <summary>Spawns an instance from the pool and parents it under <paramref name="parent"/>.</summary>
-        public T Spawn(Transform parent)
-        {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
+        public T Spawn(Transform parent) =>
+            SpawnInternal(Prefab.transform.position, Prefab.transform.rotation, parent != null ? parent : Root);
 
-            var instance = _pool.Get();
-            instance.transform.SetParent(parent, worldPositionStays: false);
-            instance.gameObject.SetActive(true);
-            return instance;
-        }
+        public T Spawn(Vector3 position, Quaternion rotation) =>
+            SpawnInternal(position, rotation, Root);
 
-        /// <summary>Spawns an instance and sets its world position and rotation.</summary>
-        public T Spawn(Vector3 position, Quaternion rotation)
-        {
-            var instance = _pool.Get();
-            instance.transform.SetPositionAndRotation(position, rotation);
-            instance.gameObject.SetActive(true);
-            return instance;
-        }
+        public T Spawn(Vector3 position, Quaternion rotation, Transform parent) =>
+            SpawnInternal(position, rotation, parent != null ? parent : Root);
 
-        /// <summary>Spawns an instance, parents it under <paramref name="parent"/>, then sets world position and rotation.</summary>
-        public T Spawn(Vector3 position, Quaternion rotation, Transform parent)
-        {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-
-            var instance = _pool.Get();
-
-            var tr = instance.transform;
-            tr.SetParent(parent, worldPositionStays: false);
-            tr.SetPositionAndRotation(position, rotation);
-
-            instance.gameObject.SetActive(true);
-            return instance;
-        }
-
-        /// <summary>Despawns an instance back to the pool.</summary>
         public void Despawn(T instance)
         {
             if (instance == null) return;
-            _pool.Release(instance);
+            instance.Despawn();
         }
 
-        /// <summary>Despawns an instance back to the pool after <paramref name="delay"/> seconds.</summary>
-        public void Despawn(T instance, float delay)
+        public void Clear()
         {
-            if (instance == null) return;
-
-            if (delay <= 0f)
+            while (InactiveStack.Count > 0)
             {
-                _pool.Release(instance);
-                return;
+                T instance = InactiveStack.Pop();
+                if (instance != null)
+                    UnityEngine.Object.Destroy(instance.gameObject);
             }
-
-            instance.Defer(delay, instance, _releaseDelegate);
         }
 
-        /// <summary>Pre-creates and returns <paramref name="count"/> instances to populate the pool.</summary>
-        public void Prewarm(int count)
+        public void Dispose()
         {
-            if (count <= 0) return;
+            if (_isDisposed) return;
+            _isDisposed = true;
 
-            _isPrewarming = true;
-            for (int i = 0; i < count; i++)
-            {
-                var instance = _pool.Get();
-                _pool.Release(instance);
-            }
-            _isPrewarming = false;
+            Clear();
+
+            if (OwnsRoot && Root != null)
+                UnityEngine.Object.Destroy(Root.gameObject);
         }
 
-        /// <summary>Destroys all currently pooled inactive instances.</summary>
-        public void Clear() => _pool.Clear();
-
-        bool IPoolReleaser.IsValid => IsValid;
-
-        void IPoolReleaser.Despawn(Component instance)
+        private T SpawnInternal(Vector3 position, Quaternion rotation, Transform parent)
         {
-            if (instance == null) return;
-
-            if (!IsValid)
+            if (_isDisposed)
             {
-                Log.Warn($"[Pooling] Pool root missing; Destroying '{instance.name}'.", instance);
-                UnityEngine.Object.Destroy(instance.gameObject);
-                return;
+                Log.Error($"Cannot spawn from disposed pool '{Prefab.name}'.");
+                return null;
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (instance is not T)
-            {
-                Log.Warn($"[Pooling] Despawn wrong type for '{instance.name}'. Destroying.", instance);
-                UnityEngine.Object.Destroy(instance.gameObject);
-                return;
-            }
-#endif
-            _pool.Release((T)instance);
-        }
+            T instance = PopValidOrCreate();
 
-        private T Create()
-        {
-            var instance = UnityEngine.Object.Instantiate(_prefab, _poolRoot);
-            instance.gameObject.SetActive(false);
+            Transform instanceTransform = instance.transform;
+            if (instanceTransform.parent != parent) instanceTransform.SetParent(parent, false);
+            instanceTransform.SetPositionAndRotation(position, rotation);
 
-            if (instance is PoolableObject poolableObject)
-            {
-                poolableObject.SetPool(this);
-            }
-
+            instance.MarkSpawned();
+            _countActive++;
+            instance.gameObject.SetActive(true);
             return instance;
         }
 
-        private void OnGet(T instance)
+        private T PopValidOrCreate()
         {
-            if (!_isPrewarming) instance.OnSpawned();
+            while (InactiveStack.Count > 0)
+            {
+                T candidate = InactiveStack.Pop();
+                if (candidate != null) return candidate;
+            }
+            return CreateInstance();
         }
 
-        private void OnRelease(T instance)
+        private T CreateInstance()
         {
-            if (instance is PoolableObject pb) pb.CancelPendingRelease();
-            if (!_isPrewarming) instance.OnDespawned();
-            if (instance.transform.parent != _poolRoot)
-                instance.transform.SetParent(_poolRoot, worldPositionStays: false);
+            T instance = UnityEngine.Object.Instantiate(Prefab, Root);
+            instance.Bind(ReleaseCallback);
+            return instance;
+        }
+
+        private void DespawnInternal(T instance)
+        {
+            _countActive--;
+
+            instance.MarkDespawned();
             instance.gameObject.SetActive(false);
+
+            if (_isDisposed || InactiveStack.Count >= MaxStackSize)
+            {
+                UnityEngine.Object.Destroy(instance.gameObject);
+                return;
+            }
+
+            Transform instanceTransform = instance.transform;
+            if (instanceTransform.parent != Root) instanceTransform.SetParent(Root, false);
+            InactiveStack.Push(instance);
         }
 
-        private static void OnDestroy(T instance)
+        private void ReleaseFromCallback(PoolableObject instance) => DespawnInternal((T)instance);
+
+        private static Transform CreateAutoRoot(string prefabName)
         {
-            if (instance == null) return;
-            UnityEngine.Object.Destroy(instance.gameObject);
+            var rootObject = new GameObject($"[Pool] {prefabName}")
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            return rootObject.transform;
         }
     }
 }

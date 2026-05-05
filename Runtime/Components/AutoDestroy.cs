@@ -17,7 +17,7 @@ namespace NekoLib.Components
 
         private void Start()
         {
-            this.Defer(_destroyAfter, OnDestroyAfterDelay);
+            this.Delay(_destroyAfter, OnDestroyAfterDelay);
         }
 
         private void OnDestroyAfterDelay()

@@ -11,7 +11,7 @@ namespace NekoLib
     internal sealed class DocMember
     {
         public DocMemberKind Kind;
-        /// <summary>Short signature shown in the Name column, e.g. "RemainingTime" or "Start()" or "OnElapsed(Action)".</summary>
+        /// <summary>Short signature shown in the Name column, e.g. "RemainingTime" or "Start()" or "OnComplete(Action)".</summary>
         public string Signature;
         /// <summary>One-line description shown in the Description column.</summary>
         public string Summary;

@@ -87,7 +87,7 @@ AudioManager.Instance.PlayMusic(clip);"
     .SetLoop(3)
     .OnUpdateWhen(() => !isPaused)
     .OnUpdate(t => Debug.Log($""Remaining: {t:F2}s""))
-    .OnElapsed(() => Debug.Log(""Period elapsed""));
+    .OnComplete(() => Debug.Log(""Period elapsed""));
 
 countdown.Start();
 
@@ -153,7 +153,7 @@ progressBar.fillAmount = pct;"
                         {
                             Kind = DocMemberKind.Property,
                             Signature = "CurrentLoopIteration",
-                            Summary = "Number of iterations that have completed and fired OnElapsed (1 after the first iteration ends, N after the last for SetLoop(N)).",
+                            Summary = "Number of iterations that have completed and fired OnComplete (1 after the first iteration ends, N after the last for SetLoop(N)).",
                             Code =
 @"Debug.Log($""Iteration {cd.CurrentLoopIteration} of {loopCount}"");"
                         },
@@ -165,7 +165,7 @@ progressBar.fillAmount = pct;"
                             Summary = "Creates a new countdown attached to a MonoBehaviour owner.",
                             Code =
 @"var cd = Countdown.Create(this, 10f)
-    .OnElapsed(() => OnTimerDone())
+    .OnComplete(() => OnTimerDone())
     .Start();"
                         },
                         new DocMember
@@ -174,7 +174,7 @@ progressBar.fillAmount = pct;"
                             Signature = "Start()",
                             Summary = "Starts the countdown from TotalTime. No-op if already running.",
                             Code =
-@"var cd = Countdown.Create(this, 5f).OnElapsed(OnDone);
+@"var cd = Countdown.Create(this, 5f).OnComplete(OnDone);
 cd.Start();"
                         },
                         new DocMember
@@ -216,7 +216,7 @@ cd.AddTime(5f);"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "ReduceTime(float seconds)",
-                            Summary = "Subtracts seconds from the remaining time. Clamps to zero on overshoot — no carry-over into subsequent loop iterations. Triggers OnElapsed when reaching zero. NaN and negative values are ignored.",
+                            Summary = "Subtracts seconds from the remaining time. Clamps to zero on overshoot — no carry-over into subsequent loop iterations. Triggers OnComplete when reaching zero. NaN and negative values are ignored.",
                             Code =
 @"// Penalty: -3s
 cd.ReduceTime(3f);"
@@ -225,13 +225,13 @@ cd.ReduceTime(3f);"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "SetLoop(int count)",
-                            Summary = "Sets how many times the countdown fires OnElapsed. Use -1 for infinite, 0 (default) for one-shot.",
+                            Summary = "Sets how many times the countdown fires OnComplete. Use -1 for infinite, 0 (default) for one-shot.",
                             Code =
 @"// SpawnWave 3 times, then GameOver after the 3rd
 var waveIndex = 0;
 var cd = Countdown.Create(this, 2f)
     .SetLoop(3)
-    .OnElapsed(() => {
+    .OnComplete(() => {
         SpawnWave();
         if (++waveIndex == 3) GameOver();
     })
@@ -246,7 +246,7 @@ var cd = Countdown.Create(this, 2f)
 @"// Pause menu timer — unaffected by slow-motion
 var cd = Countdown.Create(this, 30f)
     .SetUnscaledTime(true)
-    .OnElapsed(OnTimeout)
+    .OnComplete(OnTimeout)
     .Start();"
                         },
                         // Callbacks
@@ -268,24 +268,24 @@ var cd = Countdown.Create(this, 30f)
                             Code =
 @"Countdown.Create(this, 30f)
     .OnUpdateWhen(() => !isPaused && isInRound)
-    .OnElapsed(OnRoundEnd)
+    .OnComplete(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
-                            Signature = "OnElapsed(Action)",
+                            Signature = "OnComplete(Action)",
                             Summary = "Fires when the period elapses — once at zero for one-shot, once per iteration including the final one for SetLoop(N), every iteration forever for SetLoop(-1). Not fired on Cancel() or owner-MonoBehaviour destruction.",
                             Code =
 @"// Infinite spawner — fires every 5 seconds until cancelled
 Countdown.Create(this, 5f)
     .SetLoop(-1)
-    .OnElapsed(() => SpawnEnemy())
+    .OnComplete(() => SpawnEnemy())
     .Start();
 
 // One-shot — fires once at zero
 Countdown.Create(this, 10f)
-    .OnElapsed(() => ShowTimeUpScreen())
+    .OnComplete(() => ShowTimeUpScreen())
     .Start();"
                         },
                     }
@@ -294,14 +294,14 @@ Countdown.Create(this, 10f)
                 {
                     Title = "Stopwatch",
                     Namespace = "NekoLib.Timer",
-                    Summary = "Counts elapsed time upward. Auto-fires OnElapsed when a stop predicate becomes true, or stays alive until Cancel() is called.",
-                    Description = "Mirrors Countdown's builder API but measures elapsed time rather than remaining time. Use .SetStopWhen(predicate) to auto-fire OnElapsed on a condition.",
+                    Summary = "Counts elapsed time upward. Auto-fires OnComplete when a stop predicate becomes true, or stays alive until Cancel() is called.",
+                    Description = "Mirrors Countdown's builder API but measures elapsed time rather than remaining time. Use .SetStopWhen(predicate) to auto-fire OnComplete on a condition.",
                     Code =
 @"var stopwatch = Stopwatch.Create(this)
     .SetStopWhen(() => gameIsOver)
     .OnUpdateWhen(() => isActiveState)
     .OnUpdate(elapsed => Debug.Log($""Elapsed: {elapsed:F2}s""))
-    .OnElapsed(() => Debug.Log(""Stop predicate triggered""));
+    .OnComplete(() => Debug.Log(""Stop predicate triggered""));
 
 stopwatch.Start();
 
@@ -354,7 +354,7 @@ float elapsed = stopwatch.ElapsedTime;",
 @"var sw = Stopwatch.Create(this)
     .OnUpdate(t => label.text = t.ToClock())
     .SetStopWhen(() => roundEnded)
-    .OnElapsed(OnRoundEnd)
+    .OnComplete(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
@@ -387,11 +387,11 @@ stopwatch.Resume();"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "SetStopWhen(Func<bool>)",
-                            Summary = "Auto-fires OnElapsed and stops the stopwatch when the predicate returns true.",
+                            Summary = "Auto-fires OnComplete and stops the stopwatch when the predicate returns true.",
                             Code =
 @"Stopwatch.Create(this)
     .SetStopWhen(() => playerDead)
-    .OnElapsed(ShowDeathScreen)
+    .OnComplete(ShowDeathScreen)
     .Start();"
                         },
                         new DocMember
@@ -425,37 +425,37 @@ stopwatch.Resume();"
 @"Stopwatch.Create(this)
     .OnUpdateWhen(() => roundActive && !isPaused)
     .SetStopWhen(() => roundEnded)
-    .OnElapsed(OnRoundEnd)
+    .OnComplete(OnRoundEnd)
     .Start();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
-                            Signature = "OnElapsed(Action)",
+                            Signature = "OnComplete(Action)",
                             Summary = "Fires when SetStopWhen predicate becomes true. Never fires without a predicate. Not fired on Cancel() or owner-MonoBehaviour destruction.",
                             Code =
 @"Stopwatch.Create(this)
     .SetStopWhen(() => reachedGoal)
-    .OnElapsed(() => SaveBestTime(stopwatch.ElapsedTime))
+    .OnComplete(() => SaveBestTime(stopwatch.ElapsedTime))
     .Start();"
                         },
                     }
                 },
                 new NekoLibDocEntry
                 {
-                    Title = "Defer / Recur",
+                    Title = "Delay / Repeat",
                     Namespace = "NekoLib.Timer",
                     Summary = "MonoBehaviour extension helpers for fire-once or repeating timer calls without coroutines.",
-                    Description = "Defer and Recur are extension methods on MonoBehaviour. They return a TimerToken which can be cancelled silently before firing. Both support an optional useUnscaledTime parameter.",
+                    Description = "Delay and Repeat are extension methods on MonoBehaviour. They return a TimerToken which can be cancelled silently before firing. Both support an optional useUnscaledTime parameter.",
                     Code =
 @"// One-shot after delay
-TimerToken token    = this.Defer(2f, () => Debug.Log(""Fired!""));
-TimerToken unscaled = this.Defer(2f, () => Debug.Log(""Unscaled""),
+TimerToken token    = this.Delay(2f, () => Debug.Log(""Fired!""));
+TimerToken unscaled = this.Delay(2f, () => Debug.Log(""Unscaled""),
     useUnscaledTime: true);
 token.Cancel();   // cancel before it fires — no callbacks
 
 // Repeating tick
-TimerToken ticker = this.Recur(1f, () => Debug.Log(""Tick""));
+TimerToken ticker = this.Repeat(1f, () => Debug.Log(""Tick""));
 ticker.Cancel();  // stop the loop",
                     Tags = new[] { "Timer", "Invoke", "Repeat" },
                     Category = DocCategory.Core,
@@ -464,40 +464,40 @@ ticker.Cancel();  // stop the loop",
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Defer(float delay, Action action)",
+                            Signature = "Delay(float delay, Action action)",
                             Summary = "Fires action once after delay seconds. Returns a token to cancel before firing.",
                             Code =
-@"TimerToken token = this.Defer(3f, () => SpawnBoss());
+@"TimerToken token = this.Delay(3f, () => SpawnBoss());
 // Cancel if the round ends early
 void OnRoundEnd() => token.Cancel();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Defer(float delay, Action action, bool useUnscaledTime)",
-                            Summary = "Same as Defer but ticks with unscaled time when useUnscaledTime is true.",
+                            Signature = "Delay(float delay, Action action, bool useUnscaledTime)",
+                            Summary = "Same as Delay but ticks with unscaled time when useUnscaledTime is true.",
                             Code =
 @"// Fires after 2 real-world seconds regardless of Time.timeScale
-TimerToken t = this.Defer(2f, ShowTip, useUnscaledTime: true);"
+TimerToken t = this.Delay(2f, ShowTip, useUnscaledTime: true);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Recur(float interval, Action action)",
+                            Signature = "Repeat(float interval, Action action)",
                             Summary = "Fires action repeatedly every interval seconds. Returns a token to stop the loop.",
                             Code =
-@"TimerToken ticker = this.Recur(1f, () => IncrementScore(1));
+@"TimerToken ticker = this.Repeat(1f, () => IncrementScore(1));
 // Stop when player dies
 void OnPlayerDied() => ticker.Cancel();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Recur(float interval, Action action, bool useUnscaledTime)",
-                            Summary = "Same as Recur but ticks with unscaled time when useUnscaledTime is true.",
+                            Signature = "Repeat(float interval, Action action, bool useUnscaledTime)",
+                            Summary = "Same as Repeat but ticks with unscaled time when useUnscaledTime is true.",
                             Code =
 @"// UI heartbeat — unaffected by slow-motion
-TimerToken hb = this.Recur(0.5f, PulseHeartIcon, useUnscaledTime: true);"
+TimerToken hb = this.Repeat(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                         },
                         new DocMember
                         {
@@ -1642,7 +1642,7 @@ yield return animator.WaitForAnimation(""Death"");",
                             Summary = "Returns the clip length in seconds for the named animation state.",
                             Code =
 @"float attackDur = animator.GetAnimationLength(""Attack"");
-this.Defer(attackDur, OnAttackEnd);" },
+this.Delay(attackDur, OnAttackEnd);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "GetCurrentAnimationProgress(int layer)",
                             Summary = "Returns the normalized playback position (0–1) of the current state on the given layer.",
                             Code =
@@ -1652,7 +1652,7 @@ progressBar.fillAmount = prog;" },
                             Summary = "Returns the remaining clip time in seconds for the current animation state.",
                             Code =
 @"float left = animator.GetCurrentAnimationRemainingTime(0);
-this.Defer(left, SpawnHitEffect);" },
+this.Delay(left, SpawnHitEffect);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "IsPlayingAnimation(string name)",
                             Summary = "Returns true if the animator is currently in the named state.",
                             Code = @"if (!animator.IsPlayingAnimation(""Idle"")) return;" },
@@ -2208,7 +2208,7 @@ onPauseToggled.Invoke(isPaused);" },
 @"// Open: Window > Neko Framework > Timer Tracker
 
 // Timers appear automatically when created via Countdown/Stopwatch:
-var countdown = Countdown.Create(this, 10f).OnElapsed(() => { });
+var countdown = Countdown.Create(this, 10f).OnComplete(() => { });
 countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Debug", "Timer" },
                     Category = DocCategory.EditorTools
