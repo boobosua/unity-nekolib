@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -14,14 +13,14 @@ namespace NekoLib.Pooling
 #endif
     {
         private Action<PoolableObject> _releaseCallback;
-        private bool _despawning;
+        private bool _releasing;
 
-        public bool IsSpawned { get; private set; }
+        public bool IsActive { get; private set; }
 
-        public void Despawn()
+        public void Release()
         {
-            if (_despawning) return;
-            _despawning = true;
+            if (_releasing) return;
+            _releasing = true;
 
             if (_releaseCallback != null)
                 _releaseCallback(this);
@@ -30,7 +29,7 @@ namespace NekoLib.Pooling
         }
 
         internal void Bind(Action<PoolableObject> callback) => _releaseCallback = callback;
-        internal void MarkSpawned() { _despawning = false; IsSpawned = true; }
-        internal void MarkDespawned() { IsSpawned = false; }
+        internal void MarkActive() { _releasing = false; IsActive = true; }
+        internal void MarkInactive() { IsActive = false; }
     }
 }

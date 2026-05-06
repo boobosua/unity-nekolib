@@ -111,6 +111,26 @@ namespace NekoLib.Extensions
                     point.y >= min.y && point.y <= max.y;
         }
 
+        /// <summary>Returns a random point on a circle of the given radius around a central Vector2 point.</summary>
+        public static Vector2 RandomPointOnCircle(this Vector2 origin, float radius)
+        {
+            if (radius < 0f)
+                throw new ArgumentException("radius cannot be negative", nameof(radius));
+
+            float angle = UnityEngine.Random.value * Mathf.PI * 2f;
+            Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
+            return origin + direction * radius;
+        }
+
+        /// <summary>Returns a random point inside a disk (filled circle) of the given radius around a central Vector2 point.</summary>
+        public static Vector2 RandomPointInDisk(this Vector2 origin, float radius)
+        {
+            if (radius < 0f)
+                throw new ArgumentException("radius cannot be negative", nameof(radius));
+
+            return origin + UnityEngine.Random.insideUnitCircle * radius;
+        }
+
         /// <summary>Computes a random point in an annulus (a ring-shaped area) based on minimum and maximum radius values around a central Vector2 point (origin).</summary>
         public static Vector2 RandomPointInAnnulus(this Vector2 origin, float minRadius, float maxRadius)
         {

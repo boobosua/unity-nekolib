@@ -157,8 +157,10 @@ Vector2 rotated = vector.Rotate(45f);
 bool insideCircle = point.IsInsideCircle(center, radius);
 bool insideRect = point.IsInsideRect(center, size);
 
-// Random point in annulus
-Vector2 randomPoint = origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 8f);
+// Random points
+Vector2 onEdge    = origin.RandomPointOnCircle(radius: 5f);
+Vector2 inDisk    = origin.RandomPointInDisk(radius: 5f);
+Vector2 inRing    = origin.RandomPointInAnnulus(minRadius: 2f, maxRadius: 8f);
 ```
 
 ### Vector3Extensions
@@ -187,9 +189,11 @@ bool insideSphere = point.IsInsideSphere(center, radius);
 bool insideBox = point.IsInsideBox(center, size);             // AABB by center+size
 bool insideCollider = point.IsInsideColliderBounds(collider); // AABB of a Collider
 
-// Random point in 3D annulus
+// Random points
 // Plane2D enum (XY / XZ / YZ) is in NekoLib.Extensions
-Vector3 randomPoint = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
+Vector3 onEdge = origin.RandomPointOnCircle(5f, Plane2D.XZ);
+Vector3 inDisk = origin.RandomPointInDisk(5f, Plane2D.XZ);
+Vector3 inRing = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
 ```
 
 ## C# Extensions

@@ -111,7 +111,8 @@ float left  = countdown.RemainingTime;",
                             Signature = "IsAlive",
                             Summary = "True while the timer is registered and ticking (not yet stopped or cancelled).",
                             Code =
-@"var cd = Countdown.Create(this, 5f).Start();
+@"var cd = Countdown.Create(this, 5f);
+cd.Start();
 if (cd.IsAlive)
     Debug.Log(""Still running"");"
                         },
@@ -165,8 +166,8 @@ progressBar.fillAmount = pct;"
                             Summary = "Creates a new countdown attached to a MonoBehaviour owner.",
                             Code =
 @"var cd = Countdown.Create(this, 10f)
-    .OnComplete(() => OnTimerDone())
-    .Start();"
+    .OnComplete(() => OnTimerDone());
+cd.Start();"
                         },
                         new DocMember
                         {
@@ -234,8 +235,8 @@ var cd = Countdown.Create(this, 2f)
     .OnComplete(() => {
         SpawnWave();
         if (++waveIndex == 3) GameOver();
-    })
-    .Start();"
+    });
+cd.Start();"
                         },
                         new DocMember
                         {
@@ -246,8 +247,18 @@ var cd = Countdown.Create(this, 2f)
 @"// Pause menu timer — unaffected by slow-motion
 var cd = Countdown.Create(this, 30f)
     .SetUnscaledTime(true)
-    .OnComplete(OnTimeout)
-    .Start();"
+    .OnComplete(OnTimeout);
+cd.Start();"
+                        },
+                        new DocMember
+                        {
+                            Kind = DocMemberKind.Method,
+                            Signature = "AsTimerToken()",
+                            Summary = "Returns a TimerToken that can only cancel this countdown. Use this to pass a timer to code that should not have full control (Pause/Resume/AddTime etc.).",
+                            Code =
+@"// Give a cancel-only handle to a UI element
+TimerToken token = cd.AsTimerToken();
+cancelButton.onClick.AddListener(() => token.Cancel());"
                         },
                         // Callbacks
                         new DocMember
@@ -354,8 +365,8 @@ float elapsed = stopwatch.ElapsedTime;",
 @"var sw = Stopwatch.Create(this)
     .OnUpdate(t => label.text = t.ToClock())
     .SetStopWhen(() => roundEnded)
-    .OnComplete(OnRoundEnd)
-    .Start();"
+    .OnComplete(OnRoundEnd);
+sw.Start();"
                         },
                         new DocMember
                         {
@@ -465,7 +476,7 @@ ticker.Cancel();  // stop the loop",
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Delay(float delay, Action action)",
-                            Summary = "Fires action once after delay seconds. Returns a token to cancel before firing.",
+                            Summary = "Fires action once after delay seconds. Returns a token to cancel before firing. If delay \u2264 0, the action fires immediately and the returned token is default (already expired).",
                             Code =
 @"TimerToken token = this.Delay(3f, () => SpawnBoss());
 // Cancel if the round ends early
@@ -484,7 +495,7 @@ TimerToken t = this.Delay(2f, ShowTip, useUnscaledTime: true);"
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Repeat(float interval, Action action)",
-                            Summary = "Fires action repeatedly every interval seconds. Returns a token to stop the loop.",
+                            Summary = "Fires action repeatedly every interval seconds. Returns a token to stop the loop. Throws ArgumentException if interval \u2264 0.",
                             Code =
 @"TimerToken ticker = this.Repeat(1f, () => IncrementScore(1));
 // Stop when player dies
@@ -522,106 +533,71 @@ TimerToken hb = this.Repeat(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                 {
                     Title = "Pool<T>",
                     Namespace = "NekoLib.Pooling",
-                    Summary = "Deterministic object pool wrapping Unity's ObjectPool<T>. Use Spawn/Despawn instead of Instantiate/Destroy.",
-                    Description = "Implement IPoolable on your MonoBehaviour to receive OnSpawned() and OnDespawned() lifecycle callbacks. Pool<T> handles parenting, transforms, and activation automatically.\n\nLifecycle: OnSpawned → parenting/activation (Spawn) → use → OnDespawned → pool reparent/deactivate (Despawn).",
+                    Summary = "Deterministic prefab pool. Inherit PoolableObject and call Get() / Release() instead of Instantiate / Destroy.",
+                    Description = "Pool<T> manages a stack of inactive instances under an auto-created root transform. It re-parents and repositions on Get(), and re-parents back under the root on Release(). Use Clear() for explicit cleanup; scene unload handles the rest.",
                     Code =
-@"public sealed class Bullet : MonoBehaviour, IPoolable
-{
-    public void OnSpawned()   { /* reset state */ }
-    public void OnDespawned() { /* cleanup */     }
-}
-
-// Setup
-_pool = new Pool<Bullet>(
-    bulletPrefab, poolRoot,
-    defaultCapacity: 32, maxSize: 256);
-_pool.Prewarm(32);
+@"// Setup — auto-creates a [Pool] Bullet root
+_pool = new Pool<Bullet>(_bulletPrefab);
+_pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256);
+_pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256, root: _poolRoot);
 
 // Runtime
-var b = _pool.Spawn(position, rotation);
-_pool.Despawn(b);
-_pool.Despawn(b, delaySeconds: 2f);  // delayed
-_pool.Clear();
-int free = _pool.CountInactive;",
-                    Tags = new[] { "Pool", "Spawn", "Despawn", "Performance" },
+Bullet b = _pool.Get(position, rotation);
+Bullet b = _pool.Get(position, rotation, parent);
+Bullet b = _pool.Get();          // at Vector3.zero
+Bullet b = _pool.Get(parent);    // at zero, reparented
+_pool.Release(b);
+_pool.Clear();",
+                    Tags = new[] { "Pool", "Get", "Release", "Performance" },
                     Category = DocCategory.Core,
                     Members = new[]
                     {
-                        // Properties
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "CountInactive",
-                            Summary = "Number of instances currently sitting idle in the pool.",
-                            Code =
-@"Debug.Log($""{_pool.CountInactive} bullets ready in pool"");"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "IsValid",
-                            Summary = "False if the prefab reference is null or the pool is in a broken state.",
-                            Code =
-@"if (!_pool.IsValid)
-    Debug.LogError(""Pool prefab is missing!"");"
-                        },
-                        // Methods
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Spawn(Vector3 position, Quaternion rotation)",
-                            Summary = "Gets an instance from the pool, places it, and calls OnSpawned().",
+                            Signature = "Get()",
+                            Summary = "Gets an instance from the pool at Vector3.zero with no rotation.",
                             Code =
-@"Bullet b = _pool.Spawn(firePoint.position, firePoint.rotation);"
+@"var bullet = _pool.Get();
+bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Spawn(Vector3 position, Quaternion rotation, Transform parent)",
-                            Summary = "Same as Spawn but reparents the instance under the given Transform.",
+                            Signature = "Get(Vector3 position, Quaternion rotation)",
+                            Summary = "Gets an instance placed at the given world position and rotation.",
                             Code =
-@"var effect = _pool.Spawn(hit.point, Quaternion.identity, hitParent);"
+@"Bullet b = _pool.Get(firePoint.position, firePoint.rotation);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Spawn()",
-                            Summary = "Spawns at Vector3.zero with no rotation. Useful when you set position yourself.",
+                            Signature = "Get(Vector3 position, Quaternion rotation, Transform parent)",
+                            Summary = "Gets an instance placed at position/rotation and reparented under parent.",
                             Code =
-@"var enemy = _pool.Spawn();
-enemy.transform.position = spawnPoint;"
+@"var effect = _pool.Get(hit.point, Quaternion.identity, hitParent);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Despawn(T instance)",
-                            Summary = "Returns the instance to the pool immediately and calls OnDespawned().",
+                            Signature = "Get(Transform parent)",
+                            Summary = "Gets an instance at Vector3.zero reparented under parent.",
                             Code =
-@"_pool.Despawn(bullet); // immediate return"
+@"var icon = _pool.Get(canvasRoot);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "Despawn(T instance, float delaySeconds)",
-                            Summary = "Returns the instance after a delay in seconds.",
+                            Signature = "Release(T instance)",
+                            Summary = "Returns the instance to the pool. Destroys it if the pool is at capacity.",
                             Code =
-@"// Auto-despawn after 3 seconds (e.g. muzzle flash)
-_pool.Despawn(muzzleFlash, 3f);"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
-                            Signature = "Prewarm(int count)",
-                            Summary = "Pre-instantiates count instances into the pool to avoid runtime allocation spikes.",
-                            Code =
-@"// Called once at level load
-_pool.Prewarm(50);"
+@"_pool.Release(bullet);"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
                             Signature = "Clear()",
-                            Summary = "Destroys all pooled instances and resets the pool.",
+                            Summary = "Destroys all inactive instances and reclaims the stack's backing memory.",
                             Code =
 @"void OnLevelUnload() => _pool.Clear();"
                         },
@@ -631,18 +607,14 @@ _pool.Prewarm(50);"
                 {
                     Title = "PoolableObject",
                     Namespace = "NekoLib.Pooling",
-                    Summary = "Base class for poolable objects that need to return themselves to their pool without holding a reference.",
-                    Description = "Inherit from PoolableObject instead of MonoBehaviour + IPoolable when your object needs to self-release. Falls back to Destroy() if not managed by a Pool<T>.",
+                    Summary = "Abstract base for poolable MonoBehaviours. Provides self-release and active-state tracking.",
+                    Description = "Inherit from PoolableObject to make a MonoBehaviour usable with Pool<T>. Call Release() to return the instance to its pool, or Destroy it if not managed by a pool. Release() is idempotent — safe to call multiple times.",
                     Code =
 @"public sealed class EnemyProjectile : PoolableObject
 {
-    public override void OnSpawned()   { /* reset */ }
-    public override void OnDespawned() { /* cleanup */ }
-
     private void OnCollisionEnter(Collision _)
     {
-        ReleaseSelf();             // returns to pool or Destroy()
-        // ReleaseSelf(delay: 2f); // delayed variant
+        Release(); // returns to pool, or Destroys if unmanaged
     }
 }",
                     Tags = new[] { "Pool", "Self-release" },
@@ -651,51 +623,22 @@ _pool.Prewarm(50);"
                     {
                         new DocMember
                         {
-                            Kind = DocMemberKind.Method,
-                            Signature = "ReleaseSelf()",
-                            Summary = "Returns this object to its pool immediately. Falls back to Destroy() if not pooled.",
+                            Kind = DocMemberKind.Property,
+                            Signature = "IsActive",
+                            Summary = "True while the instance is in use; false while sitting idle in the pool.",
                             Code =
-@"private void OnTriggerEnter2D(Collider2D _)
-{
-    PlayHitEffect();
-    ReleaseSelf();
-}"
+@"if (projectile.IsActive)
+    projectile.Release();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "ReleaseSelf(float delay)",
-                            Summary = "Returns this object to the pool after delay seconds.",
+                            Signature = "Release()",
+                            Summary = "Returns this object to its pool. Falls back to Destroy() if not managed by a pool. Idempotent.",
                             Code =
-@"private void OnHit()
+@"private void OnBecameInvisible()
 {
-    PlayExplosion();
-    ReleaseSelf(delay: 1.5f); // wait for particle to finish
-}"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Callback,
-                            Signature = "OnSpawned()",
-                            Summary = "Called by the pool immediately after this instance is retrieved. Reset state here.",
-                            Code =
-@"public override void OnSpawned()
-{
-    _health = _maxHealth;
-    _rb.velocity = Vector2.zero;
-    gameObject.SetActive(true);
-}"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Callback,
-                            Signature = "OnDespawned()",
-                            Summary = "Called by the pool just before this instance is returned. Clean up here.",
-                            Code =
-@"public override void OnDespawned()
-{
-    _trailRenderer.Clear();
-    StopAllCoroutines();
+    Release();
 }"
                         },
                     }
@@ -1207,8 +1150,8 @@ Color parsed = ""#FF0000FF"".ToColor();",
                 {
                     Title = "Vector2 / Vector3 Extensions",
                     Namespace = "NekoLib.Extensions",
-                    Summary = "Fluent component modification, distance/direction, range checks, perpendicular, rotate, and random annulus.",
-                    Description = "With/Add/Subtract/Multiply/Divide allow per-component modification without allocating. InRangeOf/DirectionTo/DistanceTo simplify spatial queries. Perpendicular/PerpendicularClockwise, Rotate(). IsInsideCircle/Rect/Sphere/Box for hit checks. RandomPointInAnnulus for spawn scatter.",
+                    Summary = "Fluent component modification, distance/direction, range checks, perpendicular, rotate, and random circle/disk/annulus.",
+                    Description = "With/Add/Subtract/Multiply/Divide allow per-component modification without allocating. InRangeOf/DirectionTo/DistanceTo simplify spatial queries. Perpendicular/PerpendicularClockwise, Rotate(). IsInsideCircle/Rect/Sphere/Box for hit checks. RandomPointOnCircle (edge), RandomPointInDisk (filled, uses insideUnitCircle), RandomPointInAnnulus (ring) for spawn scatter.",
                     Code =
 @"// Vector2
 Vector2 v   = vector.With(x: 5f).Add(y: 2f);
@@ -1216,12 +1159,17 @@ bool near   = pos.InRangeOf(target, 5f);
 Vector2 dir = from.DirectionTo(to);
 Vector2 per = vector.Perpendicular();
 Vector2 rot = vector.Rotate(45f);
-Vector2 rnd = origin.RandomPointInAnnulus(2f, 8f);
+Vector2 onEdge = origin.RandomPointOnCircle(5f);
+Vector2 inDisk = origin.RandomPointInDisk(5f);
+Vector2 inRing = origin.RandomPointInAnnulus(2f, 8f);
 
 // Vector3
 Vector3 w     = vector.With(y: 10f).RotateY(90f);
 bool inSphere = point.IsInsideSphere(center, 5f);
-bool inBox    = point.IsInsideBox(center, size);",
+bool inBox    = point.IsInsideBox(center, size);
+Vector3 onEdge3 = origin.RandomPointOnCircle(5f, Plane2D.XZ);
+Vector3 inDisk3 = origin.RandomPointInDisk(5f, Plane2D.XZ);
+Vector3 inRing3 = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);",
                     Tags = new[] { "Vector", "Math", "Spatial" },
                     Category = DocCategory.Extensions,
                     Members = new[]
@@ -1254,8 +1202,14 @@ rb.velocity = dir * speed;" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "Rotate(float degrees)  (Vector2 ext)",
                             Summary = "Rotates the Vector2 by the given degrees counter-clockwise.",
                             Code = @"Vector2 rotated = forward.Rotate(45f);" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "RandomPointOnCircle(float radius)",
+                            Summary = "Returns a random point on the circumference of a circle. Uses trig (cos/sin).",
+                            Code = @"Vector2 spawnPos = origin.RandomPointOnCircle(5f);" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "RandomPointInDisk(float radius)",
+                            Summary = "Returns a random point inside a filled circle. Uses Random.insideUnitCircle — fastest option.",
+                            Code = @"Vector2 scatter = origin.RandomPointInDisk(5f);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "RandomPointInAnnulus(float min, float max)",
-                            Summary = "Returns a random point within a ring defined by min and max radius.",
+                            Summary = "Returns a random point within a ring defined by min and max radius. Uses sqrt for uniform distribution.",
                             Code = @"Vector2 spawnPos = origin.RandomPointInAnnulus(3f, 8f);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "RotateX(float deg) / RotateY(float deg) / RotateZ(float deg)  (Vector3 ext)",
                             Summary = "Rotates the Vector3 around the specified axis by degrees.",

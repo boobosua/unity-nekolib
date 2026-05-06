@@ -117,6 +117,47 @@ namespace NekoLib.Extensions
             return collider.bounds.Contains(point);
         }
 
+        /// <summary>Returns a random point on a circle of the given radius around a central Vector3 point.</summary>
+        /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
+        public static Vector3 RandomPointOnCircle(this Vector3 origin, float radius, Plane2D plane = Plane2D.XZ)
+        {
+            if (radius < 0f)
+                throw new System.ArgumentException("radius cannot be negative", nameof(radius));
+
+            float angle = Random.value * Mathf.PI * 2f;
+            Vector2 direction = new(Mathf.Cos(angle), Mathf.Sin(angle));
+
+            Vector3 position = plane switch
+            {
+                Plane2D.XY => new Vector3(direction.x, direction.y, 0f) * radius,
+                Plane2D.XZ => new Vector3(direction.x, 0f, direction.y) * radius,
+                Plane2D.YZ => new Vector3(0f, direction.x, direction.y) * radius,
+                _ => new Vector3(direction.x, 0f, direction.y) * radius
+            };
+
+            return origin + position;
+        }
+
+        /// <summary>Returns a random point inside a disk (filled circle) of the given radius around a central Vector3 point.</summary>
+        /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
+        public static Vector3 RandomPointInDisk(this Vector3 origin, float radius, Plane2D plane = Plane2D.XZ)
+        {
+            if (radius < 0f)
+                throw new System.ArgumentException("radius cannot be negative", nameof(radius));
+
+            Vector2 p = Random.insideUnitCircle * radius;
+
+            Vector3 offset = plane switch
+            {
+                Plane2D.XY => new Vector3(p.x, p.y, 0f),
+                Plane2D.XZ => new Vector3(p.x, 0f, p.y),
+                Plane2D.YZ => new Vector3(0f, p.x, p.y),
+                _ => new Vector3(p.x, 0f, p.y)
+            };
+
+            return origin + offset;
+        }
+
         /// <summary>Computes a random point in an annulus (ring-shaped area) around a central Vector3 point.</summary>
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
         public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, Plane2D plane = Plane2D.XZ)

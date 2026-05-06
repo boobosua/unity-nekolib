@@ -97,6 +97,10 @@ countdown.Pause();
 countdown.Resume();
 countdown.Cancel();
 
+// Expose a cancel-only handle — useful when sharing a timer with code that shouldn't control it
+TimerToken token = countdown.AsTimerToken();
+token.Cancel(); // same effect as countdown.Cancel()
+
 // Conditional updates — timer only ticks when condition is true
 countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 ```
@@ -134,6 +138,8 @@ Notes:
 
 - All helpers use the PlayerLoop-driven driver (no MonoBehaviour `Update`).
 - Active timers can be inspected via `Window > Neko Framework > Timer Tracker`.
+- `Delay(delay <= 0)` fires the action immediately and returns `default` (no active timer to cancel).
+- `Repeat(interval <= 0)` throws `ArgumentException` — interval must be positive.
 
 ### Pooling
 
@@ -141,102 +147,85 @@ Notes:
 using NekoLib.Pooling;
 ```
 
-NekoLib provides a small, deterministic prefab pooling helper built on Unity's `UnityEngine.Pool.ObjectPool<T>`.
-
-- `IPoolable` gives you lifecycle hooks: `OnSpawned()` and `OnDespawned()`.
-- `Pool<T>` manages instances of a prefab `T : MonoBehaviour, IPoolable`.
-- Use `Spawn(...)` / `Despawn(...)` (older `Get()` / `Release()` naming was removed).
-
-Lifecycle ordering (important when writing your hooks):
-
-- `OnSpawned()` is invoked as soon as the instance is fetched from the underlying pool.
-- After that, `Spawn(...)` applies any requested parenting/transform changes and activates the GameObject.
-- `OnDespawned()` is invoked before the pool reparents the instance under the pool root and deactivates it.
+A lightweight, deterministic prefab pool. Inherit from `PoolableObject` to make a MonoBehaviour poolable.
 
 ```csharp
 using NekoLib.Pooling;
 using UnityEngine;
 
-public sealed class Bullet : MonoBehaviour, IPoolable
+public sealed class Bullet : PoolableObject
 {
-    public void OnSpawned()
+    private void OnCollisionEnter(Collision _)
     {
-        // reset state, enable trails, etc.
-    }
-
-    public void OnDespawned()
-    {
-        // stop VFX, clear velocity, etc.
+        Release(); // return to pool, or Destroy() if not managed by a pool
     }
 }
 
 public sealed class BulletSpawner : MonoBehaviour
 {
-    [SerializeField] private Bullet bulletPrefab;
-    [SerializeField] private Transform poolRoot;
+    [SerializeField] private Bullet _bulletPrefab;
 
     private Pool<Bullet> _pool;
 
     private void Awake()
     {
-        _pool = new Pool<Bullet>(
-            prefab: bulletPrefab,
-            poolRoot: poolRoot,
-            defaultCapacity: 32,
-            maxSize: 256,
-            collectionCheck: true
-        );
+        // auto-creates a [Pool] Bullet root in the hierarchy
+        _pool = new Pool<Bullet>(_bulletPrefab);
 
-        _pool.Prewarm(32);
+        // optional: with capacity hint, max size, and explicit root
+        _pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256);
+        _pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256, root: _poolRoot);
     }
 
-    public void Spawn(Vector3 position, Quaternion rotation)
+    public void Fire(Vector3 position, Quaternion rotation)
     {
-        var bullet = _pool.Spawn(position, rotation);
-        // ... use bullet
-    }
-
-    public void Despawn(Bullet bullet)
-    {
-        _pool.Despawn(bullet);
+        var bullet = _pool.Get(position, rotation);
     }
 }
 ```
 
-If you want pooled objects to be able to return themselves without holding a pool reference, inherit from `PoolableObject`:
+#### Spawning
 
 ```csharp
-using NekoLib.Pooling;
-using UnityEngine;
+var b = _pool.Get();                            // at Vector3.zero
+var b = _pool.Get(position, rotation);          // at world position
+var b = _pool.Get(position, rotation, parent);  // reparented
+var b = _pool.Get(parent);                      // at zero, reparented
+```
 
-public sealed class EnemyProjectile : PoolableObject
+#### Releasing
+
+```csharp
+_pool.Release(bullet);  // via pool reference
+Release();              // self-release from inside PoolableObject (idempotent)
+_pool.Clear();          // destroy all inactive instances and reclaim memory
+```
+
+#### PoolableObject
+
+`IsActive` is `true` while the instance is in use, `false` while sitting idle in the pool.
+
+```csharp
+public sealed class Mine : PoolableObject
 {
-    public override void OnSpawned()
+    private void OnTriggerEnter(Collider _)
     {
-        // reset state
-    }
-
-    public override void OnDespawned()
-    {
-        // cleanup state
-    }
-
-    private void OnCollisionEnter(Collision _)
-    {
-        // If created by Pool<T>, returns to pool; otherwise Destroy(gameObject).
-        ReleaseSelf();
-        // Delayed release is also available:
-        // ReleaseSelf(delay: 2f);
+        Release(); // safe to call multiple times
     }
 }
 ```
 
-Other useful APIs on `Pool<T>`:
+#### ReleaseAfterLifetime
 
-- `Spawn()` / `Spawn(Transform parent)` / `Spawn(Vector3, Quaternion)` / `Spawn(Vector3, Quaternion, Transform parent)`
-- `Despawn(T instance, float delaySeconds)`
-- `Clear()` (destroys inactive pooled instances)
-- `CountInactive` (how many instances are currently pooled)
+Add the `ReleaseAfterLifetime` component to auto-return a pooled object after a fixed duration. Set `Lifetime` in the Inspector (values <= 0 log a warning and release immediately).
+
+#### PoolableParticle
+
+Inherit `PoolableParticle` for particle effects — it automatically calls `Release()` when the particle system stops.
+
+```csharp
+public sealed class HitEffect : PoolableParticle { }
+```
 
 ### Color Swatch
 

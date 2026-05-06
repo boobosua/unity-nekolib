@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using NekoLib.Logger;
 using UnityEngine;
 
 namespace NekoLib.Pooling
 {
-    public sealed class Pool<T> : IDisposable where T : PoolableObject
+    public sealed class Pool<T> where T : PoolableObject
     {
         private const int DefaultCapacity = 16;
         private const int DefaultMaxSize = 256;
@@ -14,17 +13,7 @@ namespace NekoLib.Pooling
         private readonly int MaxStackSize;
         private readonly Stack<T> InactiveStack;
         private readonly Transform Root;
-        private readonly bool OwnsRoot;
         private readonly Action<PoolableObject> ReleaseCallback;
-
-        private int _countActive;
-        private bool _isDisposed;
-
-        public int CountInactive => InactiveStack.Count;
-        public int CountActive => _countActive;
-        public int CountAll => _countActive + InactiveStack.Count;
-        public int MaxSize => MaxStackSize;
-        public bool IsDisposed => _isDisposed || (OwnsRoot && Root == null);
 
         public Pool(T prefab, int capacity = DefaultCapacity, int maxSize = DefaultMaxSize)
             : this(prefab, capacity, maxSize, null) { }
@@ -42,36 +31,26 @@ namespace NekoLib.Pooling
             MaxStackSize = maxSize;
             InactiveStack = new Stack<T>(capacity);
 
-            if (root != null)
-            {
-                Root = root;
-                OwnsRoot = false;
-            }
-            else
-            {
-                Root = CreateAutoRoot(prefab.name);
-                OwnsRoot = true;
-            }
-
+            Root = root != null ? root : CreateAutoRoot(prefab.name);
             ReleaseCallback = ReleaseFromCallback;
         }
 
-        public T Spawn() =>
-            SpawnInternal(Prefab.transform.position, Prefab.transform.rotation, Root);
+        public T Get() =>
+            GetInternal(Vector3.zero, Quaternion.identity, Root);
 
-        public T Spawn(Transform parent) =>
-            SpawnInternal(Prefab.transform.position, Prefab.transform.rotation, parent != null ? parent : Root);
+        public T Get(Transform parent) =>
+            GetInternal(Vector3.zero, Quaternion.identity, parent != null ? parent : Root);
 
-        public T Spawn(Vector3 position, Quaternion rotation) =>
-            SpawnInternal(position, rotation, Root);
+        public T Get(Vector3 position, Quaternion rotation) =>
+            GetInternal(position, rotation, Root);
 
-        public T Spawn(Vector3 position, Quaternion rotation, Transform parent) =>
-            SpawnInternal(position, rotation, parent != null ? parent : Root);
+        public T Get(Vector3 position, Quaternion rotation, Transform parent) =>
+            GetInternal(position, rotation, parent != null ? parent : Root);
 
-        public void Despawn(T instance)
+        public void Release(T instance)
         {
             if (instance == null) return;
-            instance.Despawn();
+            instance.Release();
         }
 
         public void Clear()
@@ -82,46 +61,26 @@ namespace NekoLib.Pooling
                 if (instance != null)
                     UnityEngine.Object.Destroy(instance.gameObject);
             }
+            InactiveStack.TrimExcess();
         }
 
-        public void Dispose()
+        private T GetInternal(Vector3 position, Quaternion rotation, Transform parent)
         {
-            if (_isDisposed) return;
-            _isDisposed = true;
-
-            Clear();
-
-            if (OwnsRoot && Root != null)
-                UnityEngine.Object.Destroy(Root.gameObject);
-        }
-
-        private T SpawnInternal(Vector3 position, Quaternion rotation, Transform parent)
-        {
-            if (_isDisposed)
-            {
-                Log.Error($"Cannot spawn from disposed pool '{Prefab.name}'.");
-                return null;
-            }
-
             T instance = PopValidOrCreate();
 
             Transform instanceTransform = instance.transform;
             if (instanceTransform.parent != parent) instanceTransform.SetParent(parent, false);
             instanceTransform.SetPositionAndRotation(position, rotation);
 
-            instance.MarkSpawned();
-            _countActive++;
+            instance.MarkActive();
             instance.gameObject.SetActive(true);
             return instance;
         }
 
         private T PopValidOrCreate()
         {
-            while (InactiveStack.Count > 0)
-            {
-                T candidate = InactiveStack.Pop();
-                if (candidate != null) return candidate;
-            }
+            if (InactiveStack.TryPop(out T candidate) && candidate != null)
+                return candidate;
             return CreateInstance();
         }
 
@@ -132,14 +91,12 @@ namespace NekoLib.Pooling
             return instance;
         }
 
-        private void DespawnInternal(T instance)
+        private void ReleaseInternal(T instance)
         {
-            _countActive--;
-
-            instance.MarkDespawned();
+            instance.MarkInactive();
             instance.gameObject.SetActive(false);
 
-            if (_isDisposed || InactiveStack.Count >= MaxStackSize)
+            if (InactiveStack.Count >= MaxStackSize)
             {
                 UnityEngine.Object.Destroy(instance.gameObject);
                 return;
@@ -150,14 +107,11 @@ namespace NekoLib.Pooling
             InactiveStack.Push(instance);
         }
 
-        private void ReleaseFromCallback(PoolableObject instance) => DespawnInternal((T)instance);
+        private void ReleaseFromCallback(PoolableObject instance) => ReleaseInternal((T)instance);
 
         private static Transform CreateAutoRoot(string prefabName)
         {
-            var rootObject = new GameObject($"[Pool] {prefabName}")
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
+            var rootObject = new GameObject($"[Pool] {prefabName}");
             return rootObject.transform;
         }
     }
