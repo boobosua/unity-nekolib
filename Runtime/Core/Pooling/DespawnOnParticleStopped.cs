@@ -4,7 +4,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 #endif
 
-namespace NekoLib.Pooling.Components
+namespace NekoLib.Pooling
 {
     [RequireComponent(typeof(PoolableObject))]
     [RequireComponent(typeof(ParticleSystem))]
