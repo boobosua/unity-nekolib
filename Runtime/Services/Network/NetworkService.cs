@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using NekoLib.Extensions;
@@ -12,7 +11,7 @@ namespace NekoLib.Services
 {
     public static class NetworkService
     {
-        private const float ConnectionMonitorIntervalSeconds = 5f;
+        private const float PollIntervalSeconds = 5f;
         private const int RequestTimeoutSeconds = 5;
 
         private static readonly string[] PingUrls =
@@ -22,45 +21,75 @@ namespace NekoLib.Services
             "https://www.microsoft.com",
         };
 
-        public static event Action<ConnectionStatus> OnConnectionUpdate;
+        public static event Action<bool> OnConnectionChanged;
 
-        public static ConnectionStatus Status { get; private set; } = ConnectionStatus.Unknown;
+        public static bool IsOnline { get; private set; }
 
-        public static bool IsOnline => Status == ConnectionStatus.Online;
+        private static CancellationTokenSource _cts;
 
-        private static CancellationTokenSource _connectionMonitoringCts;
-
-        /// <summary>Checks internet connection (coroutine).</summary>
-        public static IEnumerator FetchInternetConnectionCoroutine(Action<ConnectionStatus> onDone)
+        public static void StartMonitoring(CancellationToken externalToken = default)
         {
-            var status = ConnectionStatus.Offline;
+            StopMonitoring();
 
-            for (var i = 0; i < PingUrls.Length; i++)
-            {
-                using var request = UnityWebRequest.Head(PingUrls[i]);
-                request.timeout = RequestTimeoutSeconds;
+            _cts = externalToken == default
+                ? new CancellationTokenSource()
+                : CancellationTokenSource.CreateLinkedTokenSource(externalToken);
 
-                yield return request.SendWebRequest();
-
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    status = ConnectionStatus.Online;
-                    break;
-                }
-            }
-
-            SetStatus(status);
-            onDone?.Invoke(status);
+            MonitorAsync(_cts).Forget();
         }
 
-        /// <summary>Checks internet connection (async).</summary>
-        public static async Task<ConnectionStatus> FetchInternetConnectionAsync(CancellationToken token = default)
+        public static void StopMonitoring()
         {
-            var status = ConnectionStatus.Offline;
+            var cts = _cts;
+            _cts = null;
 
-            for (var i = 0; i < PingUrls.Length; i++)
+            if (cts == null) return;
+
+            try { cts.Cancel(); }
+            catch (ObjectDisposedException) { }
+        }
+
+        public static void Dispose()
+        {
+            StopMonitoring();
+            OnConnectionChanged = null;
+        }
+
+        private static async Task MonitorAsync(CancellationTokenSource cts)
+        {
+            Log.Info("[NetworkService] Monitoring started.");
+
+            try
             {
-                using var request = UnityWebRequest.Head(PingUrls[i]);
+                while (!cts.IsCancellationRequested)
+                {
+                    var isOnline = await CheckConnectionAsync(cts.Token);
+                    SetOnline(isOnline);
+                    await Task.Delay(TimeSpan.FromSeconds(PollIntervalSeconds), cts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Log.Info("[NetworkService] Monitoring stopped.");
+            }
+            finally
+            {
+                // Guard against nulling out a CTS from a newer StartMonitoring call.
+                if (ReferenceEquals(_cts, cts))
+                    _cts = null;
+
+                cts.Dispose();
+            }
+        }
+
+        private static async Task<bool> CheckConnectionAsync(CancellationToken token)
+        {
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+                return false;
+
+            foreach (var url in PingUrls)
+            {
+                using var request = UnityWebRequest.Head(url);
                 request.timeout = RequestTimeoutSeconds;
 
                 try
@@ -68,125 +97,42 @@ namespace NekoLib.Services
                     var operation = request.SendWebRequest();
 
                     while (!operation.isDone)
-                    {
-                        token.ThrowIfCancellationRequested();
-                        await Task.Delay(10, token);
-                    }
+                        await Task.Delay(100, token);
+
+                    // ProtocolError means we reached the server (HTTP 4xx/5xx) — still online.
+                    if (request.result is UnityWebRequest.Result.Success
+                                       or UnityWebRequest.Result.ProtocolError)
+                        return true;
                 }
                 catch (OperationCanceledException)
                 {
                     request.Abort();
-                    SetStatus(ConnectionStatus.Unknown);
-                    return ConnectionStatus.Unknown;
-                }
-
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    status = ConnectionStatus.Online;
-                    break;
+                    throw;
                 }
             }
 
-            SetStatus(status);
-            return status;
+            return false;
         }
 
-        public static void StartMonitoring(CancellationToken token = default)
+        private static void SetOnline(bool isOnline)
         {
-            // Prevent multiple monitoring instances.
-            if (_connectionMonitoringCts != null && !_connectionMonitoringCts.IsCancellationRequested)
-            {
-                Log.Warn("[NetworkService] Monitoring is already running.");
-                return;
-            }
+            if (IsOnline == isOnline) return;
 
-            StartMonitoringAsync(token).Forget();
-        }
-
-        /// <summary>Starts monitoring internet connection (async loop).</summary>
-        private static async Task StartMonitoringAsync(CancellationToken token = default)
-        {
-            // Stop any existing monitoring.
-            StopMonitoring();
-
-            // Create combined cancellation token source
-            var monitoringCts = token == default
-                ? new CancellationTokenSource()
-                : CancellationTokenSource.CreateLinkedTokenSource(token);
-
-            _connectionMonitoringCts = monitoringCts;
-
-            Log.Info("[NetworkService] Init internet monitoring.");
-
-            try
-            {
-                while (!monitoringCts.IsCancellationRequested)
-                {
-                    // Pass the combined token directly - no double linking
-                    await FetchInternetConnectionAsync(monitoringCts.Token);
-                    await Task.Delay(TimeSpan.FromSeconds(ConnectionMonitorIntervalSeconds), monitoringCts.Token);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Log.Info("[NetworkService] Internet monitoring cancelled.");
-            }
-            finally
-            {
-                if (ReferenceEquals(_connectionMonitoringCts, monitoringCts))
-                    _connectionMonitoringCts = null;
-
-                monitoringCts.Dispose();
-            }
-        }
-
-        private static void SetStatus(ConnectionStatus status)
-        {
-            if (Status == status) return;
-
-            Status = status;
-            OnConnectionUpdate?.Invoke(status);
-        }
-
-        /// <summary>Stops monitoring internet connection.</summary>
-        public static void StopMonitoring()
-        {
-            var monitoringCts = _connectionMonitoringCts;
-            _connectionMonitoringCts = null;
-
-            if (monitoringCts == null)
-                return;
-
-            try
-            {
-                monitoringCts.Cancel();
-            }
-            catch (ObjectDisposedException)
-            {
-                // Ignored.
-            }
-        }
-
-        /// <summary>Stops monitoring and clears listeners.</summary>
-        public static void Dispose()
-        {
-            StopMonitoring();
-            OnConnectionUpdate = null;
-            SetStatus(ConnectionStatus.Unknown);
+            IsOnline = isOnline;
+            OnConnectionChanged?.Invoke(isOnline);
         }
 
 #if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void EditorSubsystemRegistrationReset()
+        private static void ResetOnDomainReload()
         {
             if (!Utils.IsReloadDomainDisabled())
                 return;
 
             StopMonitoring();
-            OnConnectionUpdate = null;
-            Status = ConnectionStatus.Unknown;
+            OnConnectionChanged = null;
+            IsOnline = false;
         }
 #endif
     }
 }
-

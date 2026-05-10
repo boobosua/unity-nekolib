@@ -1806,20 +1806,14 @@ label.text = untilReset.ToReadableFormat();"
                 {
                     Title = "NetworkService",
                     Namespace = "NekoLib.Services",
-                    Summary = "Centralized internet connectivity check and background monitoring with a static API.",
-                    Description = "FetchInternetConnectionAsync() does a one-shot check against multiple endpoints. StartMonitoring() runs periodic checks and fires OnConnectionUpdate on state changes. Always call Dispose() in OnDestroy.",
+                    Summary = "Background internet connectivity monitoring with a static API.",
+                    Description = "StartMonitoring() runs periodic checks and fires OnConnectionChanged on state changes. Uses Application.internetReachability as a fast offline path, then confirms with HTTP HEAD requests. Always call Dispose() in OnDestroy.",
                     Code =
-@"ConnectionStatus status =
-    await NetworkService.FetchInternetConnectionAsync();
-Debug.Log($""Online: {NetworkService.IsOnline}"");
-
-NetworkService.StartMonitoring();
-NetworkService.OnConnectionUpdate += OnConnectionChanged;
-
-void OnConnectionChanged(ConnectionStatus s)
+@"NetworkService.OnConnectionChanged += isOnline =>
 {
-    if (s == ConnectionStatus.Online) ReconnectServices();
-}
+    offlineBanner.SetActive(!isOnline);
+};
+NetworkService.StartMonitoring();
 
 void OnDestroy() { NetworkService.Dispose(); }",
                     Tags = new[] { "Network", "Internet", "Monitor" },
@@ -1830,20 +1824,8 @@ void OnDestroy() { NetworkService.Dispose(); }",
                         new DocMember
                         {
                             Kind = DocMemberKind.Property,
-                            Signature = "Status",
-                            Summary = "Current ConnectionStatus enum value: Unknown, Online, or Offline.",
-                            Code =
-@"switch (NetworkService.Status)
-{
-    case ConnectionStatus.Online:  EnableOnlineFeatures(); break;
-    case ConnectionStatus.Offline: ShowOfflineBanner();    break;
-}"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
                             Signature = "IsOnline",
-                            Summary = "Shorthand for Status == ConnectionStatus.Online.",
+                            Summary = "True if the last connectivity check succeeded.",
                             Code =
 @"submitButton.interactable = NetworkService.IsOnline;"
                         },
@@ -1851,40 +1833,29 @@ void OnDestroy() { NetworkService.Dispose(); }",
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
-                            Signature = "FetchInternetConnectionAsync()",
-                            Summary = "One-shot async check. Updates Status and returns the result.",
+                            Signature = "StartMonitoring(CancellationToken externalToken = default)",
+                            Summary = "Begins periodic background checks. Fires OnConnectionChanged on state changes. Restarts automatically if already running.",
                             Code =
-@"var status = await NetworkService.FetchInternetConnectionAsync();
-if (status == ConnectionStatus.Online)
-    await SyncCloudData();"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
-                            Signature = "FetchInternetConnectionCoroutine(Action<bool> callback)",
-                            Summary = "Coroutine variant of the one-shot check.",
-                            Code =
-@"StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(
-    s => offlineBanner.SetActive(s == ConnectionStatus.Offline)));"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Method,
-                            Signature = "StartMonitoring()",
-                            Summary = "Begins periodic background checks. Fires OnConnectionUpdate on state changes.",
-                            Code =
-@"NetworkService.OnConnectionUpdate += OnNetworkChanged;
+@"NetworkService.OnConnectionChanged += HandleNetworkChange;
 NetworkService.StartMonitoring();"
                         },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
+                            Signature = "StopMonitoring()",
+                            Summary = "Stops the background monitoring loop. Current IsOnline value is preserved.",
+                            Code =
+@"NetworkService.StopMonitoring();"
+                        },
+                        new DocMember
+                        {
+                            Kind = DocMemberKind.Method,
                             Signature = "Dispose()",
-                            Summary = "Stops monitoring and releases resources. Call in OnDestroy.",
+                            Summary = "Stops monitoring and clears all OnConnectionChanged listeners. Call in OnDestroy.",
                             Code =
 @"void OnDestroy()
 {
-    NetworkService.OnConnectionUpdate -= OnNetworkChanged;
+    NetworkService.OnConnectionChanged -= HandleNetworkChange;
     NetworkService.Dispose();
 }"
                         },
@@ -1892,24 +1863,24 @@ NetworkService.StartMonitoring();"
                         new DocMember
                         {
                             Kind = DocMemberKind.Callback,
-                            Signature = "OnConnectionUpdate",
-                            Summary = "Fired when connectivity state changes during monitoring. Passes the new ConnectionStatus.",
+                            Signature = "OnConnectionChanged",
+                            Summary = "Fired when connectivity state changes during monitoring. Passes true when online, false when offline.",
                             Code =
 @"void OnEnable()
 {
-    NetworkService.OnConnectionUpdate += HandleNetworkChange;
+    NetworkService.OnConnectionChanged += HandleNetworkChange;
     NetworkService.StartMonitoring();
 }
 
 void OnDisable()
 {
-    NetworkService.OnConnectionUpdate -= HandleNetworkChange;
+    NetworkService.OnConnectionChanged -= HandleNetworkChange;
     NetworkService.StopMonitoring();
 }
 
-void HandleNetworkChange(ConnectionStatus status)
+void HandleNetworkChange(bool isOnline)
 {
-    offlineBanner.SetActive(status == ConnectionStatus.Offline);
+    offlineBanner.SetActive(!isOnline);
 }"
                         },
                     }

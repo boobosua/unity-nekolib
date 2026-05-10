@@ -123,6 +123,14 @@ namespace NekoLib.Timer
             if (h.IsPendingKill) return;
             h.IsPendingKill = true;
             h.IsRunning = false;
+
+            // Dead means dead — clear all observable timer data so getters return defaults.
+            // Callbacks (OnUpdate/OnComplete) always run before KillSlot, so this is safe.
+            h.CountdownRemaining = 0f;
+            h.StopwatchElapsed = 0f;
+            ref var c = ref _coldSlots[slot];
+            c.CountdownTotal = 0f;
+            c.LoopIteration = 0;
         }
 
         private static void CleanupPending()

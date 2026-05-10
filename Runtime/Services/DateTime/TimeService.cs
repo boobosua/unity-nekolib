@@ -3,158 +3,139 @@ using System.Collections;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using NekoLib.ColorPalette;
-using NekoLib.Extensions;
 using NekoLib.Logger;
-using NekoLib.Utilities;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace NekoLib.Services
 {
+    /// <summary>
+    /// Provides server-synced UTC time. Fetches once via HTTP Date headers (Google/Cloudflare/Microsoft)
+    /// or TimeAPI.io, then extrapolates locally using <see cref="Time.realtimeSinceStartupAsDouble"/>.
+    /// Falls back to <see cref="DateTime.UtcNow"/> if no sync has been performed.
+    /// </summary>
     public static class TimeService
     {
-        private static bool UseSystemTime
-        {
-            get
-            {
-#if NEKO_TIME_SERVICE_DEBUG
-                return true;
-#else
-                return false;
-#endif
-            }
-        }
-
-        private const string PrimaryUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
+        private const string TimeApiUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
         private const int TimeoutSeconds = 5;
 
-        private static readonly string[] HeaderUrls =
+        private static readonly string[] s_headerUrls =
         {
             "https://www.google.com",
             "https://www.cloudflare.com",
             "https://www.microsoft.com",
         };
 
-        private static DateTime _syncedUtcTime;
-        private static double _syncedAtRealtime;
-        private static bool _hasSynced;
-        private static bool _isFetching;
-        private static bool _hasLoggedUnsyncedWarning;
+        private static DateTime s_syncedUtcTime;
+        private static double s_syncedAtRealtime;
+        private static bool s_hasSynced;
+        private static bool s_isFetching;
+        private static bool s_hasLoggedUnsyncedWarning;
 
-        /// <summary>Fetches the current time from the server (coroutine).</summary>
-        public static IEnumerator FetchTimeFromServerCoroutine(Action<bool> onDone)
+        // ─── Public API ──────────────────────────────────────────────────────────
+
+        /// <summary>Whether the service has successfully synced with a time server.</summary>
+        public static bool HasSynced => s_hasSynced;
+
+        /// <summary>
+        /// Current UTC time. Server-synced with drift compensation when synced,
+        /// <see cref="DateTime.UtcNow"/> with a one-time warning otherwise.
+        /// </summary>
+        public static DateTime UtcNow
         {
-            if (UseSystemTime)
+            get
             {
-                onDone?.Invoke(true);
-                yield break;
-            }
-
-            if (_hasSynced)
-            {
-                onDone?.Invoke(true);
-                yield break;
-            }
-
-            if (_isFetching)
-            {
-                while (_isFetching)
+                if (!s_hasSynced)
                 {
-                    yield return null;
+                    WarnIfUnsynced();
+                    return DateTime.UtcNow;
                 }
 
-                onDone?.Invoke(_hasSynced);
-                yield break;
-            }
-
-            _isFetching = true;
-            Log.Info("[TimeService] Starting time sync (coroutine)...");
-
-            try
-            {
-                _syncedUtcTime = DateTime.UtcNow;
-
-                var success = false;
-                var utcTime = default(DateTime);
-
-                yield return TryFetchTimeFromHttpHeaderCoroutine((ok, time) =>
-                {
-                    success = ok;
-                    utcTime = time;
-                });
-
-                if (success)
-                {
-                    MarkSynced(utcTime, "HTTP Date header");
-                    onDone?.Invoke(true);
-                    yield break;
-                }
-
-                yield return TryFetchTimeFromTimeApiCoroutine((ok, time) =>
-                {
-                    success = ok;
-                    utcTime = time;
-                });
-
-                if (success)
-                {
-                    MarkSynced(utcTime, "TimeAPI.io");
-                    onDone?.Invoke(true);
-                    yield break;
-                }
-
-                _hasSynced = false;
-                Log.Warn("[TimeService] Failed to sync from all sources. Time remains unsynced.");
-                onDone?.Invoke(false);
-            }
-            finally
-            {
-                _isFetching = false;
+                double drift = Time.realtimeSinceStartupAsDouble - s_syncedAtRealtime;
+                return s_syncedUtcTime.AddSeconds(drift);
             }
         }
 
-        /// <summary>Fetches the current time from the server (async).</summary>
+        /// <summary>Current time in local timezone, derived from <see cref="UtcNow"/>.</summary>
+        public static DateTime Now
+        {
+            get
+            {
+                if (!s_hasSynced)
+                {
+                    WarnIfUnsynced();
+                    return DateTime.Now;
+                }
+
+                return UtcNow.ToLocalTime();
+            }
+        }
+
+        /// <summary>Today's date (midnight) in UTC.</summary>
+        public static DateTime TodayUtc => UtcNow.Date;
+
+        /// <summary>Today's date (midnight) in local timezone.</summary>
+        public static DateTime Today => Now.Date;
+
+        /// <summary>Whether today (local) is Monday.</summary>
+        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
+
+        /// <summary>Whether today (UTC) is Monday.</summary>
+        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
+
+        /// <summary>Whether today (local) is the 1st of the month.</summary>
+        public static bool IsTodayStartOfMonth => Today.Day == 1;
+
+        /// <summary>Whether today (UTC) is the 1st of the month.</summary>
+        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
+
+        /// <summary>Tomorrow at midnight, local timezone.</summary>
+        public static DateTime NextDay => Today.AddDays(1);
+
+        /// <summary>Tomorrow at midnight, UTC.</summary>
+        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
+
+        // ─── Fetch ───────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Syncs with a time server. Tries HTTP Date headers first, then TimeAPI.io.
+        /// Returns true if sync succeeded or was already synced. Safe to call concurrently.
+        /// </summary>
         public static async Task<bool> FetchTimeFromServerAsync(CancellationToken token = default)
         {
-            if (UseSystemTime)
+            if (s_hasSynced)
                 return true;
 
-            if (_hasSynced)
-                return true;
-
-            if (_isFetching)
+            if (s_isFetching)
             {
-                while (_isFetching)
+                while (s_isFetching)
                 {
                     token.ThrowIfCancellationRequested();
                     await Task.Yield();
                 }
-
-                return _hasSynced;
+                return s_hasSynced;
             }
 
-            _isFetching = true;
-            Log.Info("[TimeService] Starting time sync (async)...");
+            s_isFetching = true;
+            Log.Info("[TimeService] Starting time sync...");
 
             try
             {
-                _syncedUtcTime = DateTime.UtcNow;
-
-                if (await TryFetchTimeFromHttpHeaderAsync(token))
+                DateTime? time = await TryFetchFromHttpHeadersAsync(token);
+                if (time.HasValue)
                 {
-                    MarkSynced("HTTP Date header");
+                    MarkSynced(time.Value, "HTTP Date header");
                     return true;
                 }
 
-                if (await TryFetchTimeFromTimeApiAsync(token))
+                time = await TryFetchFromTimeApiAsync(token);
+                if (time.HasValue)
                 {
-                    MarkSynced("TimeAPI.io");
+                    MarkSynced(time.Value, "TimeAPI.io");
                     return true;
                 }
 
-                _hasSynced = false;
-                Log.Warn("[TimeService] Failed to sync from all sources. Time remains unsynced.");
+                Log.Warn("[TimeService] Failed to sync from all sources.");
                 return false;
             }
             catch (OperationCanceledException)
@@ -164,278 +145,40 @@ namespace NekoLib.Services
             }
             finally
             {
-                _isFetching = false;
+                s_isFetching = false;
             }
         }
 
-        /// <summary>Gets the current UTC time.</summary>
-        public static DateTime UtcNow
+        /// <summary>Coroutine wrapper for <see cref="FetchTimeFromServerAsync"/>.</summary>
+        public static IEnumerator FetchTimeFromServerCoroutine(Action<bool> onDone = null)
         {
-            get
-            {
-                if (UseSystemTime)
-                {
-                    return DateTime.UtcNow;
-                }
-
-                if (!_hasSynced)
-                {
-                    if (!_hasLoggedUnsyncedWarning)
-                    {
-                        _hasLoggedUnsyncedWarning = true;
-                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.UtcNow).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
-                    }
-                    return DateTime.UtcNow;
-                }
-
-                var drift = GetRealtimeSinceStartup() - _syncedAtRealtime;
-                return _syncedUtcTime.AddSeconds(drift);
-            }
+            Task<bool> task = FetchTimeFromServerAsync();
+            while (!task.IsCompleted)
+                yield return null;
+            onDone?.Invoke(task.IsCompletedSuccessfully && task.Result);
         }
 
-        /// <summary>Gets the current server time in local timezone.</summary>
-        public static DateTime Now
+        // ─── HTTP Date Header ────────────────────────────────────────────────────
+
+        private static async Task<DateTime?> TryFetchFromHttpHeadersAsync(CancellationToken token)
         {
-            get
+            foreach (string url in s_headerUrls)
             {
-                if (UseSystemTime)
-                {
-                    return DateTime.Now;
-                }
-
-                if (!_hasSynced)
-                {
-                    if (!_hasLoggedUnsyncedWarning)
-                    {
-                        _hasLoggedUnsyncedWarning = true;
-                        Log.Warn($"[TimeService] Using unsynced time (falling back to {nameof(DateTime.Now).Colorize(Swatch.GA)}). Call {nameof(FetchTimeFromServerAsync).Colorize(Swatch.GA)} first for server time.");
-                    }
-                    return DateTime.Now;
-                }
-
-                return UtcNow.ToLocalTime();
+                DateTime? result = await TryFetchFromHttpHeaderAsync(url, token);
+                if (result.HasValue)
+                    return result;
             }
+            return null;
         }
 
-        /// <summary>Gets today's date (midnight) in server time.</summary>
-        public static DateTime TodayUtc => UtcNow.Date;
-
-        /// <summary>Gets today's date (midnight) in local timezone.</summary>
-        public static DateTime Today => Now.Date;
-
-        /// <summary>Gets whether today (local time) is the start of the week (Monday).</summary>
-        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>Gets whether today (UTC) is the start of the week (Monday).</summary>
-        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>Gets whether today (local time) is the start of the month.</summary>
-        public static bool IsTodayStartOfMonth => Today.Day == 1;
-
-        /// <summary>Gets whether today (UTC) is the start of the month.</summary>
-        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
-
-        /// <summary>Gets tomorrow (00:00:00) from current local time.</summary>
-        public static DateTime NextDay => Today.AddDays(1);
-
-        /// <summary>Gets tomorrow (00:00:00) from current UTC time.</summary>
-        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
-
-        /// <summary>Gets whether the service has successfully synced with a time server.</summary>
-        public static bool HasSynced => _hasSynced;
-
-        /// <summary>Fetches the current time from the TimeAPI.io service (coroutine).</summary>
-        private static IEnumerator TryFetchTimeFromTimeApiCoroutine(Action<bool, DateTime> onDone)
-        {
-            using var request = UnityWebRequest.Get(PrimaryUrl);
-            request.timeout = TimeoutSeconds;
-            request.downloadHandler = new DownloadHandlerBuffer();
-
-            var startRealtime = GetRealtimeSinceStartup();
-
-            yield return request.SendWebRequest();
-
-            var endRealtime = GetRealtimeSinceStartup();
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                Log.Warn($"[TimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
-                onDone?.Invoke(false, default);
-                yield break;
-            }
-
-            try
-            {
-                var json = request.downloadHandler.text;
-                var result = JsonUtility.FromJson<TimeApiResponse>(json);
-
-                if (result == null || string.IsNullOrEmpty(result.dateTime))
-                {
-                    Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
-                    onDone?.Invoke(false, default);
-                    yield break;
-                }
-
-                // Parse as UTC to avoid timezone issues
-                if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
-                {
-                    var adjustedTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
-                    onDone?.Invoke(true, adjustedTime);
-                    yield break;
-                }
-
-                Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
-                onDone?.Invoke(false, default);
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"[TimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
-                onDone?.Invoke(false, default);
-            }
-        }
-
-        /// <summary>Tries to fetch the current time from the TimeAPI.io service.</summary>
-        private static async Task<bool> TryFetchTimeFromTimeApiAsync(CancellationToken token = default)
-        {
-            using var request = UnityWebRequest.Get(PrimaryUrl);
-            request.timeout = TimeoutSeconds;
-            request.downloadHandler = new DownloadHandlerBuffer();
-
-            try
-            {
-                var startRealtime = GetRealtimeSinceStartup();
-                var operation = request.SendWebRequest();
-
-                // Wait for completion using cancellation token
-                while (!operation.isDone)
-                {
-                    token.ThrowIfCancellationRequested();
-                    await Task.Yield();
-                }
-
-                var endRealtime = GetRealtimeSinceStartup();
-
-                if (request.result != UnityWebRequest.Result.Success)
-                {
-                    Log.Warn($"[TimeService] TimeAPI.io error: {request.error.Colorize(Swatch.GA)}.");
-                    return false;
-                }
-
-                var json = request.downloadHandler.text;
-                var result = JsonUtility.FromJson<TimeApiResponse>(json);
-
-                if (result == null || string.IsNullOrEmpty(result.dateTime))
-                {
-                    Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
-                    return false;
-                }
-
-                // Parse as UTC to avoid timezone issues
-                if (DateTime.TryParse(result.dateTime, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsedTime))
-                {
-                    _syncedUtcTime = ApplyLatencyCompensation(parsedTime, startRealtime, endRealtime);
-                    return true;
-                }
-
-                Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {result.dateTime.Colorize(Swatch.GA)}.");
-                return false;
-            }
-            catch (OperationCanceledException)
-            {
-                request.Abort();
-                Log.Warn("[TimeService] TimeAPI.io request was cancelled.");
-                return false;
-            }
-            catch (Exception e)
-            {
-                Log.Warn($"[TimeService] Failed to parse TimeAPI.io response: {e.Message.Colorize(Swatch.GA)}.");
-                return false;
-            }
-        }
-
-        /// <summary>Fetches the current time from the HTTP header (coroutine).</summary>
-        private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(Action<bool, DateTime> onDone)
-        {
-            for (var i = 0; i < HeaderUrls.Length; i++)
-            {
-                var completed = false;
-                var success = false;
-                var utcTime = default(DateTime);
-
-                yield return TryFetchTimeFromHttpHeaderCoroutine(HeaderUrls[i], (ok, time) =>
-                {
-                    success = ok;
-                    utcTime = time;
-                    completed = true;
-                });
-
-                if (completed && success)
-                {
-                    onDone?.Invoke(true, utcTime);
-                    yield break;
-                }
-            }
-
-            onDone?.Invoke(false, default);
-        }
-
-        private static IEnumerator TryFetchTimeFromHttpHeaderCoroutine(string url, Action<bool, DateTime> onDone)
-        {
-            using var request = UnityWebRequest.Head(url);
-            request.timeout = TimeoutSeconds;
-
-            var startRealtime = GetRealtimeSinceStartup();
-
-            yield return request.SendWebRequest();
-
-            var endRealtime = GetRealtimeSinceStartup();
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                Log.Warn($"[TimeService] HTTP header request error ({url.Colorize(Swatch.GA)}): {request.error.Colorize(Swatch.GA)}.");
-                onDone?.Invoke(false, default);
-                yield break;
-            }
-
-            var header = request.GetResponseHeader("Date");
-            if (string.IsNullOrEmpty(header))
-            {
-                Log.Warn($"[TimeService] 'Date' header missing from response ({url.Colorize(Swatch.GA)}).");
-                onDone?.Invoke(false, default);
-                yield break;
-            }
-
-            if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
-            {
-                var adjustedTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
-                onDone?.Invoke(true, adjustedTime);
-                yield break;
-            }
-
-            Log.Warn($"[TimeService] Failed to parse 'Date' header ({url.Colorize(Swatch.GA)}): {header.Colorize(Swatch.GA)}.");
-            onDone?.Invoke(false, default);
-        }
-
-        /// <summary>Tries to fetch the current time from the HTTP header.</summary>
-        private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(CancellationToken token = default)
-        {
-            for (var i = 0; i < HeaderUrls.Length; i++)
-            {
-                if (await TryFetchTimeFromHttpHeaderAsync(HeaderUrls[i], token))
-                    return true;
-            }
-
-            return false;
-        }
-
-        private static async Task<bool> TryFetchTimeFromHttpHeaderAsync(string url, CancellationToken token)
+        private static async Task<DateTime?> TryFetchFromHttpHeaderAsync(string url, CancellationToken token)
         {
             using var request = UnityWebRequest.Head(url);
             request.timeout = TimeoutSeconds;
 
             try
             {
-                var startRealtime = GetRealtimeSinceStartup();
+                double startRealtime = Time.realtimeSinceStartupAsDouble;
                 var operation = request.SendWebRequest();
 
                 while (!operation.isDone)
@@ -444,63 +187,125 @@ namespace NekoLib.Services
                     await Task.Yield();
                 }
 
-                var endRealtime = GetRealtimeSinceStartup();
+                double endRealtime = Time.realtimeSinceStartupAsDouble;
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Log.Warn($"[TimeService] HTTP header request error ({url.Colorize(Swatch.GA)}): {request.error.Colorize(Swatch.GA)}.");
-                    return false;
+                    Log.Warn($"[TimeService] HTTP header error ({url}): {request.error}");
+                    return null;
                 }
 
-                var header = request.GetResponseHeader("Date");
+                string header = request.GetResponseHeader("Date");
                 if (string.IsNullOrEmpty(header))
                 {
-                    Log.Warn($"[TimeService] 'Date' header missing from response ({url.Colorize(Swatch.GA)}).");
-                    return false;
+                    Log.Warn($"[TimeService] Date header missing ({url}).");
+                    return null;
                 }
 
-                if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
+                if (DateTime.TryParseExact(header, "r", CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                        out DateTime parsed))
                 {
-                    _syncedUtcTime = ApplyLatencyCompensation(dateTime, startRealtime, endRealtime);
-                    return true;
+                    return ApplyLatencyCompensation(parsed, startRealtime, endRealtime);
                 }
 
-                Log.Warn($"[TimeService] Failed to parse 'Date' header ({url.Colorize(Swatch.GA)}): {header.Colorize(Swatch.GA)}.");
-                return false;
+                Log.Warn($"[TimeService] Failed to parse Date header ({url}): {header}");
+                return null;
             }
             catch (OperationCanceledException)
             {
                 request.Abort();
-                Log.Warn($"[TimeService] HTTP header request was cancelled ({url.Colorize(Swatch.GA)}).");
-                return false;
+                throw;
             }
             catch (Exception e)
             {
-                Log.Warn($"[TimeService] HTTP header request failed ({url.Colorize(Swatch.GA)}): {e.Message.Colorize(Swatch.GA)}.");
-                return false;
+                Log.Warn($"[TimeService] HTTP header request failed ({url}): {e.Message}");
+                return null;
             }
         }
 
-        /// <summary>Applies latency compensation to the given server UTC time.</summary>
-        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, double requestStartRealtime, double requestEndRealtime)
+        // ─── TimeAPI.io ──────────────────────────────────────────────────────────
+
+        private static async Task<DateTime?> TryFetchFromTimeApiAsync(CancellationToken token)
         {
-            var rttSeconds = Math.Max(0d, requestEndRealtime - requestStartRealtime);
-            return serverUtcTime.AddSeconds(rttSeconds * 0.5d);
+            using var request = UnityWebRequest.Get(TimeApiUrl);
+            request.timeout = TimeoutSeconds;
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            try
+            {
+                double startRealtime = Time.realtimeSinceStartupAsDouble;
+                var operation = request.SendWebRequest();
+
+                while (!operation.isDone)
+                {
+                    token.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
+
+                double endRealtime = Time.realtimeSinceStartupAsDouble;
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Log.Warn($"[TimeService] TimeAPI.io error: {request.error}");
+                    return null;
+                }
+
+                string json = request.downloadHandler.text;
+                var response = JsonUtility.FromJson<TimeApiResponse>(json);
+
+                if (response == null || string.IsNullOrEmpty(response.dateTime))
+                {
+                    Log.Warn("[TimeService] TimeAPI.io response missing 'dateTime'.");
+                    return null;
+                }
+
+                if (DateTime.TryParse(response.dateTime, CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                        out DateTime parsed))
+                {
+                    return ApplyLatencyCompensation(parsed, startRealtime, endRealtime);
+                }
+
+                Log.Warn($"[TimeService] Failed to parse TimeAPI.io dateTime: {response.dateTime}");
+                return null;
+            }
+            catch (OperationCanceledException)
+            {
+                request.Abort();
+                throw;
+            }
+            catch (Exception e)
+            {
+                Log.Warn($"[TimeService] TimeAPI.io request failed: {e.Message}");
+                return null;
+            }
         }
 
-        /// <summary>Marks the service as synced with the given UTC time and source.</summary>
+        // ─── Internal ────────────────────────────────────────────────────────────
+
+        private static DateTime ApplyLatencyCompensation(DateTime serverUtcTime, double startRealtime, double endRealtime)
+        {
+            // AddSeconds rounds to the nearest millisecond, which loses sub-ms RTT compensation.
+            // Convert to ticks (100 ns) directly, with rounding to avoid systematic truncation bias.
+            double rtt = Math.Max(0d, endRealtime - startRealtime);
+            long compensationTicks = (long)Math.Round(rtt * 0.5d * TimeSpan.TicksPerSecond);
+            return serverUtcTime.AddTicks(compensationTicks);
+        }
+
         private static void MarkSynced(DateTime utcTime, string source)
         {
-            _syncedUtcTime = utcTime;
-            MarkSynced(source);
+            s_syncedUtcTime = utcTime;
+            s_syncedAtRealtime = Time.realtimeSinceStartupAsDouble;
+            s_hasSynced = true;
+            Log.Info($"[TimeService] Synced via {source}: {utcTime:O}");
         }
 
-        /// <summary>Marks the service as synced using the current value of <see cref="_syncedUtcTime"/>.</summary>
-        private static void MarkSynced(string source)
+        private static void WarnIfUnsynced()
         {
-            _hasSynced = true;
-            _syncedAtRealtime = GetRealtimeSinceStartup();
-            Log.Info($"[TimeService] Synced from {source}: {_syncedUtcTime.ToString().Colorize(Swatch.DE)}.");
+            if (s_hasLoggedUnsyncedWarning) return;
+            s_hasLoggedUnsyncedWarning = true;
+            Log.Warn("[TimeService] Time not synced — using system clock. Call FetchTimeFromServerAsync first.");
         }
 
         [Serializable]
@@ -509,27 +314,20 @@ namespace NekoLib.Services
             public string dateTime;
         }
 
-        private static double GetRealtimeSinceStartup()
-        {
-#if UNITY_2020_2_OR_NEWER
-            return Time.realtimeSinceStartupAsDouble;
-#else
-            return Time.realtimeSinceStartup;
-#endif
-        }
-
 #if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void EditorSubsystemRegistrationReset()
+        private static void ResetStaticState()
         {
-            if (!Utils.IsReloadDomainDisabled())
+            if (!UnityEditor.EditorSettings.enterPlayModeOptionsEnabled ||
+                !UnityEditor.EditorSettings.enterPlayModeOptions.HasFlag(
+                    UnityEditor.EnterPlayModeOptions.DisableDomainReload))
                 return;
 
-            _syncedUtcTime = default;
-            _syncedAtRealtime = default;
-            _hasSynced = false;
-            _isFetching = false;
-            _hasLoggedUnsyncedWarning = false;
+            s_syncedUtcTime = default;
+            s_syncedAtRealtime = default;
+            s_hasSynced = false;
+            s_isFetching = false;
+            s_hasLoggedUnsyncedWarning = false;
         }
 #endif
     }

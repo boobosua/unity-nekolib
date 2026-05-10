@@ -87,53 +87,45 @@ void CheckDailyRewards()
 
 ### NetworkService
 
-Centralized network management service with static API for easy access.
+Background internet connectivity monitoring with a static API.
 
-Internet checks try multiple endpoints to avoid relying on a single domain that may be blocked in some regions.
+Uses `Application.internetReachability` as a fast offline path, then confirms real internet access via HTTP HEAD against multiple endpoints. `OnConnectionChanged` fires only when status actually changes.
 
 ```csharp
-// Check internet connection once
-ConnectionStatus status = await NetworkService.FetchInternetConnectionAsync();
-
-// Current state (updated after checks / monitoring)
-ConnectionStatus current = NetworkService.Status;
-bool isOnline = NetworkService.IsOnline;
-
-// Coroutine version
-StartCoroutine(NetworkService.FetchInternetConnectionCoroutine(s => Debug.Log($"Status: {s}")));
-
-// Start monitoring internet connection
+// Start monitoring
 NetworkService.StartMonitoring();
 
-// Listen for internet connection changes
-NetworkService.OnConnectionUpdate += OnConnectionChanged;
+// Listen for connectivity changes (true = online, false = offline)
+NetworkService.OnConnectionChanged += HandleNetworkChange;
+
+// Current state
+bool isOnline = NetworkService.IsOnline;
 
 // Stop monitoring
 NetworkService.StopMonitoring();
 
-// Clean up
+// Clean up all listeners
 NetworkService.Dispose();
 ```
 
 #### Usage Example
 
 ```csharp
-async void Start()
+void OnEnable()
 {
-    // Check internet connection once
-    ConnectionStatus status = await NetworkService.FetchInternetConnectionAsync();
-    Debug.Log($"Internet connection: {status}");
-
-    // Start monitoring internet connection
+    NetworkService.OnConnectionChanged += HandleNetworkChange;
     NetworkService.StartMonitoring();
-
-    // Listen for internet connection changes
-    NetworkService.OnConnectionUpdate += OnConnectionUpdate;
 }
 
-private void OnConnectionUpdate(ConnectionStatus status)
+void OnDisable()
 {
-    if (status == ConnectionStatus.Online)
+    NetworkService.OnConnectionChanged -= HandleNetworkChange;
+    NetworkService.StopMonitoring();
+}
+
+private void HandleNetworkChange(bool isOnline)
+{
+    if (isOnline)
     {
         Debug.Log("Internet connection restored!");
         // Handle reconnection logic here
@@ -147,7 +139,6 @@ private void OnConnectionUpdate(ConnectionStatus status)
 
 void OnDestroy()
 {
-    // Clean up
     NetworkService.Dispose();
 }
 ```
