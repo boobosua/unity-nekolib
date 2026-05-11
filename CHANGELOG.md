@@ -1,3 +1,11 @@
+## [2.4.0] - 2026-05-11
+
+### New Features and Improvements
+
+- Add new extensions for Vector3 and Vector2.
+- Simplify timer system.
+- Refactor pooling system.
+
 ## [2.2.0] - 2026-03-05
 
 ### Major Update: Timer System Overhaul
