@@ -1,3 +1,12 @@
+## [2.4.1] - 2026-05-17
+
+### Refactor Pooling System
+
+- Simplify Pool and PoolableObject APIs with clearer method names and XML documentation.
+- Add ReleaseAfterLifetime component to auto-release poolable instances after a specified duration.
+- Add PoolableParticle subclass for easy particle system pooling with auto-release on stop.
+
+
 ## [2.4.0] - 2026-05-11
 
 ### New Features and Improvements

@@ -534,21 +534,24 @@ TimerToken hb = this.Repeat(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                     Title = "Pool<T>",
                     Namespace = "NekoLib.Pooling",
                     Summary = "Deterministic prefab pool. Inherit PoolableObject and call Get() / Release() instead of Instantiate / Destroy.",
-                    Description = "Pool<T> manages a stack of inactive instances under an auto-created root transform. It re-parents and repositions on Get(), and re-parents back under the root on Release(). Use Clear() for explicit cleanup; scene unload handles the rest.",
+                    Description = "Pool<T> manages a stack of inactive instances under an auto-created root transform. New and prewarmed instances live in an inactive staging GameObject until first Get() — so Awake, OnEnable, and OnDisable never fire on dormant pool items. Prewarm(N) pays Instantiate cost up-front to avoid first-spawn spikes. Get() applies the requested pose before activation so OnEnable observes the correct transform. Use Clear() for explicit cleanup; scene unload handles the rest.",
                     Code =
 @"// Setup — auto-creates a [Pool] Bullet root
 _pool = new Pool<Bullet>(_bulletPrefab);
 _pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256);
 _pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256, root: _poolRoot);
 
-// Runtime
+// Prewarm at boot — no lifecycle callbacks fire on prewarmed instances
+_pool.Prewarm(32);
+
+// Runtime — OnEnable observes the supplied pose
 Bullet b = _pool.Get(position, rotation);
 Bullet b = _pool.Get(position, rotation, parent);
 Bullet b = _pool.Get();          // at Vector3.zero
 Bullet b = _pool.Get(parent);    // at zero, reparented
 _pool.Release(b);
 _pool.Clear();",
-                    Tags = new[] { "Pool", "Get", "Release", "Performance" },
+                    Tags = new[] { "Pool", "Get", "Release", "Prewarm", "Performance" },
                     Category = DocCategory.Core,
                     Members = new[]
                     {
@@ -588,6 +591,18 @@ bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
+                            Signature = "Prewarm(int count)",
+                            Summary = "Instantiates count instances up-front into inactive staging. Clamps to maxSize. Awake, OnEnable, and OnDisable do NOT fire on prewarmed instances until first Get().",
+                            Code =
+@"private void Awake()
+{
+    _pool = new Pool<Bullet>(_bulletPrefab, capacity: 32, maxSize: 256);
+    _pool.Prewarm(32); // amortize Instantiate cost away from gameplay frames
+}"
+                        },
+                        new DocMember
+                        {
+                            Kind = DocMemberKind.Method,
                             Signature = "Release(T instance)",
                             Summary = "Returns the instance to the pool. Destroys it if the pool is at capacity.",
                             Code =
@@ -621,15 +636,6 @@ bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
                     Category = DocCategory.Core,
                     Members = new[]
                     {
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "IsActive",
-                            Summary = "True while the instance is in use; false while sitting idle in the pool.",
-                            Code =
-@"if (projectile.IsActive)
-    projectile.Release();"
-                        },
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,

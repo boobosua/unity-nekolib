@@ -193,6 +193,8 @@ var b = _pool.Get(position, rotation, parent);  // reparented
 var b = _pool.Get(parent);                      // at zero, reparented
 ```
 
+When `Get(position, rotation, ...)` is called, `OnEnable` on the returned instance always observes the supplied world pose. Velocity setters and other transform-reading initializers in `OnEnable` are safe.
+
 #### Releasing
 
 ```csharp
@@ -201,9 +203,19 @@ Release();              // self-release from inside PoolableObject (idempotent)
 _pool.Clear();          // destroy all inactive instances and reclaim memory
 ```
 
+#### Prewarm
+
+```csharp
+_pool.Prewarm(20);                              // instantiate 20 inactive instances up-front
+```
+
+Prewarm pays the `Instantiate` cost during loading so the first 20 `Get()` calls don't spike a gameplay frame. Prewarmed instances live under an inactive staging GameObject — **`Awake`, `OnEnable`, and `OnDisable` never fire on them** until they're first `Get()`-ed. This makes prewarm safe even for poolables whose `OnDisable` triggers gameplay (e.g. a bullet that spawns shrapnel when released).
+
+`Prewarm(count)` clamps to the pool's `maxSize` and is additive — calling it multiple times fills toward the cap.
+
 #### PoolableObject
 
-`IsActive` is `true` while the instance is in use, `false` while sitting idle in the pool.
+Use Unity's own `gameObject.activeSelf` / `activeInHierarchy` to check whether an instance is in use — `PoolableObject` does not expose a public active flag.
 
 ```csharp
 public sealed class Mine : PoolableObject
@@ -217,7 +229,7 @@ public sealed class Mine : PoolableObject
 
 #### ReleaseAfterLifetime
 
-Add the `ReleaseAfterLifetime` component to auto-return a pooled object after a fixed duration. Set `Lifetime` in the Inspector (values <= 0 log a warning and release immediately).
+Add the `ReleaseAfterLifetime` component to auto-return a pooled object after a fixed duration. Set `Lifetime` in the Inspector (values <= 0 release on the first Update after activation). Toggle `Use Unscaled Time` to ignore `Time.timeScale` — useful for UI overlays that should expire even while the game is paused. Default is scaled.
 
 #### PoolableParticle
 

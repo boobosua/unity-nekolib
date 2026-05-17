@@ -15,8 +15,9 @@ namespace NekoLib.Pooling
         private Action<PoolableObject> _releaseCallback;
         private bool _releasing;
 
-        public bool IsActive { get; private set; }
+        internal bool IsActive { get; private set; }
 
+        /// <summary> Releases this instance back to the pool. If the instance is not managed by a pool, it will be destroyed. </summary>
         public void Release()
         {
             if (_releasing) return;
