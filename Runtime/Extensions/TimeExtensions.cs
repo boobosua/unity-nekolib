@@ -282,26 +282,9 @@ namespace NekoLib.Extensions
 
         #endregion
 
-        #region DateTime Raw Time Calculations
-        /// <summary>Gets absolute difference in seconds between the given DateTime and now.</summary>
-        public static double AbsoluteSecondsDifference(this DateTime time)
-        {
-            var now = TimeService.Now;
-            return Math.Abs((now - time).TotalSeconds);
-        }
-
-        /// <summary>Gets absolute difference in seconds between the given DateTime and now (UTC).</summary>
-        public static double AbsoluteSecondsDifferenceUtc(this DateTime time)
-        {
-            var now = TimeService.UtcNow;
-            return Math.Abs((now - time).TotalSeconds);
-        }
-
-        #endregion
-
         #region DateTime Manipulation
 
-        /// <summary>Creates a new DateTime with modified date components.</summary>
+        /// <summary>Returns a new DateTime with modified date components (day clamps to the new month's max).</summary>
         public static DateTime WithDate(this DateTime dt, int? year = null, int? month = null, int? day = null)
         {
             int newYear = year ?? dt.Year;
@@ -360,13 +343,5 @@ namespace NekoLib.Extensions
 
         #endregion
 
-        #region DateTime Extensions for Periods
-
-        /// <summary>Gets the next day from this DateTime.</summary>
-        public static DateTime NextDay(this DateTime time)
-        {
-            return time.AddDays(1);
-        }
-        #endregion
     }
 }

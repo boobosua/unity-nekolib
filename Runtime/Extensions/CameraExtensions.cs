@@ -18,49 +18,19 @@ namespace NekoLib.Extensions
         /// <summary>Add a layer to the camera's culling mask.</summary>
         public static void AddToCullingMask(this Camera camera, LayerMask layerMask)
         {
-            if (!camera.IsLayerInCullingMask(layerMask))
-            {
-                camera.cullingMask |= layerMask;
-            }
+            camera.cullingMask |= layerMask;
         }
 
         /// <summary>Remove a layer from the camera's culling mask.</summary>
         public static void RemoveFromCullingMask(this Camera camera, LayerMask layerMask)
         {
-            if (camera.IsLayerInCullingMask(layerMask))
-            {
-                camera.cullingMask &= ~layerMask;
-            }
+            camera.cullingMask &= ~layerMask;
         }
 
         /// <summary>Set the camera's culling mask to only render specific layers (replaces current mask).</summary>
         public static void SetCullingMask(this Camera camera, LayerMask layerMask)
         {
             camera.cullingMask = layerMask;
-        }
-
-        /// <summary>Set the camera to render all layers.</summary>
-        public static void ShowAllLayers(this Camera camera)
-        {
-            camera.cullingMask = -1;
-        }
-
-        /// <summary>Set the camera to render no layers.</summary>
-        public static void HideAllLayers(this Camera camera)
-        {
-            camera.cullingMask = 0;
-        }
-
-        /// <summary>Zoom in by reducing field of view.</summary>
-        public static void ZoomIn(this Camera camera, float amount = 10f)
-        {
-            camera.fieldOfView = Mathf.Max(MinFOV, camera.fieldOfView - amount);
-        }
-
-        /// <summary>Zoom out by increasing field of view.</summary>
-        public static void ZoomOut(this Camera camera, float amount = 10f)
-        {
-            camera.fieldOfView = Mathf.Min(MaxFOV, camera.fieldOfView + amount);
         }
 
         /// <summary>Set field of view with clamping.</summary>

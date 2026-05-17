@@ -7,18 +7,6 @@ namespace NekoLib.Extensions
 {
     public static class NumberExtensions
     {
-        /// <summary>Returns true if the number is even.</summary>
-        public static bool IsEven(this int num)
-        {
-            return num % 2 == 0;
-        }
-
-        /// <summary>Returns true if the number is odd.</summary>
-        public static bool IsOdd(this int num)
-        {
-            return num % 2 != 0;
-        }
-
         /// <summary>Returns the percentage of the current value relative to the total.</summary>
         public static float PercentageOf(this int current, int total)
         {
@@ -37,31 +25,7 @@ namespace NekoLib.Extensions
             return Mathf.Clamp01(current / total);
         }
 
-        /// <summary>Prevents a number from going below a minimum.</summary>
-        public static int AtLeast(this int num, int min)
-        {
-            return Math.Max(num, min);
-        }
-
-        /// <summary>Prevents a number from going above a maximum.</summary>
-        public static int AtMost(this int num, int max)
-        {
-            return Math.Min(num, max);
-        }
-
-        /// <summary>Prevents a number from going below a minimum.</summary>
-        public static float AtLeast(this float num, float min)
-        {
-            return Mathf.Max(num, min);
-        }
-
-        /// <summary>Prevents a number from going above a maximum.</summary>
-        public static float AtMost(this float num, float max)
-        {
-            return Mathf.Min(num, max);
-        }
-
-        /// <summary>Returns true if a random roll succeeds based on the probability rate.</summary>
+        /// <summary>Returns true with the given probability (boundary-exact at min and max).</summary>
         public static bool IsSuccessfulRoll(this float probability, float min = 0f, float max = 1f)
         {
             if (probability < min || probability > max)
@@ -69,8 +33,10 @@ namespace NekoLib.Extensions
                 throw new ArgumentException($"probability '{probability}' must be in range [{min}, {max}]");
             }
 
-            var randomRoll = Random.Range(min, max);
-            return randomRoll <= probability;
+            if (probability <= min) return false;
+            if (probability >= max) return true;
+
+            return Random.Range(min, max) <= probability;
         }
 
         /// <summary>Returns true if a random roll succeeds based on the percentage rate.</summary>
@@ -89,26 +55,25 @@ namespace NekoLib.Extensions
             return randomRoll < probability;
         }
 
-        /// <summary>Converts an integer to the specified enum type.</summary>
+        /// <summary>Converts an integer to the specified enum type. Throws if value is not a defined enum member.</summary>
         public static T ToEnum<T>(this int value) where T : struct, Enum
         {
-            var stringValue = value.ToString();
-            if (Enum.TryParse<T>(stringValue, out var result))
-                return result;
+            if (!Enum.IsDefined(typeof(T), value))
+                throw new ArgumentException($"Value {value} is not defined in enum {typeof(T).Name}");
 
-            throw new ArgumentException($"Unable to parse {value} as {typeof(T).Name}");
+            return (T)(object)value;
         }
 
-        /// <summary>Converts an integer to the specified enum type, or returns a default value if the conversion fails.</summary>
+        /// <summary>Converts to enum T, or returns the default if the value is not defined.</summary>
         public static T ToEnumOrDefault<T>(this int value, T defaultValue = default) where T : struct, Enum
         {
-            var stringValue = value.ToString();
-            if (Enum.TryParse<T>(stringValue, out var result))
-                return result;
+            if (!Enum.IsDefined(typeof(T), value))
+            {
+                Log.Warn($"Value {value} is not defined in enum {typeof(T).Name}, using default: {defaultValue}");
+                return defaultValue;
+            }
 
-            Log.Warn($"Failed to parse int {value} to enum {typeof(T).Name}, using default: {defaultValue}");
-            return defaultValue;
+            return (T)(object)value;
         }
     }
 }
-

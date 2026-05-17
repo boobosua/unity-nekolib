@@ -34,12 +34,6 @@ namespace NekoLib.Extensions
             SetClock(text, useCeiling ? Mathf.CeilToInt(totalSeconds) : Mathf.FloorToInt(totalSeconds));
         }
 
-        /// <summary>Sets text to "HH:MM:SS" from seconds.</summary>
-        public static void SetClock(this TMP_Text text, double totalSeconds, bool useCeiling = true)
-        {
-            SetClock(text, useCeiling ? (int)Math.Ceiling(totalSeconds) : (int)Math.Floor(totalSeconds));
-        }
-
         /// <summary>Sets text to "MM:SS" from seconds.</summary>
         public static void SetShortClock(this TMP_Text text, int totalSeconds)
         {
@@ -59,12 +53,6 @@ namespace NekoLib.Extensions
         public static void SetShortClock(this TMP_Text text, float totalSeconds, bool useCeiling = true)
         {
             SetShortClock(text, useCeiling ? Mathf.CeilToInt(totalSeconds) : Mathf.FloorToInt(totalSeconds));
-        }
-
-        /// <summary>Sets text to "MM:SS" from seconds.</summary>
-        public static void SetShortClock(this TMP_Text text, double totalSeconds, bool useCeiling = true)
-        {
-            SetShortClock(text, useCeiling ? (int)Math.Ceiling(totalSeconds) : (int)Math.Floor(totalSeconds));
         }
 
         /// <summary>Sets text to readable duration like "2d 3h 45m" (spacing optional).</summary>
@@ -110,10 +98,5 @@ namespace NekoLib.Extensions
             SetReadableTime(text, useCeiling ? Mathf.CeilToInt(totalSeconds) : Mathf.FloorToInt(totalSeconds), useSpacing);
         }
 
-        /// <summary>Sets text to readable duration like "2d 3h 45m" (spacing optional).</summary>
-        public static void SetReadableTime(this TMP_Text text, double totalSeconds, bool useSpacing = true, bool useCeiling = true)
-        {
-            SetReadableTime(text, useCeiling ? (int)Math.Ceiling(totalSeconds) : (int)Math.Floor(totalSeconds), useSpacing);
-        }
     }
 }

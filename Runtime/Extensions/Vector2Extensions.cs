@@ -6,26 +6,31 @@ namespace NekoLib.Extensions
 {
     public static class Vector2Extensions
     {
+        /// <summary>Returns a new Vector2 with the specified components replaced.</summary>
         public static Vector2 With(this Vector2 vector, float? x = null, float? y = null)
         {
             return new Vector2(x ?? vector.x, y ?? vector.y);
         }
 
+        /// <summary>Adds the specified components to the current vector.</summary>
         public static Vector2 Add(this Vector2 vector, float? x = null, float? y = null)
         {
             return new Vector2(vector.x + (x ?? 0), vector.y + (y ?? 0));
         }
 
+        /// <summary>Subtracts the specified components from the current vector.</summary>
         public static Vector2 Subtract(this Vector2 vector, float? x = null, float? y = null)
         {
             return new Vector2(vector.x - (x ?? 0), vector.y - (y ?? 0));
         }
 
+        /// <summary>Multiplies the current vector by the specified components.</summary>
         public static Vector2 Multiply(this Vector2 vector, float? x = null, float? y = null)
         {
             return new Vector2(vector.x * (x ?? 1), vector.y * (y ?? 1));
         }
 
+        /// <summary>Divides by the specified components (zero/null divisors are ignored).</summary>
         public static Vector2 Divide(this Vector2 vector, float? x = null, float? y = null)
         {
             return new Vector2(
@@ -34,19 +39,20 @@ namespace NekoLib.Extensions
             );
         }
 
-        /// <summary>Returns a Boolean indicating whether the current Vector2 is in a given range from another Vector2</summary>
+        /// <summary>Returns true if within range of the target (negative range returns false).</summary>
         public static bool InRangeOf(this Vector2 current, Vector2 target, float range)
         {
+            if (range < 0f) return false;
             return (current - target).sqrMagnitude <= range * range;
         }
 
-        /// <summary>Returns a vector with the specified magnitude in the same direction. Returns zero vector if original vector is zero.</summary>
+        /// <summary>Returns a vector with the given magnitude in the same direction (zero if original is zero).</summary>
         public static Vector2 WithMagnitude(this Vector2 vector, float magnitude)
         {
             return vector.sqrMagnitude > Constants.NearZeroSqrMagnitude ? vector.normalized * magnitude : Vector2.zero;
         }
 
-        /// <summary>Returns the direction from this vector to the target vector. Returns zero vector if both vectors are equal.</summary>
+        /// <summary>Returns the unit direction to the target, or zero if equal.</summary>
         public static Vector2 DirectionTo(this Vector2 from, Vector2 to)
         {
             Vector2 dir = to - from;
@@ -111,7 +117,7 @@ namespace NekoLib.Extensions
                     point.y >= min.y && point.y <= max.y;
         }
 
-        /// <summary>Returns a random point on a circle of the given radius around a central Vector2 point.</summary>
+        /// <summary>Returns a random point on a circle of the given radius around the origin.</summary>
         public static Vector2 RandomPointOnCircle(this Vector2 origin, float radius)
         {
             if (radius < 0f)
@@ -122,7 +128,7 @@ namespace NekoLib.Extensions
             return origin + direction * radius;
         }
 
-        /// <summary>Returns a random point inside a disk (filled circle) of the given radius around a central Vector2 point.</summary>
+        /// <summary>Returns a random point inside a disk of the given radius around the origin.</summary>
         public static Vector2 RandomPointInDisk(this Vector2 origin, float radius)
         {
             if (radius < 0f)
@@ -131,7 +137,7 @@ namespace NekoLib.Extensions
             return origin + UnityEngine.Random.insideUnitCircle * radius;
         }
 
-        /// <summary>Computes a random point in an annulus (a ring-shaped area) based on minimum and maximum radius values around a central Vector2 point (origin).</summary>
+        /// <summary>Returns a random point in an annulus (ring) between minRadius and maxRadius around the origin.</summary>
         public static Vector2 RandomPointInAnnulus(this Vector2 origin, float minRadius, float maxRadius)
         {
             if (minRadius < 0f)

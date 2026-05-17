@@ -29,25 +29,13 @@ namespace NekoLib.Extensions
             return text;
         }
 
-        /// <summary>Wraps the entire string in <b> tags if the predicate is true.</summary>
-        public static string Bold(this string text, Func<bool> predicate)
-        {
-            return predicate() ? $"<b>{text}</b>" : text;
-        }
-
         /// <summary>Wraps the specified words in <b> tags if the predicate is true.</summary>
         public static string Bold(this string text, Func<string, bool> predicate)
         {
             return s_wordRegex.Replace(text, match => predicate(match.Value) ? $"<b>{match.Value}</b>" : match.Value);
         }
 
-        /// <summary>Wraps the character in <b> tags.</summary>
-        public static string Bold(this char character)
-        {
-            return $"<b>{character}</b>";
-        }
-
-        /// <summary>Wraps the specified character in <b> tags.</summary>
+        /// <summary>Wraps EVERY occurrence of the character in <b> tags (string.Replace semantics, not word-boundary).</summary>
         public static string Bold(this string text, char character)
         {
             return text.Replace(character.ToString(), $"<b>{character}</b>");
@@ -75,25 +63,13 @@ namespace NekoLib.Extensions
             return text;
         }
 
-        /// <summary>Wraps the entire string in <i> tags if the predicate is true.</summary>
-        public static string Italic(this string text, Func<bool> predicate)
-        {
-            return predicate() ? $"<i>{text}</i>" : text;
-        }
-
         /// <summary>Wraps the specified words in <i> tags if the predicate is true.</summary>
         public static string Italic(this string text, Func<string, bool> predicate)
         {
             return s_wordRegex.Replace(text, match => predicate(match.Value) ? $"<i>{match.Value}</i>" : match.Value);
         }
 
-        /// <summary>Wraps the character in <i> tags.</summary>
-        public static string Italic(this char character)
-        {
-            return $"<i>{character}</i>";
-        }
-
-        /// <summary>Wraps the specified character in <i> tags.</summary>
+        /// <summary>Wraps EVERY occurrence of the character in <i> tags (string.Replace semantics, not word-boundary).</summary>
         public static string Italic(this string text, char character)
         {
             return text.Replace(character.ToString(), $"<i>{character}</i>");
@@ -121,25 +97,13 @@ namespace NekoLib.Extensions
             return text;
         }
 
-        /// <summary>Wraps the entire string in <u> tags if the predicate is true.</summary>
-        public static string Underline(this string text, Func<bool> predicate)
-        {
-            return predicate() ? $"<u>{text}</u>" : text;
-        }
-
         /// <summary>Wraps the specified words in <u> tags if the predicate is true.</summary>
         public static string Underline(this string text, Func<string, bool> predicate)
         {
             return s_wordRegex.Replace(text, match => predicate(match.Value) ? $"<u>{match.Value}</u>" : match.Value);
         }
 
-        /// <summary>Wraps the character in <u> tags.</summary>
-        public static string Underline(this char character)
-        {
-            return $"<u>{character}</u>";
-        }
-
-        /// <summary>Wraps the specified character in <u> tags.</summary>
+        /// <summary>Wraps EVERY occurrence of the character in <u> tags (string.Replace semantics, not word-boundary).</summary>
         public static string Underline(this string text, char character)
         {
             return text.Replace(character.ToString(), $"<u>{character}</u>");
@@ -171,14 +135,6 @@ namespace NekoLib.Extensions
                 text = text.Size(size, word);
             }
             return text;
-        }
-
-        /// <summary>Wraps the entire string in <size> tags if the predicate is true.</summary>
-        public static string Size(this string text, float size, Func<bool> predicate)
-        {
-            if (size <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive.");
-            return predicate() ? $"<size={size}>{text}</size>" : text;
         }
 
         /// <summary>Wraps the specified word in <size> tags if the predicate is true.</summary>

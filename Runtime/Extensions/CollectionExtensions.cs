@@ -41,8 +41,8 @@ namespace NekoLib.Extensions
             return result;
         }
 
-        /// <summary>Swaps two elements in the array.</summary>
-        public static T[] Swap<T>(this T[] arr, int aIndex, int bIndex)
+        /// <summary>Swaps two elements in the array by index.</summary>
+        public static T[] SwapAt<T>(this T[] arr, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= arr.Length || bIndex < 0 || bIndex >= arr.Length)
                 throw new IndexOutOfRangeException($"Index {aIndex} or {bIndex} is out of bounds of array of length {arr.Length}");
@@ -58,18 +58,19 @@ namespace NekoLib.Extensions
         /// <summary>Swaps two elements in the array.</summary>
         public static T[] Swap<T>(this T[] arr, T a, T b)
         {
-            if (a == null || b == null)
-                throw new ArgumentNullException("a or b cannot be null");
+            var eq = EqualityComparer<T>.Default;
+            if (eq.Equals(a, default) && a is null) throw new ArgumentNullException(nameof(a));
+            if (eq.Equals(b, default) && b is null) throw new ArgumentNullException(nameof(b));
 
             int aIndex = Array.IndexOf(arr, a);
             int bIndex = Array.IndexOf(arr, b);
 
             if (aIndex == -1)
-                throw new ArgumentException($"Element '{a}' not found in array");
+                throw new ArgumentException($"Element '{a}' not found in array", nameof(a));
             if (bIndex == -1)
-                throw new ArgumentException($"Element '{b}' not found in array");
+                throw new ArgumentException($"Element '{b}' not found in array", nameof(b));
 
-            return Swap(arr, aIndex, bIndex);
+            return SwapAt(arr, aIndex, bIndex);
         }
 
         /// <summary>Checks if the array contains any null elements.</summary>
@@ -90,7 +91,7 @@ namespace NekoLib.Extensions
             return arr == null || arr.Length == 0;
         }
 
-        /// <summary>Returns a string representation of an array. Does not work on nested arrays or array that is nested in other structures.</summary>
+        /// <summary>Returns a flat "[a, b, c]" representation for debug logging (not nested-aware).</summary>
         public static string ToLiteral<T>(this T[] arr)
         {
             // Handle null.
@@ -105,22 +106,6 @@ namespace NekoLib.Extensions
             return "[" + string.Join(", ", arr) + "]";
         }
 
-        /// <summary>Gets the last element of the array.</summary>
-        public static T Last<T>(this T[] arr)
-        {
-            if (arr.IsNullOrEmpty())
-                throw new InvalidOperationException("Cannot get last element from null or empty array");
-            return arr[^1];
-        }
-
-        /// <summary>Gets the first element of the array.</summary>
-        public static T First<T>(this T[] arr)
-        {
-            if (arr.IsNullOrEmpty())
-                throw new InvalidOperationException("Cannot get first element from null or empty array");
-            return arr[0];
-        }
-
         /// <summary>Gets a sub-array from the specified start index to the end.</summary>
         public static T[] Slice<T>(this T[] arr, int startIndex)
         {
@@ -132,10 +117,13 @@ namespace NekoLib.Extensions
         {
             if (arr.IsNullOrEmpty())
                 return new T[0];
-            if (startIndex < 0 || startIndex >= arr.Length)
+            if (startIndex < 0 || startIndex > arr.Length)
                 throw new IndexOutOfRangeException($"Start index {startIndex} is out of bounds of array of length {arr.Length}");
             if (length < 0 || startIndex + length > arr.Length)
                 throw new ArgumentException($"Length {length} would exceed array bounds from start index {startIndex}");
+
+            if (length == 0)
+                return new T[0];
 
             T[] result = new T[length];
             Array.Copy(arr, startIndex, result, 0, length);
@@ -197,14 +185,16 @@ namespace NekoLib.Extensions
                     return item;
             }
 
-            return arr.Last(); // Fallback, should rarely happen due to floating point precision
+            return arr[^1]; // Fallback, should rarely happen due to floating point precision
         }
 
+        /// <summary>Checks if the 2D grid is null or has zero total elements.</summary>
         public static bool IsNullOrEmpty<T>(this T[,] grid)
         {
             return grid == null || grid.Length == 0;
         }
 
+        /// <summary>Returns a row-major string representation of a 2D grid for debug logging.</summary>
         public static string ToLiteral<T>(this T[,] grid)
         {
             if (grid == null)
@@ -263,8 +253,8 @@ namespace NekoLib.Extensions
             return result;
         }
 
-        /// <summary>Swaps two elements in the list.</summary>
-        public static List<T> Swap<T>(this List<T> list, int aIndex, int bIndex)
+        /// <summary>Swaps two elements in the list by index.</summary>
+        public static List<T> SwapAt<T>(this List<T> list, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= list.Count || bIndex < 0 || bIndex >= list.Count)
                 throw new IndexOutOfRangeException($"Index {aIndex} or {bIndex} is out of bounds of list of length {list.Count}");
@@ -280,18 +270,19 @@ namespace NekoLib.Extensions
         /// <summary>Swaps two elements in the list.</summary>
         public static List<T> Swap<T>(this List<T> list, T a, T b)
         {
-            if (a == null || b == null)
-                throw new ArgumentNullException("a or b cannot be null");
+            var eq = EqualityComparer<T>.Default;
+            if (eq.Equals(a, default) && a is null) throw new ArgumentNullException(nameof(a));
+            if (eq.Equals(b, default) && b is null) throw new ArgumentNullException(nameof(b));
 
             int aIndex = list.IndexOf(a);
             int bIndex = list.IndexOf(b);
 
             if (aIndex == -1)
-                throw new ArgumentException($"Element '{a}' not found in list");
+                throw new ArgumentException($"Element '{a}' not found in list", nameof(a));
             if (bIndex == -1)
-                throw new ArgumentException($"Element '{b}' not found in list");
+                throw new ArgumentException($"Element '{b}' not found in list", nameof(b));
 
-            return Swap(list, aIndex, bIndex);
+            return SwapAt(list, aIndex, bIndex);
         }
 
         /// <summary>Checks if the list contains any null elements.</summary>
@@ -325,7 +316,7 @@ namespace NekoLib.Extensions
         }
 
 
-        /// <summary>Returns a string representation of a list. Does not work on nested lists or list that is nested in other structures.</summary>
+        /// <summary>Returns a flat "{a, b, c}" representation for debug logging (not nested-aware).</summary>
         public static string ToLiteral<T>(this List<T> list)
         {
             // Handle null.
@@ -338,22 +329,6 @@ namespace NekoLib.Extensions
 
             // Format the list.
             return "{" + string.Join(", ", list) + "}";
-        }
-
-        /// <summary>Returns the last element of the list.</summary>
-        public static T Last<T>(this List<T> list)
-        {
-            if (list.IsNullOrEmpty())
-                throw new InvalidOperationException("Cannot get last element from null or empty list");
-            return list[^1];
-        }
-
-        /// <summary>Returns the first element of the list.</summary>
-        public static T First<T>(this List<T> list)
-        {
-            if (list.IsNullOrEmpty())
-                throw new InvalidOperationException("Cannot get first element from null or empty list");
-            return list[0];
         }
 
         /// <summary>Returns multiple random elements from the list without replacement.</summary>
@@ -437,15 +412,7 @@ namespace NekoLib.Extensions
             return dict == null || dict.Count == 0;
         }
 
-        /// <summary>Returns a new copy of the dictionary.</summary>
-        public static Dictionary<K, V> AsNewCopy<K, V>(this Dictionary<K, V> dict) where K : notnull
-        {
-            var copy = new Dictionary<K, V>(dict.Count);
-            foreach (var kvp in dict) copy[kvp.Key] = kvp.Value;
-            return copy;
-        }
-
-        /// <summary>Returns a string representation of a dictionary. Does not work on nested dictionaries or dictionary that is nested in other structures.</summary>
+        /// <summary>Returns a flat "{k: v, ...}" representation for debug logging (not nested-aware).</summary>
         public static string ToLiteral<K, V>(this Dictionary<K, V> dict) where K : notnull
         {
             // Handle null.
@@ -469,19 +436,19 @@ namespace NekoLib.Extensions
         }
         #endregion
 
-        /// <summary>Returns a string representation of a queue. Does not work on nested queues or queue that is nested in other structures.</summary>
+        /// <summary>Returns a flat FIFO-order string representation for debug logging.</summary>
         public static string ToLiteral<T>(this Queue<T> queue)
         {
             return new List<T>(queue).ToLiteral();
         }
 
-        /// <summary>Returns a string representation of a stack. Does not work on nested stacks or stack that is nested in other structures.</summary>
+        /// <summary>Returns a flat LIFO-order string representation for debug logging.</summary>
         public static string ToLiteral<T>(this Stack<T> stack)
         {
             return new List<T>(stack).ToLiteral();
         }
 
-        /// <summary>Returns a string representation of a hashset. Does not work on nested hashsets or hashset that is nested in other structures.</summary>
+        /// <summary>Returns a flat string representation for debug logging.</summary>
         public static string ToLiteral<T>(this HashSet<T> set)
         {
             return new List<T>(set).ToLiteral();

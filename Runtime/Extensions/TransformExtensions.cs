@@ -55,15 +55,6 @@ namespace NekoLib.Extensions
             }
         }
 
-        /// <summary>Rotates this transform around a point in world space.</summary>
-        public static void RotateAround(this Transform transform, Vector3 center, Vector3 axis, float degrees)
-        {
-            var offset = transform.position - center;
-            offset = Quaternion.AngleAxis(degrees, axis) * offset;
-            transform.position = center + offset;
-            transform.Rotate(axis, degrees, Space.World);
-        }
-
         /// <summary>Makes transform look at target in 2D (Z-axis rotation only).</summary>
         public static void LookAt2D(this Transform transform, Vector2 target)
         {

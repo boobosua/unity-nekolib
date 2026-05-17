@@ -44,9 +44,7 @@ namespace NekoLib.Extensions
             }
         }
 
-        // <summary>
-        /// Converts a Task to a Coroutine using YieldTask
-        /// </summary>
+        /// <summary>Converts a Task into a coroutine-yieldable IEnumerator.</summary>
         public static IEnumerator AsCoroutine(this Task task)
         {
             yield return new YieldTask(task);

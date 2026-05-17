@@ -57,9 +57,10 @@ namespace NekoLib.Extensions
             return Quaternion.AngleAxis(degrees, Vector3.forward) * vector;
         }
 
-        /// <summary>Returns a Boolean indicating whether the current Vector3 is in a given range from another Vector3</summary>
+        /// <summary>Returns true if within range of the target (negative range returns false).</summary>
         public static bool InRangeOf(this Vector3 current, Vector3 target, float range)
         {
+            if (range < 0f) return false;
             return (current - target).sqrMagnitude <= range * range;
         }
 
@@ -69,7 +70,7 @@ namespace NekoLib.Extensions
             return vector.sqrMagnitude > Constants.NearZeroSqrMagnitude ? vector.normalized * magnitude : Vector3.zero;
         }
 
-        /// <summary>Returns the direction from this vector to the target vector. Returns zero vector if both vectors are equal.</summary>
+        /// <summary>Returns the unit direction to the target, or zero if equal.</summary>
         public static Vector3 DirectionTo(this Vector3 from, Vector3 to)
         {
             Vector3 dir = to - from;
@@ -111,13 +112,13 @@ namespace NekoLib.Extensions
                     point.z >= min.z && point.z <= max.z;
         }
 
-        /// <summary>Checks if this point is inside a Collider's axis-aligned bounding box. Note: this is an AABB approximation, not an exact shape test.</summary>
+        /// <summary>Checks if the point is inside the collider's AABB (approximation, not exact shape).</summary>
         public static bool IsInsideColliderBounds(this Vector3 point, Collider collider)
         {
             return collider.bounds.Contains(point);
         }
 
-        /// <summary>Returns a random point on a circle of the given radius around a central Vector3 point.</summary>
+        /// <summary>Returns a random point on a circle of the given radius around the origin.</summary>
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
         public static Vector3 RandomPointOnCircle(this Vector3 origin, float radius, Plane2D plane = Plane2D.XZ)
         {
@@ -138,7 +139,7 @@ namespace NekoLib.Extensions
             return origin + position;
         }
 
-        /// <summary>Returns a random point inside a disk (filled circle) of the given radius around a central Vector3 point.</summary>
+        /// <summary>Returns a random point inside a disk of the given radius around the origin.</summary>
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
         public static Vector3 RandomPointInDisk(this Vector3 origin, float radius, Plane2D plane = Plane2D.XZ)
         {
@@ -158,7 +159,7 @@ namespace NekoLib.Extensions
             return origin + offset;
         }
 
-        /// <summary>Computes a random point in an annulus (ring-shaped area) around a central Vector3 point.</summary>
+        /// <summary>Returns a random point in an annulus (ring) between minRadius and maxRadius around the origin.</summary>
         /// <param name="plane">The plane to generate the point on (XY, XZ, or YZ)</param>
         public static Vector3 RandomPointInAnnulus(this Vector3 origin, float minRadius, float maxRadius, Plane2D plane = Plane2D.XZ)
         {
@@ -188,11 +189,15 @@ namespace NekoLib.Extensions
         }
     }
 
+    /// <summary>Axis-aligned 2D plane in 3D space.</summary>
     public enum Plane2D
     {
-        XY, // Horizontal plane (standard 2D)
-        XZ, // Ground plane (typical for 3D games)
-        YZ  // Vertical plane
+        /// <summary>XY plane (standard 2D orientation).</summary>
+        XY,
+        /// <summary>XZ plane (typical ground plane for 3D games).</summary>
+        XZ,
+        /// <summary>YZ plane (vertical, side-view orientation).</summary>
+        YZ,
     }
 }
 

@@ -1,4 +1,3 @@
-using System;
 using NekoLib.ColorPalette;
 using NekoLib.Logger;
 using UnityEngine;
@@ -25,18 +24,6 @@ namespace NekoLib.Extensions
             return gameObject.AddComponent<T>();
         }
 
-        /// <summary>Sets the active state of the specified MonoBehaviour to true.</summary>
-        public static void SetActive<T>(this T obj) where T : MonoBehaviour
-        {
-            obj.gameObject.SetActive(true);
-        }
-
-        /// <summary>Sets the active state of the specified MonoBehaviour to false.</summary>
-        public static void SetInactive<T>(this T obj) where T : MonoBehaviour
-        {
-            obj.gameObject.SetActive(false);
-        }
-
         /// <summary>Checks if the specified GameObject is in the given LayerMask.</summary>
         public static bool IsInLayer(this GameObject gameObject, LayerMask layer)
         {
@@ -48,9 +35,6 @@ namespace NekoLib.Extensions
         {
             gameObject.transform.Clear();
         }
-
-        [Obsolete("Use ClearChildTransforms instead.")]
-        public static void DestroyChildren(this GameObject gameObject) => ClearChildTransforms(gameObject);
 
         /// <summary>Set GameObject to a specific layer.</summary>
         public static void SetLayer(this GameObject gameObject, int newLayer)

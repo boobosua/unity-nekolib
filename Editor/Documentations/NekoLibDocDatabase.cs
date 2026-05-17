@@ -1232,20 +1232,17 @@ rb.velocity = dir * speed;" },
                 {
                     Title = "StringExtensions",
                     Namespace = "NekoLib.Extensions",
-                    Summary = "Comma-float parsing, SplitCamelCase, percent formatting, short number formats (K/M/B), enum conversion.",
-                    Description = "ToShortFormat handles K/M/B/T and beyond for idle-game style large numbers. ToShortABCFormat uses alphabetic suffixes (a/b/c...). AsPercent multiplies by 100; AsExactPercent uses the value directly.",
+                    Summary = "Comma-float parsing, SplitCamelCase, percent formatting, enum conversion.",
+                    Description = "Parsing/format helpers for strings and primitive values. Number-display formatting lives in BigNumberFormatExtensions.",
                     Code =
 @"float  val   = ""3,14"".ParseFloatWithComma();    // 3.14f
 string split = ""MyVarName"".SplitCamelCase();    // ""My Var Name""
 
-string pct   = 0.25f.AsPercent();               // ""25%""
-string exact = 25f.AsExactPercent();             // ""25%""
-
-string short1 = 1_500_000m.ToShortFormat(1);    // ""1.5M""
-string abc    = 1_500m.ToShortABCFormat();       // ""1.5a""
+string pct   = 0.25f.AsPercent();                 // ""25%""
+string exact = 25f.AsExactPercent();              // ""25%""
 
 MyEnum e = ""EnumValue"".ToEnum<MyEnum>();",
-                    Tags = new[] { "String", "Format", "Number" },
+                    Tags = new[] { "String", "Format" },
                     Category = DocCategory.Extensions,
                     Members = new[]
                     {
@@ -1261,17 +1258,39 @@ MyEnum e = ""EnumValue"".ToEnum<MyEnum>();",
                         new DocMember { Kind = DocMemberKind.Method, Signature = "AsExactPercent()  (float ext)",
                             Summary = "Appends % to the value as-is, without multiplying. 25f → \"25%\".",
                             Code = @"label.text = healthPercent.AsExactPercent();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "ToShortFormat(int decimals)  (decimal ext)",
-                            Summary = "Formats large numbers with K/M/B/T suffixes for idle-game style display.",
-                            Code =
-@"string s = 1_500_000m.ToShortFormat(1); // ""1.5M""
-string t = 2_300m.ToShortFormat(0);     // ""2K""" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "ToShortABCFormat()  (decimal ext)",
-                            Summary = "Formats large numbers with alphabetic suffixes (a, b, c…) for idle games.",
-                            Code = @"string s = 1_500m.ToShortABCFormat(); // ""1.5a""" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "ToEnum<T>()",
                             Summary = "Parses the string as an enum value of type T.",
                             Code = @"WeaponType wt = ""Sword"".ToEnum<WeaponType>();" },
+                    }
+                },
+                new NekoLibDocEntry
+                {
+                    Title = "BigNumberStyleExtensions",
+                    Namespace = "NekoLib.Extensions",
+                    Summary = "Format int/long/decimal values as big-number display strings. Two styles: Compact (K/M/B/T → aa, bb, ...) and Alphabetical (a, b, c, ...).",
+                    Description = "A mini number-formatter — no dependency on the NekoBigNumber package. Use when a project wants idle/incremental-style number display without the full big-number arithmetic. Overloads for int, long, and decimal.",
+                    Code =
+@"decimal n = 1_500_000m;
+string compact = n.ToBigNumber(BigNumberStyle.Compact);          // ""1.5M""
+string alpha   = n.ToBigNumber(BigNumberStyle.Alphabetical);     // ""1.5b""
+
+// Beyond T:
+string big = 1_000_000_000_000_000m.ToBigNumber(BigNumberStyle.Compact); // ""1aa""
+
+// Custom precision (trailing zeros always trimmed):
+string p2 = 1230m.ToBigNumber(BigNumberStyle.Compact, 2); // ""1.23K""
+
+// Negatives preserved:
+string neg = (-1500m).ToBigNumber(BigNumberStyle.Compact); // ""-1.5K""",
+                    Tags = new[] { "Number", "Format", "BigNumber", "Idle" },
+                    Category = DocCategory.Extensions,
+                    Members = new[]
+                    {
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "ToBigNumber(BigNumberStyle style, int decimalPlaces = 1)  (decimal ext)",
+                            Summary = "Formats the value using the given BigNumberStyle. Sub-1000 values written as-is. Trailing zeros always trimmed.",
+                            Code =
+@"goldLabel.text = playerGold.ToBigNumber(BigNumberStyle.Compact);
+hpLabel.text   = currentHP.ToBigNumber(BigNumberStyle.Alphabetical, decimalPlaces: 2);" },
                     }
                 },
                 new NekoLibDocEntry
@@ -1315,10 +1334,10 @@ foreach (var card in deck) Deal(card);" },
                             Summary = "Picks one element using weighted probability. Higher weight = more likely.",
                             Code =
 @"Enemy e = spawnTable.RandWeighted(x => x.spawnWeight);" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "Swap(T a, T b)",
-                            Summary = "Returns a new array/list with two elements swapped by index or value.",
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SwapAt(int aIndex, int bIndex) / Swap(T a, T b)",
+                            Summary = "Returns a new array/list with two elements swapped by index (SwapAt) or by value (Swap).",
                             Code =
-@"int[] sorted = order.Swap(0, 2);     // by index
+@"int[] sorted = order.SwapAt(0, 2);   // by index
 string[] s  = names.Swap(""Alice"", ""Bob""); // by value" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "Slice(int startIndex, int length)",
                             Summary = "Returns a sub-array from startIndex with the given length.",
@@ -1347,14 +1366,10 @@ string val = dialogueMap.RandV();" },
                 {
                     Title = "NumberExtensions",
                     Namespace = "NekoLib.Extensions",
-                    Summary = "IsEven, IsOdd, PercentageOf, AtLeast/AtMost clamping, IsSuccessfulRoll probability, ToEnum.",
-                    Description = "IsSuccessfulRoll(float) treats the value as a 0–1 probability. The int overload takes a max parameter. AtLeast/AtMost chain for expressive clamping.",
+                    Summary = "PercentageOf, IsSuccessfulRoll probability, ToEnum.",
+                    Description = "IsSuccessfulRoll(float) treats the value as a 0–1 probability. The int overload takes a max parameter.",
                     Code =
-@"bool even  = 42.IsEven();
-bool odd   = 13.IsOdd();
-float pct  = current.PercentageOf(total);
-
-int clamped = value.AtLeast(10).AtMost(100);
+@"float pct  = current.PercentageOf(total);
 
 bool hit  = 0.75f.IsSuccessfulRoll();      // 75% chance
 bool hit2 = 25.IsSuccessfulRoll(0, 100);   // 25 out of 100
@@ -1364,19 +1379,11 @@ MyEnum e = 1.ToEnum<MyEnum>();",
                     Category = DocCategory.Extensions,
                     Members = new[]
                     {
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsEven() / IsOdd()",
-                            Summary = "Returns true if the integer is even or odd.",
-                            Code = @"if (waveNumber.IsEven()) SpawnEliteEnemy();" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "PercentageOf(float total)",
                             Summary = "Returns this value as a 0–1 fraction of total.",
                             Code =
 @"float fill = currentHealth.PercentageOf(maxHealth);
 healthBar.fillAmount = fill;" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "AtLeast(T min) / AtMost(T max)",
-                            Summary = "Clamps the value to a minimum or maximum. Both can be chained.",
-                            Code =
-@"int damage = (baseDamage - armor).AtLeast(0);
-float vol = rawVolume.AtLeast(0f).AtMost(1f);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "IsSuccessfulRoll()  (float)",
                             Summary = "Treats the value as a 0–1 probability and returns true with that chance.",
                             Code =
@@ -1583,61 +1590,29 @@ IEnumerator Example()
                 {
                     Title = "AnimatorExtensions",
                     Namespace = "NekoLib.Extensions",
-                    Summary = "Clip length queries, progress tracking, state checks, PlayAndWait / CrossFadeAndWait.",
-                    Description = "GetAnimationLength works with both string names and hash ints. GetCurrentAnimationProgress/RemainingTime give frame-accurate values. PlayAndWait and CrossFadeAndWait are coroutine yield helpers.",
+                    Summary = "Clip length queries and state checks (string + hash overloads).",
+                    Description = "GetAnimationLength's hash overload expects a clip-name hash (Animator.StringToHash(clipName)). IsPlayingAnimation's hash overload expects a state-name hash (shortNameHash). They differ in practice only when a state name and clip name diverge.",
                     Code =
-@"float len  = animator.GetAnimationLength(""Jump"");
-float prog = animator.GetCurrentAnimationProgress(layerIndex: 0);
-float left = animator.GetCurrentAnimationRemainingTime(0);
-bool  ok   = animator.IsPlayingAnimation(""Jump"");
-
-yield return animator.PlayAndWait(""Attack"");
-yield return animator.CrossFadeAndWait(""Idle"", 0.2f);
-yield return animator.WaitForAnimation(""Death"");",
-                    Tags = new[] { "Animator", "Animation", "Coroutine" },
+@"float len = animator.GetAnimationLength(""Jump"");
+bool  ok  = animator.IsPlayingAnimation(""Jump"");",
+                    Tags = new[] { "Animator", "Animation" },
                     Category = DocCategory.Extensions,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "GetAnimationLength(string name)",
-                            Summary = "Returns the clip length in seconds for the named animation state.",
+                            Summary = "Returns the clip length in seconds for the named clip asset.",
                             Code =
 @"float attackDur = animator.GetAnimationLength(""Attack"");
 this.Delay(attackDur, OnAttackEnd);" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "GetCurrentAnimationProgress(int layer)",
-                            Summary = "Returns the normalized playback position (0–1) of the current state on the given layer.",
-                            Code =
-@"float prog = animator.GetCurrentAnimationProgress(0);
-progressBar.fillAmount = prog;" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "GetCurrentAnimationRemainingTime(int layer)",
-                            Summary = "Returns the remaining clip time in seconds for the current animation state.",
-                            Code =
-@"float left = animator.GetCurrentAnimationRemainingTime(0);
-this.Delay(left, SpawnHitEffect);" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "GetAnimationLength(int clipNameHash)",
+                            Summary = "Hash overload — pass Animator.StringToHash(clipName). Matches the clip asset's name.",
+                            Code = @"float len = animator.GetAnimationLength(AttackClipHash);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "IsPlayingAnimation(string name)",
                             Summary = "Returns true if the animator is currently in the named state.",
                             Code = @"if (!animator.IsPlayingAnimation(""Idle"")) return;" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "PlayAndWait(string name)",
-                            Summary = "Plays the animation and yields until it finishes. Use inside a coroutine.",
-                            Code =
-@"IEnumerator AttackSequence()
-{
-    yield return animator.PlayAndWait(""Attack"");
-    yield return animator.PlayAndWait(""Recover"");
-    isAttacking = false;
-}" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "CrossFadeAndWait(string name, float transitionDuration)",
-                            Summary = "Cross-fades to the animation and yields until the target clip finishes.",
-                            Code =
-@"IEnumerator Die()
-{
-    yield return animator.CrossFadeAndWait(""Death"", 0.2f);
-    gameObject.SetInactive();
-}" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "WaitForAnimation(string name)",
-                            Summary = "Yields until the named animation starts playing on layer 0.",
-                            Code =
-@"animator.SetTrigger(""Jump"");
-yield return animator.WaitForAnimation(""Jump"");" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPlayingAnimation(int stateNameHash)",
+                            Summary = "Hash overload — matches shortNameHash (state name), NOT clip name.",
+                            Code = @"if (animator.IsPlayingAnimation(IdleStateHash)) return;" },
                     }
                 },
                 new NekoLibDocEntry
@@ -1645,14 +1620,11 @@ yield return animator.WaitForAnimation(""Jump"");" },
                     Title = "CameraExtensions",
                     Namespace = "NekoLib.Extensions",
                     Summary = "Culling mask management, FOV control, orthographic size, FitBoundsInView, screen size query.",
-                    Description = "Culling helpers: IsLayerInCullingMask, AddToCullingMask, RemoveFromCullingMask, ShowAllLayers, HideAllLayers. FOV: ZoomIn, ZoomOut, SetFOV. Orthographic: SetOrthographicSize, FitBoundsInView.",
+                    Description = "Culling helpers: IsLayerInCullingMask, AddToCullingMask, RemoveFromCullingMask, SetCullingMask. FOV: SetFOV. Orthographic: SetOrthographicSize, FitBoundsInView.",
                     Code =
 @"camera.AddToCullingMask(LayerMask.GetMask(""UI""));
 camera.RemoveFromCullingMask(LayerMask.GetMask(""UI""));
-camera.ShowAllLayers();
-camera.HideAllLayers();
 
-camera.ZoomIn(15f);
 camera.SetFOV(60f);
 camera.SetOrthographicSize(5f);
 camera.FitBoundsInView(bounds);
@@ -1670,17 +1642,12 @@ cam.RemoveFromCullingMask(LayerMask.GetMask(""HUD""));" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "IsLayerInCullingMask(int layer)",
                             Summary = "Returns true if the given layer index is visible to this camera.",
                             Code = @"if (!cam.IsLayerInCullingMask(uiLayer)) cam.AddToCullingMask(1 << uiLayer);" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "ShowAllLayers() / HideAllLayers()",
-                            Summary = "Sets the culling mask to everything or nothing.",
-                            Code =
-@"screenshotCam.HideAllLayers();
-screenshotCam.AddToCullingMask(LayerMask.GetMask(""Game""));" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "ZoomIn(float fov) / ZoomOut(float fov) / SetFOV(float fov)",
-                            Summary = "Adjusts the perspective camera field of view.",
-                            Code =
-@"cam.ZoomIn(15f);   // fov -= 15
-cam.ZoomOut(15f);  // fov += 15
-cam.SetFOV(60f);   // absolute" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SetCullingMask(LayerMask mask)",
+                            Summary = "Replaces the culling mask outright. Pass 0 to render nothing, -1 to render everything.",
+                            Code = @"screenshotCam.SetCullingMask(LayerMask.GetMask(""Game""));" },
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SetFOV(float fov)",
+                            Summary = "Sets the perspective camera field of view, clamped to [MinFOV, MaxFOV].",
+                            Code = @"cam.SetFOV(60f);" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "SetOrthographicSize(float size)",
                             Summary = "Sets the orthographic camera's half-height size.",
                             Code = @"cam.SetOrthographicSize(5f);" },

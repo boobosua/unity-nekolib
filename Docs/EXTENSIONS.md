@@ -15,10 +15,6 @@ using NekoLib.Extensions;
 AudioSource audio = gameObject.GetOrAdd<AudioSource>();
 Rigidbody rb = monoBehaviour.GetOrAdd<Rigidbody>();
 
-// Active state management
-monoBehaviour.SetActive();   // Set active to true
-monoBehaviour.SetInactive(); // Set active to false
-
 // Layer management
 bool inLayer = gameObject.IsInLayer(LayerMask.GetMask("Enemy"));
 gameObject.SetLayer("Player");           // By name
@@ -27,7 +23,6 @@ gameObject.SetLayer(LayerMask.GetMask("UI")); // By LayerMask
 
 // Child management
 gameObject.ClearChildTransforms(); // Destroy all children
-// Note: DestroyChildren() is [Obsolete] — use ClearChildTransforms()
 
 // Get children in specific layers
 GameObject[] enemyChildren = gameObject.GetChildrenInLayer(LayerMask.GetMask("Enemy"));
@@ -42,9 +37,6 @@ GameObject[] fromMono = monoBehaviour.GetChildrenInLayer(LayerMask.GetMask("Enem
 // Child management
 transform.Clear(); // Destroy all children
 Transform[] children = transform.GetChildren(includeInactive: false);
-
-// Rotation around point
-transform.RotateAround(center, Vector3.up, 90f);
 
 // 2D look-at
 transform.LookAt2D(targetPosition);
@@ -67,24 +59,13 @@ GameObject[] allEnemies = transform.GetChildrenInLayerRecursive(LayerMask.GetMas
 ### AnimatorExtensions
 
 ```csharp
-// Animation length queries
+// Animation length queries — hash overload expects a CLIP-name hash (Animator.StringToHash(clipName))
 float clipLength = animator.GetAnimationLength("JumpAnimation");
 float hashLength = animator.GetAnimationLength(Animator.StringToHash("JumpAnimation"));
 
-// Animation progress tracking
-float progress = animator.GetCurrentAnimationProgress(layerIndex: 0);
-float remainingTime = animator.GetCurrentAnimationRemainingTime(layerIndex: 0);
-
-// Animation state checks
+// Animation state checks — hash overload expects a STATE-name hash (shortNameHash)
 bool isJumping = animator.IsPlayingAnimation("JumpAnimation");
-bool isPlaying = animator.IsPlayingAnimation(jumpAnimHash);
-
-// Play and wait for completion (coroutines)
-yield return animator.PlayAndWait("AttackAnimation");
-yield return animator.CrossFadeAndWait("IdleAnimation", transitionDuration: 0.2f);
-
-// Wait for specific animation to complete
-yield return animator.WaitForAnimation("DeathAnimation");
+bool isPlaying = animator.IsPlayingAnimation(jumpStateHash);
 ```
 
 ### CameraExtensions
@@ -95,12 +76,8 @@ bool isVisible = camera.IsLayerInCullingMask(LayerMask.GetMask("Enemy"));
 camera.AddToCullingMask(LayerMask.GetMask("UI"));
 camera.RemoveFromCullingMask(LayerMask.GetMask("UI"));
 camera.SetCullingMask(LayerMask.GetMask("Player", "Enemy"));
-camera.ShowAllLayers(); // cullingMask = -1
-camera.HideAllLayers(); // cullingMask = 0
 
 // FOV control
-camera.ZoomIn(15f);
-camera.ZoomOut(15f);
 camera.SetFOV(60f);
 
 // Orthographic control
@@ -215,35 +192,41 @@ string percent2 = 0.25f.AsPercent(1);            // "25%"
 string exact = 25f.AsExactPercent();             // "25%"  (uses value directly)
 string exact2 = 25.5f.AsExactPercent(1);         // "25.5%"
 
-// Large number formatting (K / M / B / T / aa / bb ...)
-string short1 = 1500000m.ToShortFormat(1);       // "1.5M"
-string short2 = 1500000L.ToShortFormat(1);       // "1.5M"
-string short3 = 1500000.ToShortFormat(1);        // "1.5M"
-
-// Alphabetic suffix format (a / b / c ...)
-string abc1 = 1500m.ToShortABCFormat();         // "1.5a"
-string abc2 = 1500000m.ToShortABCFormat();      // "1.5b"
-string abc3 = 1500000L.ToShortABCFormat();
-string abc4 = 1500000.ToShortABCFormat();
-
 // Enum conversion
 MyEnum value = "EnumValue".ToEnum<MyEnum>();
 MyEnum safe = "BadValue".ToEnumOrDefault(MyEnum.Default);
 ```
 
+### BigNumberStyleExtensions
+
+```csharp
+// Mini big-number formatter — no dependency on the NekoBigNumber package.
+// Two styles via the BigNumberStyle enum. Overloads for int, long, and decimal.
+
+// Compact: K/M/B/T then doubled-letter pairs (aa, bb, cc, ...).
+string c1 = 1_500m.ToBigNumber(BigNumberStyle.Compact);                  // "1.5K"
+string c2 = 1_500_000m.ToBigNumber(BigNumberStyle.Compact);              // "1.5M"
+string c3 = 1_500_000_000_000L.ToBigNumber(BigNumberStyle.Compact);      // "1.5T"
+string c4 = 1_000_000_000_000_000m.ToBigNumber(BigNumberStyle.Compact);  // "1aa"
+string c5 = 1_000_000_000_000_000_000m.ToBigNumber(BigNumberStyle.Compact); // "1bb"
+
+// Alphabetical: single letters a..z from 1e3 onward.
+string a1 = 1_500m.ToBigNumber(BigNumberStyle.Alphabetical);             // "1.5a"
+string a2 = 1_500_000m.ToBigNumber(BigNumberStyle.Alphabetical);         // "1.5b"
+
+// Custom precision (trailing zeros always trimmed).
+string p0 = 2300m.ToBigNumber(BigNumberStyle.Compact, 0);                // "2K"
+string p2 = 1230m.ToBigNumber(BigNumberStyle.Compact, 2);                // "1.23K"
+
+// Negative values keep the sign.
+string n  = (-1500m).ToBigNumber(BigNumberStyle.Compact);                // "-1.5K"
+```
+
 ### NumberExtensions
 
 ```csharp
-// Number checks
-bool isEven = 42.IsEven();
-bool isOdd = 13.IsOdd();
-
 // Percentage calculations
 float percentage = current.PercentageOf(total);
-
-// Range clamping
-int clamped = value.AtLeast(10).AtMost(100);
-float clampedFloat = value.AtLeast(0f).AtMost(1f);
 
 // Probability/chance
 bool success = 0.75f.IsSuccessfulRoll();          // 75% chance (0–1 range)
@@ -263,13 +246,11 @@ using NekoLib.Logger;
 T randomItem = array.Rand();
 int randomIndex = array.RandIndex();
 T[] shuffled = array.Shuffle();
-T[] swapped = array.Swap(0, 1);
+T[] swapped = array.SwapAt(0, 1);
 T[] swappedByElement = array.Swap(item1, item2);
 bool isEmpty = array.IsNullOrEmpty();
 bool hasNulls = array.ContainsNull();
 string formatted = array.ToLiteral(); // "[item1, item2, item3]"
-T first = array.First();
-T last = array.Last();
 T[] sliced = array.Slice(2, 5);
 T[] multiple = array.RandMultiple(3);
 T weighted = array.RandWeighted(item => item.weight);
@@ -280,11 +261,9 @@ bool contains = array.Contains(item);
 T randomItem = list.Rand();
 int randomIndex = list.RandIndex();
 List<T> shuffled = list.Shuffle();
-List<T> swapped = list.Swap(0, 1);
+List<T> swapped = list.SwapAt(0, 1);
 bool hasNulls = list.ContainsNull();
 string formatted = list.ToLiteral(); // "{item1, item2, item3}"
-T first = list.First();
-T last = list.Last();
 List<T> multiple = list.RandMultiple(3);
 T weighted = list.RandWeighted(item => item.weight);
 
@@ -292,7 +271,6 @@ T weighted = list.RandWeighted(item => item.weight);
 V randomValue = dict.RandV();
 K randomKey = dict.RandK();
 bool hasNulls = dict.ContainsNullValues();
-Dictionary<K, V> copy = dict.AsNewCopy();
 string formatted = dict.ToLiteral(); // "{key1: value1, key2: value2}"
 
 // Other collections
@@ -337,9 +315,6 @@ double daysFromNow = future.DaysFromNow();
 
 // UTC variants
 double utcSecsFromNow = future.SecondsFromNowUtc();
-
-// Absolute difference (past or future)
-double absDiff = someDateTime.AbsoluteSecondsDifference();
 ```
 
 ### TMPTextExtensions
@@ -348,7 +323,6 @@ double absDiff = someDateTime.AbsoluteSecondsDifference();
 // Set to "HH:MM:SS" from seconds
 tmpText.SetClock(3661);        // "01:01:01"
 tmpText.SetClock(3661f);
-tmpText.SetClock(3661d);
 
 // Set to "MM:SS" from seconds
 tmpText.SetShortClock(125);           // "02:05"

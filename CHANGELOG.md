@@ -1,3 +1,15 @@
+## [2.4.2] - 2026-05-18
+
+### Overhaul Extension Methods
+
+- Add `BigNumberStyleExtensions` for formatting `NekoBigNumber` values with configurable notation styles.
+- Refactor `CollectionExtensions`: rename index-based `Swap(int, int)` to `SwapAt(int, int)` on arrays and lists to resolve overload ambiguity with value-based `Swap(T, T)`.
+- Refactor `AnimatorExtensions`, `CameraExtensions`, `GameObjectExtensions`, `TransformExtensions`, `Vector2Extensions`, and `Vector3Extensions` with improved XML documentation and cleaner APIs.
+- Refactor `NumberExtensions`, `StringExtensions`, `TextColorizeExtensions`, `TextFormatExtensions`, `TMPTextExtensions`, `TaskExtensions`, and `TimeExtensions` for consistency and correctness.
+- Update `Docs/EXTENSIONS.md` and `NekoLibDocDatabase` to reflect all API changes.
+- Bump `package.json` version.
+
+
 ## [2.4.1] - 2026-05-17
 
 ### Refactor Pooling System
