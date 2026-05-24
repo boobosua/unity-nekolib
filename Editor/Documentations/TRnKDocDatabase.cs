@@ -2210,10 +2210,10 @@ countdown.Start();  // now visible in Timer Tracker",
                     Description = "TRnK.Signal is NOT included in TRnK. Install TRnK.Toolkit first, then add TRnK.Signal via Unity Package Manager → Add package from git URL.",
                     Code =
 @"// 1. Install TRnK.Toolkit first
-https://github.com/boobosua/unity-trnk-toolkit.git
+https://github.com/trnkdev/unity-trnk-toolkit.git
 
 // 2. Then install TRnK.Signal
-https://github.com/boobosua/unity-trnk-signal.git",
+https://github.com/trnkdev/unity-trnk-signal.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
                     Category = DocCategory.TRnKSignal
                 },
@@ -2512,10 +2512,10 @@ public sealed class TeamFilter : ISignalFilter
                     Description = "TRnK.Flow is NOT included in TRnK. Install TRnK.Toolkit first, then add TRnK.Flow via Unity Package Manager → Add package from git URL.",
                     Code =
 @"// 1. Install TRnK.Toolkit first
-https://github.com/boobosua/unity-trnk-toolkit.git
+https://github.com/trnkdev/unity-trnk-toolkit.git
 
 // 2. Then install TRnK.Flow
-https://github.com/boobosua/unity-trnk-flow.git",
+https://github.com/trnkdev/unity-trnk-flow.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
                     Category = DocCategory.TRnKFlow
                 },
@@ -2727,10 +2727,10 @@ patrol?.SetNextWaypoint(wp);" },
                     Description = "TRnK.Serializer is NOT included in TRnK. Requires Unity 2021+ (Newtonsoft.Json ships by default). Install TRnK.Toolkit first, then add TRnK.Serializer via Unity Package Manager → Add package from git URL.",
                     Code =
 @"// 1. Install TRnK.Toolkit first
-https://github.com/boobosua/unity-trnk-toolkit.git
+https://github.com/trnkdev/unity-trnk-toolkit.git
 
 // 2. Then install TRnK.Serializer
-https://github.com/boobosua/unity-trnk-serializer.git",
+https://github.com/trnkdev/unity-trnk-serializer.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
                     Category = DocCategory.TRnKSerializer
                 },

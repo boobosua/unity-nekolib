@@ -15,11 +15,12 @@ namespace TRnK.Toolkit
 
         private static readonly string[] DefaultGitUrls =
         {
-            "https://github.com/boobosua/unity-trnk-signal.git",
-            "https://github.com/boobosua/unity-trnk-flow.git",
-            "https://github.com/boobosua/unity-trnk-serializer.git",
-            "https://github.com/boobosua/unity-trnk-bignumber.git",
-            "https://github.com/boobosua/unity-trnk-nav.git",
+            "https://github.com/trnkdev/unity-trnk-signal.git",
+            "https://github.com/trnkdev/unity-trnk-flow.git",
+            "https://github.com/trnkdev/unity-trnk-serializer.git",
+            "https://github.com/trnkdev/unity-trnk-big-number.git",
+            "https://github.com/trnkdev/unity-trnk-nav.git",
+            "https://github.com/trnkdev/unity-trnk-spreadsheets.git",
         };
 
         [Serializable]
