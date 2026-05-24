@@ -2522,11 +2522,11 @@ https://github.com/boobosua/unity-trnk-flow.git",
                 new TRnKDocEntry
                 {
                     Title = "StateBehaviour",
-                    Namespace = "TRnK.Flow.FSM",
+                    Namespace = "TRnK.Flow",
                     Summary = "MonoBehaviour-based FSM controller. Derive from it, create states, then declare transitions in Awake.",
                     Description = "StateBehaviour is the 'brain' — it owns transition predicates and state instances. Use GetTimeInCurrentState() for time-based transitions. API: IsInState<T>(), TryGetCurrentState<T>(out T), GetTimeInCurrentState().",
                     Code =
-@"using TRnK.Flow.FSM;
+@"using TRnK.Flow;
 
 public class EnemyController : StateBehaviour
 {
@@ -2585,11 +2585,11 @@ public class EnemyController : StateBehaviour
                 new TRnKDocEntry
                 {
                     Title = "BaseState<TContext>",
-                    Namespace = "TRnK.Flow.FSM",
+                    Namespace = "TRnK.Flow",
                     Summary = "Convenience base class for states. Provides protected _context, _gameObject, and _transform.",
                     Description = "Implement IState directly for pure C# states, or inherit BaseState<T> when you need convenient access to the controller and its GameObject. State logic only — no transition predicates here.",
                     Code =
-@"using TRnK.Flow.FSM;
+@"using TRnK.Flow;
 
 public sealed class EnemyIdleState : BaseState<EnemyController>
 {
@@ -2648,11 +2648,11 @@ public sealed class EnemyIdleState : BaseState<EnemyController>
                 new TRnKDocEntry
                 {
                     Title = "StateMachine (pure C#)",
-                    Namespace = "TRnK.Flow.FSM",
+                    Namespace = "TRnK.Flow",
                     Summary = "Standalone state machine, no MonoBehaviour required. Tick it manually in Update.",
                     Description = "Use StateMachine directly when you want FSM logic inside a plain C# class. Remember to call Tick(deltaTime) each frame. API: StartWith, At, Any, SetState, CurrentState, TimeInState, Is<T>(), Get<T>().",
                     Code =
-@"using TRnK.Flow.FSM;
+@"using TRnK.Flow;
 
 public class EnemyBrain : MonoBehaviour
 {
