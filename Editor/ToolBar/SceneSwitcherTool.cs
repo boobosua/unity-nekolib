@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     /// <summary>
     /// Adds a scene switching dropdown / menu to the main editor toolbar.
@@ -39,10 +39,10 @@ namespace NekoLib
         private static string startupScenePath;
         private static bool playSwitched;
         private static string originalSceneBeforePlay;
-        private const string SessionOriginalSceneKey = "NekoLib:OriginalSceneBeforePlay";
-        private const string SessionPlaySwitchedKey = "NekoLib:PlaySwitchedFlag";
+        private const string SessionOriginalSceneKey = "TRnK.Toolkit:OriginalSceneBeforePlay";
+        private const string SessionPlaySwitchedKey = "TRnK.Toolkit:PlaySwitchedFlag";
 
-        private const string PrefActivateLoadedAdditive = "NekoLib:ActivateLoadedAdditiveOnSelect";
+        private const string PrefActivateLoadedAdditive = "TRnK.Toolkit:ActivateLoadedAdditiveOnSelect";
         #endregion
         static SceneSwitcherToolbar()
         {
@@ -51,7 +51,7 @@ namespace NekoLib
                 RefreshSceneList();
                 // Install on startup unless the global HideToolbar preference is set
 #if !UNITY_6000_3_OR_NEWER
-                try { if (!NekoLibSettings.GetOrCreate().hideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
+                try { if (!TRnKSettings.GetOrCreate().hideToolbar) EditorApplication.update += TryInstall; } catch { EditorApplication.update += TryInstall; }
 #endif
                 LoadStartupPrefs();
                 // Recover persisted session info (domain reload safety)
@@ -78,7 +78,7 @@ namespace NekoLib
         }
 
 #if UNITY_6000_3_OR_NEWER
-        [MainToolbarElement("NekoLib/Scene Switcher", defaultDockPosition = MainToolbarDockPosition.Left)]
+        [MainToolbarElement("TRnK.Toolkit/Scene Switcher", defaultDockPosition = MainToolbarDockPosition.Left)]
         public static MainToolbarElement CreateMainToolbarElement()
         {
             var iconTex = ToolbarUtils.GetBestIcon(
@@ -96,7 +96,7 @@ namespace NekoLib
 
             MainToolbarButton button = null;
             button = new MainToolbarButton(content, () => ShowUnity6000Menu(button));
-            button.name = "NekoLibSceneSwitcher";
+            button.name = "TRnK.ToolkitSceneSwitcher";
 
             button.RegisterCallback<AttachToPanelEvent>(_ => ApplyUnity6000Visual(button));
             button.schedule.Execute(() => ApplyUnity6000Visual(button)).Every(250);
@@ -106,7 +106,7 @@ namespace NekoLib
         private static void ApplyUnity6000Visual(VisualElement button)
         {
             bool hidden = false;
-            try { hidden = NekoLibSettings.GetOrCreate().hideToolbar; } catch { }
+            try { hidden = TRnKSettings.GetOrCreate().hideToolbar; } catch { }
             button.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
             button.SetEnabled(!hidden);
 
@@ -216,7 +216,7 @@ namespace NekoLib
         {
             startupScenePath = string.Empty;
             EditorSceneManager.playModeStartScene = null;
-            var settings = NekoLibSettings.GetOrCreate();
+            var settings = TRnKSettings.GetOrCreate();
             settings.startupScenePath = string.Empty;
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
@@ -232,17 +232,17 @@ namespace NekoLib
 
         private static void TryInstall()
         {
-            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
+            try { if (TRnKSettings.GetOrCreate().hideToolbar) return; } catch { }
             if (initialized) return;
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null) return;
 
-            ToolbarUtils.RemoveAllByName(root, "NekoLibSceneSwitcherContainer");
+            ToolbarUtils.RemoveAllByName(root, "TRnK.ToolkitSceneSwitcherContainer");
 
             initialized = true;
             EditorApplication.update -= TryInstall;
 
-            var container = new VisualElement { name = "NekoLibSceneSwitcherContainer" };
+            var container = new VisualElement { name = "TRnK.ToolkitSceneSwitcherContainer" };
             containerRef = container;
             container.style.position = Position.Absolute;
             container.style.flexDirection = FlexDirection.Row;
@@ -252,7 +252,7 @@ namespace NekoLib
 #if UNITY_2020_1_OR_NEWER
             toolbarMenu = new ToolbarMenu
             {
-                name = "NekoLibSceneSwitcher",
+                name = "TRnK.ToolkitSceneSwitcher",
                 tooltip = "Switch active scene (Build Settings)"
             };
             ApplyControlSizing(toolbarMenu);
@@ -284,7 +284,7 @@ namespace NekoLib
         private static void LegacySelfHeal()
         {
             if (!initialized) return;
-            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
+            try { if (TRnKSettings.GetOrCreate().hideToolbar) return; } catch { }
 
             if (containerRef != null && containerRef.parent != null) return;
             initialized = false;
@@ -307,7 +307,7 @@ namespace NekoLib
                 containerRef.parent.Remove(containerRef);
             }
             containerRef = null;
-            if (!NekoLibSettings.GetOrCreate().hideToolbar)
+            if (!TRnKSettings.GetOrCreate().hideToolbar)
             {
                 EditorApplication.update += TryInstall;
             }
@@ -335,7 +335,7 @@ namespace NekoLib
             if (fallbackDropdown != null) return;
             fallbackDropdown = new DropdownField
             {
-                name = "NekoLibSceneSwitcherFallback",
+                name = "TRnK.ToolkitSceneSwitcherFallback",
                 tooltip = "Switch active scene (Build Settings)",
                 choices = new List<string>(sceneNames)
             };
@@ -638,7 +638,7 @@ namespace NekoLib
         {
             if (sceneIcon != null) return;
             var tex = EditorGUIUtility.IconContent("SceneAsset Icon").image as Texture2D;
-            sceneIcon = new Image { image = tex, scaleMode = ScaleMode.ScaleToFit, name = "NekoLibSceneIcon" };
+            sceneIcon = new Image { image = tex, scaleMode = ScaleMode.ScaleToFit, name = "TRnK.ToolkitSceneIcon" };
             sceneIcon.style.width = 16;
             sceneIcon.style.height = 16;
             sceneIcon.style.marginRight = 4;
@@ -650,7 +650,7 @@ namespace NekoLib
             string fromSettings = string.Empty;
             try
             {
-                var settings = NekoLibSettings.GetOrCreate();
+                var settings = TRnKSettings.GetOrCreate();
                 fromSettings = settings != null ? settings.startupScenePath : string.Empty;
             }
             catch { }
@@ -668,7 +668,7 @@ namespace NekoLib
                 startupScenePath = string.Empty;
                 try
                 {
-                    var settings = NekoLibSettings.GetOrCreate();
+                    var settings = TRnKSettings.GetOrCreate();
                     settings.startupScenePath = string.Empty;
                     EditorUtility.SetDirty(settings);
                     AssetDatabase.SaveAssets();
@@ -685,7 +685,7 @@ namespace NekoLib
                 startupScenePath = startPath;
                 try
                 {
-                    var settings = NekoLibSettings.GetOrCreate();
+                    var settings = TRnKSettings.GetOrCreate();
                     if (settings.startupScenePath != startPath)
                     {
                         settings.startupScenePath = startPath;
@@ -725,8 +725,8 @@ namespace NekoLib
                 {
                     startupScenePath = string.Empty;
                     EditorSceneManager.playModeStartScene = null;
-                    // Mirror clear into NekoLibSettings asset
-                    var settings = NekoLibSettings.GetOrCreate();
+                    // Mirror clear into TRnKSettings asset
+                    var settings = TRnKSettings.GetOrCreate();
                     settings.startupScenePath = string.Empty;
                     EditorUtility.SetDirty(settings);
                     AssetDatabase.SaveAssets();
@@ -741,7 +741,7 @@ namespace NekoLib
         {
             var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
             EditorSceneManager.playModeStartScene = sceneAsset;
-            var settings = NekoLibSettings.GetOrCreate();
+            var settings = TRnKSettings.GetOrCreate();
             settings.startupScenePath = path;
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();

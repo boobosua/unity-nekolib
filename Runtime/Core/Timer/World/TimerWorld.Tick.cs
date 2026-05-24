@@ -1,8 +1,8 @@
 using System;
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {
@@ -34,7 +34,7 @@ namespace NekoLib.Timer
                     try { shouldTick = _coldSlots[slot].UpdateWhen.InvokeOrTrue(); }
                     catch (Exception ex)
                     {
-                        Log.Error($"[NekoLib.Timer] updateWhen threw; disabling predicate. {ex}");
+                        Log.Error($"[TRnK.Timer] updateWhen threw; disabling predicate. {ex}");
                         _coldSlots[slot].UpdateWhen.Clear();
                         h.HasUpdateWhen = false;
                         continue;
@@ -117,7 +117,7 @@ namespace NekoLib.Timer
             try { shouldStop = _coldSlots[slot].StopwatchStopWhen.InvokeOrFalse(); }
             catch (Exception ex)
             {
-                Log.Error($"[NekoLib.Timer] stopWhen threw; disabling predicate. {ex}");
+                Log.Error($"[TRnK.Timer] stopWhen threw; disabling predicate. {ex}");
                 _coldSlots[slot].StopwatchStopWhen.Clear();
                 h.HasStopWhen = false;
                 return;

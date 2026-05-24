@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using NekoLib.Constant;
+using TRnK.Constant;
 using UnityEngine;
-using NekoLib.Logger;
-using NekoLib.ColorPalette;
+using TRnK.Logger;
+using TRnK.ColorPalette;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

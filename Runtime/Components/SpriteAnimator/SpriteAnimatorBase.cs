@@ -1,10 +1,10 @@
 using System;
-using NekoLib.Extensions;
-using NekoLib.Logger;
+using TRnK.Extensions;
+using TRnK.Logger;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     public enum SpriteAnimatorLoopMode { Once, Loop, PingPong }
 

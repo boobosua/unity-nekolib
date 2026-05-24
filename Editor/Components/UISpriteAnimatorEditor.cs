@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(UISpriteAnimator))]

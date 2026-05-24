@@ -5,19 +5,21 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [Serializable]
     internal class SetupPackagesSettings : ScriptableObject
     {
-        private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
+        private const string AssetDir = "Assets/Plugins/TRnK/Toolkit/Editor";
         private const string AssetName = "SetupPackagesSettings.asset";
 
         private static readonly string[] DefaultGitUrls =
         {
-            "https://github.com/boobosua/unity-neko-signal.git",
-            "https://github.com/boobosua/unity-neko-flow.git",
-            "https://github.com/boobosua/unity-neko-serializer.git",
+            "https://github.com/boobosua/unity-trnk-signal.git",
+            "https://github.com/boobosua/unity-trnk-flow.git",
+            "https://github.com/boobosua/unity-trnk-serializer.git",
+            "https://github.com/boobosua/unity-trnk-bignumber.git",
+            "https://github.com/boobosua/unity-trnk-nav.git",
         };
 
         [Serializable]
@@ -90,8 +92,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string folderName)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 using Random = UnityEngine.Random;
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

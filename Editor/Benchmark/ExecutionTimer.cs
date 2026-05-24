@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace NekoLib.Benchmark
+namespace TRnK.Benchmark
 {
     /// <summary> A simple utility to measure execution time of a code block.</summary>
     public sealed class ExecutionTimer

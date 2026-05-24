@@ -3,25 +3,25 @@ using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using NekoLib.Logger;
+using TRnK.Logger;
 
 #if UNITY_2020_1_OR_NEWER
 using UnityEditor.UIElements;
 #endif
 #if UNITY_6000_3_OR_NEWER
 using UnityEditor.Toolbars;
-using NekoLib.Logger;
+using TRnK.Logger;
 #endif
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [InitializeOnLoad]
     internal static class ClearPlayerPrefsTool
     {
-        private const string ContainerName = "NekoLibClearPrefsContainer";
-        private const string ResumePlayKey = "NekoLib:CPP:ResumePlay";
-        private const string PendingClearKey = "NekoLib:CPP:PendingClear";
-        private const string RequestedFromPlayKey = "NekoLib:CPP:RequestedFromPlay";
+        private const string ContainerName = "TRnK.ToolkitClearPrefsContainer";
+        private const string ResumePlayKey = "TRnK.Toolkit:CPP:ResumePlay";
+        private const string PendingClearKey = "TRnK.Toolkit:CPP:PendingClear";
+        private const string RequestedFromPlayKey = "TRnK.Toolkit:CPP:RequestedFromPlay";
 
         private static bool installed;
 #if !UNITY_6000_3_OR_NEWER
@@ -47,7 +47,7 @@ namespace NekoLib
 #if UNITY_6000_3_OR_NEWER
         private static Texture2D unity6000Icon;
 
-        [MainToolbarElement("NekoLib/Clear PlayerPrefs", defaultDockPosition = MainToolbarDockPosition.Left)]
+        [MainToolbarElement("TRnK.Toolkit/Clear PlayerPrefs", defaultDockPosition = MainToolbarDockPosition.Left)]
         public static MainToolbarElement CreateMainToolbarElement()
         {
             if (unity6000Icon == null)
@@ -67,7 +67,7 @@ namespace NekoLib
             };
 
             var button = new MainToolbarButton(content, TriggerClearFromToolbar);
-            button.name = "NekoLibClearPlayerPrefs";
+            button.name = "TRnK.ToolkitClearPlayerPrefs";
 
             button.RegisterCallback<AttachToPanelEvent>(_ => ApplyUnity6000Visibility(button));
             button.schedule.Execute(() => ApplyUnity6000Visibility(button)).Every(250);
@@ -80,7 +80,7 @@ namespace NekoLib
         {
             if (ve == null) return;
             bool hidden = false;
-            try { hidden = NekoLibSettings.GetOrCreate().hideToolbar; } catch { }
+            try { hidden = TRnKSettings.GetOrCreate().hideToolbar; } catch { }
             ve.style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
             ve.SetEnabled(!hidden);
         }
@@ -94,7 +94,7 @@ namespace NekoLib
 #else
             if (installed) return;
             // Respect global HideToolbar preference (default: hidden)
-            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
+            try { if (TRnKSettings.GetOrCreate().hideToolbar) return; } catch { }
             var root = ToolbarUtils.GetToolbarRoot();
             if (root == null)
             {
@@ -157,7 +157,7 @@ namespace NekoLib
 
             container.RegisterCallback<GeometryChangedEvent>(_ => ResizeButtonToContainer());
             // Re-anchor when SceneSwitcher or toolbar geometry changes
-            var sceneContainer = ToolbarUtils.FindByName(root, "NekoLibSceneSwitcherContainer");
+            var sceneContainer = ToolbarUtils.FindByName(root, "TRnK.ToolkitSceneSwitcherContainer");
             if (sceneContainer != null)
             {
                 sceneContainer.RegisterCallback<GeometryChangedEvent>(_ =>
@@ -265,7 +265,7 @@ namespace NekoLib
         {
             float containerWidth = ve.layout.width > 0 ? ve.layout.width : 60f;
             // Preferred: 20px to the right of SceneSwitcherTool container
-            var sceneSwitcherContainer = ToolbarUtils.FindByName(toolbarRoot, "NekoLibSceneSwitcherContainer");
+            var sceneSwitcherContainer = ToolbarUtils.FindByName(toolbarRoot, "TRnK.ToolkitSceneSwitcherContainer");
             if (sceneSwitcherContainer != null)
             {
                 float rightX = ToolbarUtils.GetWorldX(sceneSwitcherContainer, toolbarRoot) + sceneSwitcherContainer.layout.width;
@@ -278,7 +278,7 @@ namespace NekoLib
             }
 
             // Next preference: align next to TimeScale container (to its left keeps one line alignment)
-            var timeScaleContainer = ToolbarUtils.FindByName(toolbarRoot, "NekoLibTimeScaleContainer");
+            var timeScaleContainer = ToolbarUtils.FindByName(toolbarRoot, "TRnK.ToolkitTimeScaleContainer");
             if (timeScaleContainer != null)
             {
                 float timeLeft = ToolbarUtils.GetWorldX(timeScaleContainer, toolbarRoot);
@@ -335,13 +335,13 @@ namespace NekoLib
                 "Cancel");
             if (!confirmed) return;
 
-            bool domainReloadDisabled = NekoLib.Utilities.Utils.IsReloadDomainDisabled();
-            bool autoReenter = NekoLibSettings.GetOrCreate().autoReenterPlayAfterClear;
+            bool domainReloadDisabled = TRnK.Utilities.Utils.IsReloadDomainDisabled();
+            bool autoReenter = TRnKSettings.GetOrCreate().autoReenterPlayAfterClear;
 
             if (!EditorApplication.isPlaying)
             {
                 PerformClear();
-                bool willReenter = NekoLibSettings.GetOrCreate().autoReenterPlayAfterClear && SessionState.GetBool(RequestedFromPlayKey, false);
+                bool willReenter = TRnKSettings.GetOrCreate().autoReenterPlayAfterClear && SessionState.GetBool(RequestedFromPlayKey, false);
                 if (domainReloadDisabled)
                 {
                     // Domain reload disabled: explicitly request a reload now per spec
@@ -375,7 +375,7 @@ namespace NekoLib
                     PerformClear();
                     SessionState.SetBool(PendingClearKey, false);
 
-                    bool domainReloadDisabled = NekoLib.Utilities.Utils.IsReloadDomainDisabled();
+                    bool domainReloadDisabled = TRnK.Utilities.Utils.IsReloadDomainDisabled();
                     bool willReenter = SessionState.GetBool(ResumePlayKey, false);
                     if ((domainReloadDisabled && willReenter) || (!domainReloadDisabled && !willReenter))
                     {

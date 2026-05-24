@@ -2,10 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    [CustomEditor(typeof(NekoLibSettings))]
-    internal class NekoLibSettingsEditor : Editor
+    [CustomEditor(typeof(TRnKSettings))]
+    internal class TRnKSettingsEditor : Editor
     {
         public override void OnInspectorGUI()
         {

@@ -1,9 +1,9 @@
-# NekoLib Services
+# TRnK.Toolkit Services
 
 Singleton services for networking and time management.
 
 ```csharp
-using NekoLib.Services;
+using TRnK.Services;
 ```
 
 ## DateTime Services
@@ -12,16 +12,16 @@ using NekoLib.Services;
 
 Server-synchronized time service.
 
-If you define `NEKO_TIME_SERVICE_DEBUG` in Scripting Define Symbols, `TimeService.Now`/`UtcNow` will behave like `DateTime.Now`/`DateTime.UtcNow` for local debugging.
+If you define `TRNK_TIME_SERVICE_DEBUG` in Scripting Define Symbols, `TimeService.Now`/`UtcNow` will behave like `DateTime.Now`/`DateTime.UtcNow` for local debugging.
 
-Without `NEKO_TIME_SERVICE_DEBUG`, `TimeService.Now`/`UtcNow` fall back to `DateTime.Now`/`DateTime.UtcNow` until a successful sync.
+Without `TRNK_TIME_SERVICE_DEBUG`, `TimeService.Now`/`UtcNow` fall back to `DateTime.Now`/`DateTime.UtcNow` until a successful sync.
 
-#### NEKO_TIME_SERVICE_DEBUG
+#### TRNK_TIME_SERVICE_DEBUG
 
 Enable it via Unity:
 
 - **Edit → Project Settings → Player → Other Settings → Scripting Define Symbols**
-- Add `NEKO_TIME_SERVICE_DEBUG` for the target platform.
+- Add `TRNK_TIME_SERVICE_DEBUG` for the target platform.
 
 When enabled:
 

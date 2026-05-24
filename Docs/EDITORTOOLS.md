@@ -1,4 +1,4 @@
-# NekoLib Editor Tools
+# TRnK.Toolkit Editor Tools
 
 Editor-only tools that integrate into the Unity Editor workflow.
 
@@ -19,7 +19,7 @@ A toolbar dropdown that lists all scenes registered in **Build Settings**, letti
 - Optional: **Activate Loaded Additive** — when enabled, selecting a scene that is already loaded additively makes it the active scene instead of opening it fresh
 - Survives domain reloads via `SessionState`
 
-**Settings** (`Edit > Project Settings > NekoLib`):
+**Settings** (`Edit > Project Settings > TRnK.Toolkit`):
 | Setting | Description |
 |---------|-------------|
 | Startup Scene Path | The scene that loads automatically when entering Play mode |
@@ -38,7 +38,7 @@ A slider embedded in the toolbar for adjusting `Time.timeScale` in real time dur
 - Reset button snaps back to `1.0`
 - Time scale is automatically restored to `1.0` when exiting Play mode
 
-**Settings** (`Edit > Project Settings > NekoLib`):
+**Settings** (`Edit > Project Settings > TRnK.Toolkit`):
 | Setting | Description |
 |---------|-------------|
 | Time Scale Max | Upper bound of the slider (default `10`) |
@@ -55,7 +55,7 @@ A toolbar button that clears all `PlayerPrefs` with a confirmation dialog.
 - If triggered **during Play mode**: exits Play mode, clears PlayerPrefs, then optionally re-enters Play mode
 - Re-enter Play mode after clear is configurable
 
-**Settings** (`Edit > Project Settings > NekoLib`):
+**Settings** (`Edit > Project Settings > TRnK.Toolkit`):
 | Setting | Description |
 |---------|-------------|
 | Auto Re-enter Play After Clear | Re-enter Play mode automatically after clearing PlayerPrefs |
@@ -66,7 +66,7 @@ A toolbar button that clears all `PlayerPrefs` with a confirmation dialog.
 
 ### Game Screenshot Tool
 
-`Tools > Neko Framework > Screenshot > Open Settings`  
+`Tools > TRnK Framework > Screenshot > Open Settings`  
 Shortcut: `Ctrl + Shift + K` (Quick Capture without opening the window)
 
 Captures screenshots from the Unity Editor during Play mode.
@@ -104,9 +104,9 @@ Multiplies the Game View resolution before capture. A `2×` supersize on a 1080p
 
 ### Timer Tracker Window
 
-`Window > Neko Framework > Timer Tracker`
+`Window > TRnK Framework > Timer Tracker`
 
-Visualises all active **Countdowns** and **Stopwatches** created via the NekoLib Timer system while in Play mode.
+Visualises all active **Countdowns** and **Stopwatches** created via the TRnK.Toolkit Timer system while in Play mode.
 
 **Features:**
 
@@ -122,25 +122,25 @@ Visualises all active **Countdowns** and **Stopwatches** created via the NekoLib
 
 ## Project Settings
 
-`Edit > Project Settings > NekoLib`
+`Edit > Project Settings > TRnK.Toolkit`
 
-Central configuration for NekoLib editor tools, stored at `Assets/Plugins/NekoLib/Editor/NekoLibSettings.asset` (auto-created on first use).
+Central configuration for TRnK.Toolkit editor tools, stored at `Assets/Plugins/TRnK.Toolkit/Editor/TRnKSettings.asset` (auto-created on first use).
 
 | Setting                            | Default  | Description                                                 |
 | ---------------------------------- | -------- | ----------------------------------------------------------- |
 | Startup Scene Path                 | _(none)_ | Scene loaded automatically on entering Play mode            |
 | Activate Loaded Additive On Select | `false`  | Scene Switcher behaviour for already-loaded additive scenes |
 | Time Scale Max                     | `10`     | Upper limit of the Time Scale toolbar slider                |
-| Hide Toolbar                       | `false`  | Hides all NekoLib toolbar elements                          |
+| Hide Toolbar                       | `false`  | Hides all TRnK.Toolkit toolbar elements                          |
 | Auto Re-enter Play After Clear     | `true`   | Re-enter Play mode after clearing PlayerPrefs               |
 
 ---
 
 ## Setup Window
 
-`Window > Neko Framework > Setup`
+`Window > TRnK Framework > Setup`
 
-A one-time project setup wizard for new NekoLib projects.
+A one-time project setup wizard for new TRnK.Toolkit projects.
 
 **Tabs:**
 

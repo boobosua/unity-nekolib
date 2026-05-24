@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
 using System.Threading.Tasks;
-using NekoLib.Logger;
-using NekoLib.Utilities;
+using TRnK.Logger;
+using TRnK.Utilities;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class TaskExtensions
     {

@@ -1,18 +1,18 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    internal static class NekoLibDocDatabase
+    internal static class TRnKDocDatabase
     {
-        public static List<NekoLibDocEntry> GetEntries()
+        public static List<TRnKDocEntry> GetEntries()
         {
-            return new List<NekoLibDocEntry>
+            return new List<TRnKDocEntry>
             {
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "PersistentSingleton<T>",
-                    Namespace = "NekoLib.Singleton",
+                    Namespace = "TRnK.Singleton",
                     Summary = "A MonoBehaviour singleton that survives scene changes via DontDestroyOnLoad.",
                     Description = "Inherit from PersistentSingleton<T> to create a manager that lives for the entire game session. Only one instance is ever allowed; duplicates are automatically destroyed.",
                     Code =
@@ -47,10 +47,10 @@ GameManager.Instance.Score += 100;",
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "LazySingleton<T>",
-                    Namespace = "NekoLib.Singleton",
+                    Namespace = "TRnK.Singleton",
                     Summary = "Auto-created singleton. A new GameObject is spawned on first access if none exists.",
                     Description = "Ideal for utility managers (audio, pooling, etc.) that do not need to be pre-placed in any scene. The instance is created lazily and destroyed when the application quits. Safe to use with Enter Play Mode / Disable Domain Reload in the Editor.",
                     Code =
@@ -76,10 +76,10 @@ AudioManager.Instance.PlayMusic(clip);"
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Countdown",
-                    Namespace = "NekoLib.Timer",
+                    Namespace = "TRnK.Timer",
                     Summary = "PlayerLoop-driven countdown timer handle. No coroutines. Supports loops, callbacks, and conditional ticking.",
                     Description = "Countdown is a lightweight readonly struct handle. Create with Countdown.Create(owner, duration), chain builder methods, then call .Start(). Ticks via Unity's PlayerLoop — no MonoBehaviour Update overhead.\n\nKey state: IsAlive, IsRunning, IsPaused, RemainingTime, TotalTime, CurrentLoopIteration.\nKey controls: Start(), Pause(), Resume(), Cancel() (silent — no callbacks), AddTime(), ReduceTime().",
                     Code =
@@ -301,10 +301,10 @@ Countdown.Create(this, 10f)
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Stopwatch",
-                    Namespace = "NekoLib.Timer",
+                    Namespace = "TRnK.Timer",
                     Summary = "Counts elapsed time upward. Auto-fires OnComplete when a stop predicate becomes true, or stays alive until Cancel() is called.",
                     Description = "Mirrors Countdown's builder API but measures elapsed time rather than remaining time. Use .SetStopWhen(predicate) to auto-fire OnComplete on a condition.",
                     Code =
@@ -452,10 +452,10 @@ stopwatch.Resume();"
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Delay / Repeat",
-                    Namespace = "NekoLib.Timer",
+                    Namespace = "TRnK.Timer",
                     Summary = "MonoBehaviour extension helpers for fire-once or repeating timer calls without coroutines.",
                     Description = "Delay and Repeat are extension methods on MonoBehaviour. They return a TimerToken which can be cancelled silently before firing. Both support an optional useUnscaledTime parameter.",
                     Code =
@@ -529,10 +529,10 @@ TimerToken hb = this.Repeat(0.5f, PulseHeartIcon, useUnscaledTime: true);"
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Pool<T>",
-                    Namespace = "NekoLib.Pooling",
+                    Namespace = "TRnK.Pooling",
                     Summary = "Deterministic prefab pool. Inherit PoolableObject and call Get() / Release() instead of Instantiate / Destroy.",
                     Description = "Pool<T> manages a stack of inactive instances under an auto-created root transform. New and prewarmed instances live in an inactive staging GameObject until first Get() — so Awake, OnEnable, and OnDisable never fire on dormant pool items. Prewarm(N) pays Instantiate cost up-front to avoid first-spawn spikes. Get() applies the requested pose before activation so OnEnable observes the correct transform. Use Clear() for explicit cleanup; scene unload handles the rest.",
                     Code =
@@ -618,10 +618,10 @@ bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "PoolableObject",
-                    Namespace = "NekoLib.Pooling",
+                    Namespace = "TRnK.Pooling",
                     Summary = "Abstract base for poolable MonoBehaviours. Provides self-release and active-state tracking.",
                     Description = "Inherit from PoolableObject to make a MonoBehaviour usable with Pool<T>. Call Release() to return the instance to its pool, or Destroy it if not managed by a pool. Release() is idempotent — safe to call multiple times.",
                     Code =
@@ -649,10 +649,10 @@ bullet.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Swatch (Color Palette)",
-                    Namespace = "NekoLib.ColorPalette",
+                    Namespace = "TRnK.ColorPalette",
                     Summary = "Pre-defined color constants for consistent in-editor and in-game theming.",
                     Description = "Use Swatch constants for consistent Debug log coloring and runtime UI theming. Common swatches: VR (Vibrant Red), VC (Vibrant Cyan), DE (Debug Emphasis), DG (Dark Gray).",
                     Code =
@@ -665,14 +665,14 @@ Color dark      = Swatch.DG;",
                     Tags = new[] { "Color", "Debug", "UI" },
                     Category = DocCategory.Core
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Log",
-                    Namespace = "NekoLib.Logger",
+                    Namespace = "TRnK.Logger",
                     Summary = "Conditional logger — Info, Warn, and Assert are stripped in release builds. Error and Exception always fire so crash reporters receive them.",
-                    Description = "Log.Info and Log.Warn are compiled only in the Editor, Development builds, or when NEKOLIB_LOG is defined. Log.Error and Log.Exception always fire in all builds so crash reporters (e.g. Firebase Crashlytics, Sentry) capture them via Application.logMessageReceived. Supports an optional context object to ping it in the Console.",
+                    Description = "Log.Info and Log.Warn are compiled only in the Editor, Development builds, or when TRNK_LOG is defined. Log.Error and Log.Exception always fire in all builds so crash reporters (e.g. Firebase Crashlytics, Sentry) capture them via Application.logMessageReceived. Supports an optional context object to ping it in the Console.",
                     Code =
-@"using NekoLib.Logger;
+@"using TRnK.Logger;
 
 Log.Info(""System started"");
 Log.Warn(""Low memory"");
@@ -737,10 +737,10 @@ catch (Exception e) { Log.Exception(e); }"
                 },
 
                 // ── Components ──────────────────────────────────
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "SpriteAnimator",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Frame-based sprite animation for SpriteRenderer. Auto-pauses when renderer is disabled.",
                     Description = "Loop modes: Once (stops on last frame), Loop (wraps back), PingPong (reverses). Add per-frame UnityEvent callbacks via the Frame Events inspector tab. OnCycleComplete fires at each cycle boundary.",
                     Code =
@@ -847,10 +847,10 @@ anim.SetFrameRate(0f);    // freeze on current frame"
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "UISpriteAnimator",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Same as SpriteAnimator but targets a UI Image. Auto-pauses when Image or CanvasGroups have alpha ≤ 0.",
                     Description = "Assign CanvasGroups in the inspector — animation auto-pauses when any group's alpha is zero. Shares the same play/stop API as SpriteAnimator.",
                     Code =
@@ -887,10 +887,10 @@ anim.GoToFrame(0);" },
 @"anim.OnCycleComplete.AddListener(() => PlaySoundEffect(cycleClip));" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "ScrollingBackground variants",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Continuously scrolls a texture offset for parallax/looping background effects. Four renderer variants.",
                     Description = "Variants: ScrollingSpriteRenderer, ScrollingImage, ScrollingRawImage (scrolls uvRect, no material copy), ScrollingMeshRenderer. All share the same API. Configure Speed, Auto Play, and Use Unscaled Time in the inspector.",
                     Code =
@@ -936,10 +936,10 @@ scroller.SetSpeedX(0.5f);  // only change X
 scroller.SetSpeedY(0f);    // stop vertical" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "AutoDestroy",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Destroys the GameObject after a configurable delay. Fires OnBeforeDestroy just before destruction.",
                     Description = "Set _destroyAfter (seconds, default 5) in the inspector. Subscribe to OnBeforeDestroy for cleanup. No code required for basic use.",
                     Code =
@@ -964,10 +964,10 @@ ad.OnBeforeDestroy.AddListener(() =>
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "LookAtCamera",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Makes a GameObject face the camera every frame. Four facing modes selectable in the inspector.",
                     Description = "Modes: LookAt, LookAtInverted, CameraForward, CameraForwardInverted. Uses Camera.main by default. Override via inspector.",
                     Code =
@@ -976,10 +976,10 @@ ad.OnBeforeDestroy.AddListener(() =>
                     Tags = new[] { "Billboard", "Camera" },
                     Category = DocCategory.Components
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "AutoOrbitAround",
-                    Namespace = "NekoLib.Components",
+                    Namespace = "TRnK.Components",
                     Summary = "Continuously orbits around a target transform. Configurable speed, elevation, bearing, and facing mode.",
                     Description = "Inspector fields: Target, Distance, Speed (deg/s; negative = reverse), StartAngle (stagger multiple orbiters), ElevationAngle (0 = flat ring, 90 = vertical loop), BearingAngle, Facing mode. Draws a gizmo arc in the Scene view.",
                     Code =
@@ -992,10 +992,10 @@ ad.OnBeforeDestroy.AddListener(() =>
                 },
 
                 // ── Extensions ──────────────────────────────────
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "GameObjectExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "GetOrAdd<T>, active-state helpers, layer management, child queries.",
                     Description = "GetOrAdd<T> avoids repeated GetComponent + AddComponent boilerplate. SetActive()/SetInactive() improve intent clarity. ClearChildTransforms() destroys all children. GetChildrenInLayer/Recursive filter by LayerMask.",
                     Code =
@@ -1044,10 +1044,10 @@ gameObject.SetLayer(2);" },
                             Code = @"GameObject[] all = root.GetChildrenInLayerRecursive(LayerMask.GetMask(""Enemy""));" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TransformExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Clear children, LookAt2D, distance/direction helpers, transform resets.",
                     Description = "Clear() destroys all children. GetChildren() collects them. LookAt2D supports an optional angle offset. DistanceTo/DirectionTo/InRangeOf are readable alternatives to Vector3.Distance. ResetTransform / ResetLocalTransform zero world or local TRS.",
                     Code =
@@ -1102,10 +1102,10 @@ rb.velocity = dir * speed;" },
                             Code = @"uiPanel.transform.ResetLocalTransform();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "ColorExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Fluent Color modifications: alpha, channels, multiply, add, invert, grayscale, luminance, hex.",
                     Description = "All channel methods return a new Color — the original is unchanged. ToHex produces #RRGGBBAA. ToColor parses hex strings.",
                     Code =
@@ -1152,10 +1152,10 @@ Color parsed = ""#FF0000FF"".ToColor();",
                             Code = @"Color c = ""#FF6600"".ToColor();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Vector2 / Vector3 Extensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Fluent component modification, distance/direction, range checks, perpendicular, rotate, and random circle/disk/annulus.",
                     Description = "With/Add/Subtract/Multiply/Divide allow per-component modification without allocating. InRangeOf/DirectionTo/DistanceTo simplify spatial queries. Perpendicular/PerpendicularClockwise, Rotate(). IsInsideCircle/Rect/Sphere/Box for hit checks. RandomPointOnCircle (edge), RandomPointInDisk (filled, uses insideUnitCircle), RandomPointInAnnulus (ring) for spawn scatter.",
                     Code =
@@ -1228,10 +1228,10 @@ rb.velocity = dir * speed;" },
                             Code = @"if (pos.IsInsideBox(roomCenter, roomSize)) TriggerRoomEvent();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "StringExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Comma-float parsing, SplitCamelCase, percent formatting, enum conversion.",
                     Description = "Parsing/format helpers for strings and primitive values. Number-display formatting lives in BigNumberFormatExtensions.",
                     Code =
@@ -1263,12 +1263,12 @@ MyEnum e = ""EnumValue"".ToEnum<MyEnum>();",
                             Code = @"WeaponType wt = ""Sword"".ToEnum<WeaponType>();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "BigNumberStyleExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Format int/long/decimal values as big-number display strings. Two styles: Compact (K/M/B/T → aa, bb, ...) and Alphabetical (a, b, c, ...).",
-                    Description = "A mini number-formatter — no dependency on the NekoBigNumber package. Use when a project wants idle/incremental-style number display without the full big-number arithmetic. Overloads for int, long, and decimal.",
+                    Description = "A mini number-formatter — no dependency on the TRnK.BigNum package. Use when a project wants idle/incremental-style number display without the full big-number arithmetic. Overloads for int, long, and decimal.",
                     Code =
 @"decimal n = 1_500_000m;
 string compact = n.ToBigNumber(BigNumberStyle.Compact);          // ""1.5M""
@@ -1293,10 +1293,10 @@ string neg = (-1500m).ToBigNumber(BigNumberStyle.Compact); // ""-1.5K""",
 hpLabel.text   = currentHP.ToBigNumber(BigNumberStyle.Alphabetical, decimalPlaces: 2);" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "CollectionExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Rand, Shuffle, Swap, RandWeighted, RandMultiple, Slice, ToLiteral, and more.",
                     Description = "All helpers are generic. RandWeighted accepts a weight selector func. ToLiteral gives human-readable string representations useful for debug logging. Null-safety: IsNullOrEmpty, ContainsNull.",
                     Code =
@@ -1362,10 +1362,10 @@ Debug.Log(stats.ToLiteral());       // ""{hp: 100, mp: 50}""" },
 string val = dialogueMap.RandV();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NumberExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "PercentageOf, IsSuccessfulRoll probability, ToEnum.",
                     Description = "IsSuccessfulRoll(float) treats the value as a 0–1 probability. The int overload takes a max parameter.",
                     Code =
@@ -1398,10 +1398,10 @@ if (0.30f.IsSuccessfulRoll())
                             Code = @"GameState state = savedValue.ToEnum<GameState>();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TimeExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "ToClock, ToShortClock, ToReadableFormat, and DateTime elapsed/remaining helpers.",
                     Description = "ToClock formats seconds as HH:MM:SS. ToShortClock gives MM:SS. ToReadableFormat produces \"1d 2h 3m\" style strings. DateTime helpers use TimeService.Now for server-synced results.",
                     Code =
@@ -1444,10 +1444,10 @@ double secs = resetTime.SecondsFromNow();
 countdownLabel.text = ((float)secs).ToClock();" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TextColorize / TextFormat Extensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Rich-text helpers: Colorize (whole, selective, conditional), Bold, Italic, Size — all chainable.",
                     Description = "Colorize injects Unity rich-text color tags. Selective overloads target specific substrings or chars. Conditional overloads take a predicate. Bold/Italic/Size support selective targeting and can be chained.",
                     Code =
@@ -1489,10 +1489,10 @@ label.text = ""Tip: press Space to jump"".Bold(""Space"");" },
                             Code = @"label.text = title.Size(24f);" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "CoroutineExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Sequential, parallel, delayed, conditional coroutine starters. Coroutine↔Task bridge.",
                     Description = "StartCoroutineSequence runs coroutines one after another. StartCoroutineParallel runs them concurrently. StartCoroutineDelayed adds a wait. StartCoroutineWhen waits for a condition. AsTask, WhenAll, WhenAny bridge into async/await.",
                     Code =
@@ -1539,10 +1539,10 @@ Debug.Log(""Coroutine done"");" },
                             Code = @"await this.WhenAny(WaitForInput(), TimeoutCoroutine(5f));" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TaskExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Forget() for fire-and-forget tasks, YieldTask for awaiting Tasks inside coroutines.",
                     Description = "Forget() swallows exceptions unless you supply an error handler. YieldTask wraps a Task in a CustomYieldInstruction. AsCoroutine() converts an async Task to a yield instruction.",
                     Code =
@@ -1586,10 +1586,10 @@ IEnumerator Example()
 }" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "AnimatorExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Clip length queries and state checks (string + hash overloads).",
                     Description = "GetAnimationLength's hash overload expects a clip-name hash (Animator.StringToHash(clipName)). IsPlayingAnimation's hash overload expects a state-name hash (shortNameHash). They differ in practice only when a state name and clip name diverge.",
                     Code =
@@ -1615,10 +1615,10 @@ this.Delay(attackDur, OnAttackEnd);" },
                             Code = @"if (animator.IsPlayingAnimation(IdleStateHash)) return;" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "CameraExtensions",
-                    Namespace = "NekoLib.Extensions",
+                    Namespace = "TRnK.Extensions",
                     Summary = "Culling mask management, FOV control, orthographic size, FitBoundsInView, screen size query.",
                     Description = "Culling helpers: IsLayerInCullingMask, AddToCullingMask, RemoveFromCullingMask, SetCullingMask. FOV: SetFOV. Orthographic: SetOrthographicSize, FitBoundsInView.",
                     Code =
@@ -1661,12 +1661,12 @@ cam.RemoveFromCullingMask(LayerMask.GetMask(""HUD""));" },
                 },
 
                 // ── Services ────────────────────────────────────
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TimeService",
-                    Namespace = "NekoLib.Services",
+                    Namespace = "TRnK.Services",
                     Summary = "Server-synchronized DateTime service. Falls back to DateTime.Now until a successful sync.",
-                    Description = "Call FetchTimeFromServerAsync() at startup to sync. Access via TimeService.Now/UtcNow. Define NEKO_TIME_SERVICE_DEBUG to skip real web requests locally.\n\nPeriod helpers: IsTodayStartOfWeek, IsTodayStartOfMonth. Date helpers: Today, TodayUtc, NextDay, NextDayUtc.",
+                    Description = "Call FetchTimeFromServerAsync() at startup to sync. Access via TimeService.Now/UtcNow. Define TRNK_TIME_SERVICE_DEBUG to skip real web requests locally.\n\nPeriod helpers: IsTodayStartOfWeek, IsTodayStartOfMonth. Date helpers: Today, TodayUtc, NextDay, NextDayUtc.",
                     Code =
 @"bool synced = await TimeService.FetchTimeFromServerAsync();
 
@@ -1775,10 +1775,10 @@ label.text = untilReset.ToReadableFormat();"
                         },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NetworkService",
-                    Namespace = "NekoLib.Services",
+                    Namespace = "TRnK.Services",
                     Summary = "Background internet connectivity monitoring with a static API.",
                     Description = "StartMonitoring() runs periodic checks and fires OnConnectionChanged on state changes. Uses Application.internetReachability as a fast offline path, then confirms with HTTP HEAD requests. Always call Dispose() in OnDestroy.",
                     Code =
@@ -1860,10 +1860,10 @@ void HandleNetworkChange(bool isOnline)
                 },
 
                 // ── Utilities ───────────────────────────────────
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "MouseUtils",
-                    Namespace = "NekoLib.Utilities",
+                    Namespace = "TRnK.Utilities",
                     Summary = "Mouse world-position helpers for 2D and 3D, raycast shortcuts, and game-window boundary check.",
                     Description = "GetMousePosition2D works for orthographic cameras. GetMousePosition3D takes a distance parameter. GetMousePosition3DFromRaycast hits actual geometry with an optional layer mask. GetMouseRay returns the screen-to-world ray.",
                     Code =
@@ -1904,10 +1904,10 @@ if (Physics.Raycast(ray, out RaycastHit hit))
     Debug.Log(hit.collider.name);" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Raycast2D / Raycast3D Utils",
-                    Namespace = "NekoLib.Utilities",
+                    Namespace = "TRnK.Utilities",
                     Summary = "IsPointerOver* helpers for 2D/3D objects with optional layer mask, out-collider, and component retrieval.",
                     Description = "Overloads include: out Collider/RaycastHit; generic IsPointerOver2DObject<T>/IsPointerOver3DObject<T> for direct component access. UIElementUtils.IsPointerOverUI checks UI layers.",
                     Code =
@@ -1956,10 +1956,10 @@ bool overUI = Utils.IsPointerOverUI(LayerMask.GetMask(""UI""));",
                             Code = @"if (Utils.IsPointerOverUI(LayerMask.GetMask(""UI""))) return;" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "EnumUtils",
-                    Namespace = "NekoLib.Utilities",
+                    Namespace = "TRnK.Utilities",
                     Summary = "GetRandomEnum, AllEnum, CountEnum, ForEnum — generic enum helpers without boilerplate.",
                     Description = "GetRandomEnum can exclude specific values. AllEnum returns all values as an array with optional exclusions. ForEnum is a foreach substitute that takes an action.",
                     Code =
@@ -1998,10 +1998,10 @@ Utils.ForEnum<MyEnum>(v => Debug.Log(v));",
 });" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "TransformUtils / TimeUtils",
-                    Namespace = "NekoLib.Utilities",
+                    Namespace = "TRnK.Utilities",
                     Summary = "GetAngleFromVector, GetRandomRotation, and cached WaitForSeconds allocation helpers.",
                     Description = "GetRandomRotation accepts an Axis enum and optional per-axis Vector2 range. TimeUtils.GetWaitForSeconds caches WaitForSeconds instances to avoid per-frame GC allocation in coroutines.",
                     Code =
@@ -2049,10 +2049,10 @@ transform.rotation = Utils.GetRandomRotation(Axis.XYZ); // fully random" },
                             Code = @"yield return Utils.GetWaitForSecondsRealtime(2f);" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "EventUtils (UnityEvent aliases)",
-                    Namespace = "NekoLib.Utilities",
+                    Namespace = "TRnK.Utilities",
                     Summary = "Serializable UnityEvent subclasses for common types: FloatEvent, IntEvent, StringEvent, BoolEvent.",
                     Description = "These typed event aliases save repetitive UnityEvent<float> etc. declarations and are serializable (visible in the inspector). Drop-in replacements for UnityEvent<T>.",
                     Code =
@@ -2096,14 +2096,14 @@ onPauseToggled.Invoke(isPaused);" },
                 },
 
                 // ── Editor Tools ─────────────────────────────────
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Timer Tracker Window",
-                    Namespace = "Window > Neko Framework > Timer Tracker",
+                    Namespace = "Window > TRnK Framework > Timer Tracker",
                     Summary = "Live inspector for all active Countdowns and Stopwatches. Progress bars, memory stats, pagination.",
                     Description = "Two tabs: Countdowns and Stopwatches. Each row shows source GameObject, component name, elapsed/remaining time, and a smooth progress bar. Stats bar displays IsAlive count, Capacity, Free Slots, and Slot Memory via Unsafe.SizeOf. Paginated at 20 items. Clears on exiting Play mode.",
                     Code =
-@"// Open: Window > Neko Framework > Timer Tracker
+@"// Open: Window > TRnK Framework > Timer Tracker
 
 // Timers appear automatically when created via Countdown/Stopwatch:
 var countdown = Countdown.Create(this, 10f).OnComplete(() => { });
@@ -2111,14 +2111,14 @@ countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Debug", "Timer" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Scene Switcher (Toolbar)",
-                    Namespace = "Edit > Project Settings > NekoLib",
+                    Namespace = "Edit > Project Settings > TRnK.Toolkit",
                     Summary = "Toolbar dropdown listing all Build Settings scenes. Right-click to set a Startup Scene for Play mode.",
                     Description = "Lists scenes by name; duplicates disambiguated with their paths. Right-click any entry to mark it as the Startup Scene — Play mode auto-loads it then restores the original on exit. Setting: Activate Loaded Additive On Select reactivates an already-loaded additive scene instead of reopening it.",
                     Code =
-@"// Settings: Edit > Project Settings > NekoLib
+@"// Settings: Edit > Project Settings > TRnK.Toolkit
 // Startup Scene Path
 //   — auto-loaded when entering Play mode
 // Activate Loaded Additive On Select
@@ -2126,40 +2126,40 @@ countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Scene", "Toolbar" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Time Scale Tool (Toolbar)",
-                    Namespace = "Edit > Project Settings > NekoLib",
+                    Namespace = "Edit > Project Settings > TRnK.Toolkit",
                     Summary = "Toolbar slider (0–10) for adjusting Time.timeScale in real time. Auto-restores to 1.0 on exiting Play mode.",
-                    Description = "Bidirectionally synced with Project Settings > Time Manager. Reset button snaps to 1.0. Upper bound configurable via Time Scale Max in NekoLib settings (default 10).",
+                    Description = "Bidirectionally synced with Project Settings > Time Manager. Reset button snaps to 1.0. Upper bound configurable via Time Scale Max in TRnK.Toolkit settings (default 10).",
                     Code =
 @"// No code needed. Slider appears in the Unity toolbar during Play mode.
-// Settings: Edit > Project Settings > NekoLib
+// Settings: Edit > Project Settings > TRnK.Toolkit
 //   Time Scale Max — upper bound of the slider (default 10)",
                     Tags = new[] { "Editor", "TimeScale", "Toolbar" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Clear PlayerPrefs (Toolbar)",
-                    Namespace = "Edit > Project Settings > NekoLib",
+                    Namespace = "Edit > Project Settings > TRnK.Toolkit",
                     Summary = "One-click toolbar button to clear all PlayerPrefs with a confirmation dialog.",
                     Description = "Shows a confirmation dialog before deletion. In Play mode: exits, clears PlayerPrefs, then optionally re-enters Play mode (controlled by Auto Re-enter Play After Clear setting).",
                     Code =
 @"// No code needed. Toolbar button with confirmation dialog.
-// Settings: Edit > Project Settings > NekoLib
+// Settings: Edit > Project Settings > TRnK.Toolkit
 //   Auto Re-enter Play After Clear — default true",
                     Tags = new[] { "Editor", "PlayerPrefs", "Toolbar" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Game Screenshot Tool",
-                    Namespace = "Tools > Neko Framework > Screenshot",
+                    Namespace = "Tools > TRnK Framework > Screenshot",
                     Summary = "In-editor screenshot capture. GameView or SpecificCamera mode. Supersize multiplier up to 4×.",
                     Description = "Capture modes: GameView (resolution × supersize) or SpecificCamera (offscreen — no Screen Space Overlay UI). Supersize 2× on 1080p → 4K output. Shortcut: Ctrl+Shift+K. Output: {SceneName}_{Width}x{Height}_{Timestamp}.png. Requires Play mode.",
                     Code =
-@"// Menu: Tools > Neko Framework > Screenshot > Open Settings
+@"// Menu: Tools > TRnK Framework > Screenshot > Open Settings
 // Shortcut: Ctrl+Shift+K (quick capture)
 // Supersize table (1080p GameView):
 //   1x = 1920x1080
@@ -2169,14 +2169,14 @@ countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Screenshot", "Capture" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Setup Window",
-                    Namespace = "Window > Neko Framework > Setup",
+                    Namespace = "Window > TRnK Framework > Setup",
                     Summary = "One-time project setup wizard: create standard folder structure and install pre-defined packages.",
                     Description = "Tabs: Folders (creates project folder tree from SetupFoldersSettings ScriptableObject) and Packages (installs a pre-defined list from SetupPackagesSettings). Both settings are serialized ScriptableObjects customizable per team.",
                     Code =
-@"// Menu: Window > Neko Framework > Setup
+@"// Menu: Window > TRnK Framework > Setup
 // Tabs:
 //   Folders  — creates project folder structure
 //   Packages — installs Unity packages from a pre-defined list
@@ -2184,47 +2184,47 @@ countdown.Start();  // now visible in Timer Tracker",
                     Tags = new[] { "Editor", "Setup", "Wizard" },
                     Category = DocCategory.EditorTools
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
-                    Title = "NekoLib Project Settings",
-                    Namespace = "Edit > Project Settings > NekoLib",
-                    Summary = "Central settings for all NekoLib editor tools. Auto-created at Assets/Plugins/NekoLib/Editor/NekoLibSettings.asset.",
+                    Title = "TRnK.Toolkit Project Settings",
+                    Namespace = "Edit > Project Settings > TRnK.Toolkit",
+                    Summary = "Central settings for all TRnK.Toolkit editor tools. Auto-created at Assets/Plugins/TRnK/Toolkit/Editor/TRnKSettings.asset.",
                     Description = "Available settings: Startup Scene Path, Activate Loaded Additive On Select, Time Scale Max (default 10), Hide Toolbar, Auto Re-enter Play After Clear (default true). Persisted as a ScriptableObject asset.",
                     Code =
-@"// Edit > Project Settings > NekoLib
-// Asset: Assets/Plugins/NekoLib/Editor/NekoLibSettings.asset
+@"// Edit > Project Settings > TRnK.Toolkit
+// Asset: Assets/Plugins/TRnK/Toolkit/Editor/TRnKSettings.asset
 // Startup Scene Path         — auto-load on entering Play mode
 // Time Scale Max             — toolbar slider upper bound (default 10)
-// Hide Toolbar               — hide all NekoLib toolbar elements
+// Hide Toolbar               — hide all TRnK.Toolkit toolbar elements
 // Auto Re-enter After Clear  — re-enter Play after clearing prefs",
                     Tags = new[] { "Editor", "Settings", "Configuration" },
                     Category = DocCategory.EditorTools
                 },
 
-                // ── NekoSignal ────────────────────────────────────────────────
-                new NekoLibDocEntry
+                // ── TRnK.Signal ────────────────────────────────────────────────
+                new TRnKDocEntry
                 {
-                    Title = "NekoSignal — Installation",
-                    Namespace = "Package: unity-neko-signal",
-                    Summary = "NekoSignal is a separate package and must be installed via UPM before use.",
-                    Description = "NekoSignal is NOT included in NekoLib. Install NekoLib first, then add NekoSignal via Unity Package Manager → Add package from git URL.",
+                    Title = "TRnK.Signal — Installation",
+                    Namespace = "Package: unity-trnk-signal",
+                    Summary = "TRnK.Signal is a separate package and must be installed via UPM before use.",
+                    Description = "TRnK.Signal is NOT included in TRnK. Install TRnK.Toolkit first, then add TRnK.Signal via Unity Package Manager → Add package from git URL.",
                     Code =
-@"// 1. Install NekoLib first
-https://github.com/boobosua/unity-nekolib.git
+@"// 1. Install TRnK.Toolkit first
+https://github.com/boobosua/unity-trnk-toolkit.git
 
-// 2. Then install NekoSignal
-https://github.com/boobosua/unity-neko-signal.git",
+// 2. Then install TRnK.Signal
+https://github.com/boobosua/unity-trnk-signal.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
-                    Category = DocCategory.NekoSignal
+                    Category = DocCategory.TRnKSignal
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "ISignal",
-                    Namespace = "NekoSignal",
+                    Namespace = "TRnK.Signal",
                     Summary = "Marker interface all signal structs must implement. Enforces struct constraint — null payload is impossible by design.",
                     Description = "Signals must be structs (readonly struct recommended for immutability). The subscribe and emit generics enforce `where T : struct, ISignal`, so signals are always stack-allocated value types.",
                     Code =
-@"using NekoSignal;
+@"using TRnK.Signal;
 
 public readonly struct PlayerDied : ISignal { }
 
@@ -2240,16 +2240,16 @@ public readonly struct PlayerHealthChanged : ISignal
     }
 }",
                     Tags = new[] { "Signal", "Struct", "Interface" },
-                    Category = DocCategory.NekoSignal
+                    Category = DocCategory.TRnKSignal
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "[OnSignal] + SignalHub.Bind",
-                    Namespace = "NekoSignal",
+                    Namespace = "TRnK.Signal",
                     Summary = "Attribute-based subscription. Decorate handler methods with [OnSignal] and call SignalHub.Bind(this) once — no manual wiring.",
-                    Description = "NekoSignal discovers all [OnSignal]-decorated methods via reflection at bind time only (zero reflection on emit). Always pair Bind in OnEnable with Unbind in OnDisable. Forgetting Unbind leaks the delegate — the Memory Leaks tab in Signal Tracker will surface it.",
+                    Description = "TRnK.Signal discovers all [OnSignal]-decorated methods via reflection at bind time only (zero reflection on emit). Always pair Bind in OnEnable with Unbind in OnDisable. Forgetting Unbind leaks the delegate — the Memory Leaks tab in Signal Tracker will surface it.",
                     Code =
-@"using NekoSignal;
+@"using TRnK.Signal;
 
 public class UIHealthBar : MonoBehaviour
 {
@@ -2267,7 +2267,7 @@ public class UIHealthBar : MonoBehaviour
     private void OnHealthChangedEarly(PlayerHealthChanged s) { }
 }",
                     Tags = new[] { "Subscribe", "Attribute", "Bind" },
-                    Category = DocCategory.NekoSignal,
+                    Category = DocCategory.TRnKSignal,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "SignalHub.Bind(MonoBehaviour owner)",
@@ -2297,14 +2297,14 @@ private void OnPlayerDied(PlayerDied s)
 private void HandleEarlyResponse(PlayerDied s) { }" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "SignalBus.Emit / this.Emit",
-                    Namespace = "NekoSignal",
+                    Namespace = "TRnK.Signal",
                     Summary = "Emit a signal to all subscribers. Use this.Emit() from a MonoBehaviour to record the emitter in the Signal Tracker.",
                     Description = "Both overloads are equivalent in dispatch behavior. `this.Emit()` attaches the emitting MonoBehaviour as context for the Signal Tracker log. `SignalBus.Emit()` is usable from any non-MonoBehaviour context.",
                     Code =
-@"using NekoSignal;
+@"using TRnK.Signal;
 
 // From a MonoBehaviour — emitter recorded in Signal Tracker
 this.Emit(new PlayerHealthChanged(health, maxHealth));
@@ -2312,7 +2312,7 @@ this.Emit(new PlayerHealthChanged(health, maxHealth));
 // From anywhere — no emitter context
 SignalBus.Emit(new PlayerHealthChanged(health, maxHealth));",
                     Tags = new[] { "Emit", "Dispatch" },
-                    Category = DocCategory.NekoSignal,
+                    Category = DocCategory.TRnKSignal,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "this.Emit<T>(T signal)",
@@ -2338,14 +2338,14 @@ private void Update()
 }" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Listen<T> / SignalReceiver",
-                    Namespace = "NekoSignal",
+                    Namespace = "TRnK.Signal",
                     Summary = "Manual subscription returning a SignalReceiver. Call Dispose() to unsubscribe. Use when you need conditional or lifetime-limited subscriptions.",
                     Description = "Listen<T>() returns a SignalReceiver. Call Dispose() to unsubscribe at any time — it is idempotent. SignalReceiver.IsActive is true until Dispose() is called. Abandoned receivers are auto-cleaned when the owner MonoBehaviour is destroyed, but explicit disposal is cleaner.",
                     Code =
-@"using NekoSignal;
+@"using TRnK.Signal;
 
 public class TemporaryListener : MonoBehaviour
 {
@@ -2372,7 +2372,7 @@ var rx = SignalBus.Listen<PlayerDied>(owner, OnPlayerDied);
 var rxPri = SignalBus.Listen<PlayerDied>(owner, OnPlayerDied, priority: 5);
 rx.Dispose(); // unsubscribe",
                     Tags = new[] { "Subscribe", "Listen", "Receiver", "Dispose" },
-                    Category = DocCategory.NekoSignal,
+                    Category = DocCategory.TRnKSignal,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "this.Listen<T>(Action<T> callback)",
@@ -2418,14 +2418,14 @@ rx.Dispose(); // unsubscribe later" },
 Debug.Log($""{count} listeners registered for PlayerDied"");" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "ISignalFilter + Filtered Emit",
-                    Namespace = "NekoSignal",
+                    Namespace = "TRnK.Signal",
                     Summary = "Emitter-side filters restrict delivery to subscribers whose MonoBehaviour owner passes all provided filters.",
                     Description = "Three built-in filters: HasComponent<T>, InLayer, WithTag. Custom filters implement ISignalFilter.Evaluate(MonoBehaviour owner). For signals emitted every frame, pre-allocate the filter array in Awake to avoid params allocation.",
                     Code =
-@"using NekoSignal;
+@"using TRnK.Signal;
 
 // Fluent one-off
 new EnemySpotted(target)
@@ -2455,7 +2455,7 @@ public sealed class TeamFilter : ISignalFilter
         => owner.TryGetComponent<TeamMember>(out var m) && m.TeamId == _teamId;
 }",
                     Tags = new[] { "Filter", "ISignalFilter", "HasComponent", "InLayer", "WithTag" },
-                    Category = DocCategory.NekoSignal,
+                    Category = DocCategory.TRnKSignal,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "signal.ConfigureFilters()",
@@ -2493,40 +2493,40 @@ public sealed class TeamFilter : ISignalFilter
 @"this.Emit(new Signal(), new WithTag(""Player""));" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "Signal Tracker",
-                    Namespace = "Window > Neko Framework > Signal Tracker",
+                    Namespace = "Window > TRnK Framework > Signal Tracker",
                     Summary = "Editor window with live subscription monitor, emit log, and memory leak detector.",
                     Description = "Three tabs:\n• Subscription Monitor — live subscriber table per signal type (GameObject, component, method, priority). Searchable.\n• Signal Log — emit history with emitter context, timestamp, payload fields, and applied filters.\n• Memory Leaks — MonoBehaviours that called SignalHub.Bind but were destroyed without Unbind. Cleared automatically on exiting Play Mode.",
                     Tags = new[] { "Editor", "Debug", "Tracker", "Memory" },
-                    Category = DocCategory.NekoSignal
+                    Category = DocCategory.TRnKSignal
                 },
 
-                // ── NekoFlow ──────────────────────────────────────────────────
-                new NekoLibDocEntry
+                // ── TRnK.Flow ──────────────────────────────────────────────────
+                new TRnKDocEntry
                 {
-                    Title = "NekoFlow — Installation",
-                    Namespace = "Package: unity-neko-flow",
-                    Summary = "NekoFlow is a separate package and must be installed via UPM before use.",
-                    Description = "NekoFlow is NOT included in NekoLib. Install NekoLib first, then add NekoFlow via Unity Package Manager → Add package from git URL.",
+                    Title = "TRnK.Flow — Installation",
+                    Namespace = "Package: unity-trnk-flow",
+                    Summary = "TRnK.Flow is a separate package and must be installed via UPM before use.",
+                    Description = "TRnK.Flow is NOT included in TRnK. Install TRnK.Toolkit first, then add TRnK.Flow via Unity Package Manager → Add package from git URL.",
                     Code =
-@"// 1. Install NekoLib first
-https://github.com/boobosua/unity-nekolib.git
+@"// 1. Install TRnK.Toolkit first
+https://github.com/boobosua/unity-trnk-toolkit.git
 
-// 2. Then install NekoFlow
-https://github.com/boobosua/unity-neko-flow.git",
+// 2. Then install TRnK.Flow
+https://github.com/boobosua/unity-trnk-flow.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
-                    Category = DocCategory.NekoFlow
+                    Category = DocCategory.TRnKFlow
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "StateBehaviour",
-                    Namespace = "NekoFlow.FSM",
+                    Namespace = "TRnK.Flow.FSM",
                     Summary = "MonoBehaviour-based FSM controller. Derive from it, create states, then declare transitions in Awake.",
                     Description = "StateBehaviour is the 'brain' — it owns transition predicates and state instances. Use GetTimeInCurrentState() for time-based transitions. API: IsInState<T>(), TryGetCurrentState<T>(out T), GetTimeInCurrentState().",
                     Code =
-@"using NekoFlow.FSM;
+@"using TRnK.Flow.FSM;
 
 public class EnemyController : StateBehaviour
 {
@@ -2545,7 +2545,7 @@ public class EnemyController : StateBehaviour
     }
 }",
                     Tags = new[] { "FSM", "StateMachine", "Controller" },
-                    Category = DocCategory.NekoFlow,
+                    Category = DocCategory.TRnKFlow,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "StartWith(IState state)",
@@ -2582,14 +2582,14 @@ public class EnemyController : StateBehaviour
 @".At(_idle, _patrol, () => GetTimeInCurrentState() >= 3f)" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "BaseState<TContext>",
-                    Namespace = "NekoFlow.FSM",
+                    Namespace = "TRnK.Flow.FSM",
                     Summary = "Convenience base class for states. Provides protected _context, _gameObject, and _transform.",
                     Description = "Implement IState directly for pure C# states, or inherit BaseState<T> when you need convenient access to the controller and its GameObject. State logic only — no transition predicates here.",
                     Code =
-@"using NekoFlow.FSM;
+@"using TRnK.Flow.FSM;
 
 public sealed class EnemyIdleState : BaseState<EnemyController>
 {
@@ -2605,7 +2605,7 @@ public sealed class EnemyIdleState : BaseState<EnemyController>
     public override void OnExit() { /* cleanup */ }
 }",
                     Tags = new[] { "FSM", "State", "BaseState" },
-                    Category = DocCategory.NekoFlow,
+                    Category = DocCategory.TRnKFlow,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Property, Signature = "_context",
@@ -2645,14 +2645,14 @@ public sealed class EnemyIdleState : BaseState<EnemyController>
 }" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "StateMachine (pure C#)",
-                    Namespace = "NekoFlow.FSM",
+                    Namespace = "TRnK.Flow.FSM",
                     Summary = "Standalone state machine, no MonoBehaviour required. Tick it manually in Update.",
                     Description = "Use StateMachine directly when you want FSM logic inside a plain C# class. Remember to call Tick(deltaTime) each frame. API: StartWith, At, Any, SetState, CurrentState, TimeInState, Is<T>(), Get<T>().",
                     Code =
-@"using NekoFlow.FSM;
+@"using TRnK.Flow.FSM;
 
 public class EnemyBrain : MonoBehaviour
 {
@@ -2672,7 +2672,7 @@ public class EnemyBrain : MonoBehaviour
     private void Update() => _sm?.Tick(Time.deltaTime);
 }",
                     Tags = new[] { "FSM", "StateMachine", "PureCSharp" },
-                    Category = DocCategory.NekoFlow,
+                    Category = DocCategory.TRnKFlow,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Property, Signature = "CurrentState",
@@ -2718,30 +2718,30 @@ patrol?.SetNextWaypoint(wp);" },
                     }
                 },
 
-                // ── NekoSerializer ────────────────────────────────────────────
-                new NekoLibDocEntry
+                // ── TRnK.Serializer ────────────────────────────────────────────
+                new TRnKDocEntry
                 {
-                    Title = "NekoSerializer — Installation",
-                    Namespace = "Package: unity-neko-serializer",
-                    Summary = "NekoSerializer is a separate package and must be installed via UPM before use.",
-                    Description = "NekoSerializer is NOT included in NekoLib. Requires Unity 2021+ (Newtonsoft.Json ships by default). Install NekoLib first, then add NekoSerializer via Unity Package Manager → Add package from git URL.",
+                    Title = "TRnK.Serializer — Installation",
+                    Namespace = "Package: unity-trnk-serializer",
+                    Summary = "TRnK.Serializer is a separate package and must be installed via UPM before use.",
+                    Description = "TRnK.Serializer is NOT included in TRnK. Requires Unity 2021+ (Newtonsoft.Json ships by default). Install TRnK.Toolkit first, then add TRnK.Serializer via Unity Package Manager → Add package from git URL.",
                     Code =
-@"// 1. Install NekoLib first
-https://github.com/boobosua/unity-nekolib.git
+@"// 1. Install TRnK.Toolkit first
+https://github.com/boobosua/unity-trnk-toolkit.git
 
-// 2. Then install NekoSerializer
-https://github.com/boobosua/unity-neko-serializer.git",
+// 2. Then install TRnK.Serializer
+https://github.com/boobosua/unity-trnk-serializer.git",
                     Tags = new[] { "Install", "UPM", "Setup" },
-                    Category = DocCategory.NekoSerializer
+                    Category = DocCategory.TRnKSerializer
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NSR.Save / NSR.Load",
-                    Namespace = "NekoSerializer",
+                    Namespace = "TRnK.Serializer",
                     Summary = "Core save/load API. Writes to the configured storage backend (PlayerPrefs or JSON file). Load returns defaultValue when the key is missing.",
                     Description = "All public API lives on the static NSR class. Unity value types (Vector2/3, Quaternion, Color, Rect, Bounds, Transform snapshot, etc.) are serialized automatically via Newtonsoft.Json converters.",
                     Code =
-@"using NekoSerializer;
+@"using TRnK.Serializer;
 
 // Save
 NSR.Save(""playerName"", ""Neko"");
@@ -2757,7 +2757,7 @@ Vector3 pos  = NSR.Load<Vector3>(""position"");
 if (NSR.Exists(""highScore""))
     NSR.Delete(""highScore"");",
                     Tags = new[] { "Save", "Load", "Persistence" },
-                    Category = DocCategory.NekoSerializer,
+                    Category = DocCategory.TRnKSerializer,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "NSR.Save<T>(string key, T value)",
@@ -2783,19 +2783,19 @@ Vector3 pos   = NSR.Load<Vector3>(""position"");" },
 @"NSR.Delete(""tempData""); // clean up after level complete" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NSR.SaveAsync / NSR.LoadAsync",
-                    Namespace = "NekoSerializer",
+                    Namespace = "TRnK.Serializer",
                     Summary = "Async variants of Save and Load. Returns Task / Task<T> — await in async methods.",
                     Description = "Async variants are useful when saving large or complex data structures to JSON files to avoid blocking the main thread. Both methods mirror the synchronous API exactly.",
                     Code =
-@"using NekoSerializer;
+@"using TRnK.Serializer;
 
 await NSR.SaveAsync(""highScore"", 9999);
 int hs = await NSR.LoadAsync<int>(""highScore"", 0);",
                     Tags = new[] { "Async", "Save", "Load" },
-                    Category = DocCategory.NekoSerializer,
+                    Category = DocCategory.TRnKSerializer,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "NSR.SaveAsync<T>(string key, T value)",
@@ -2815,14 +2815,14 @@ int hs = await NSR.LoadAsync<int>(""highScore"", 0);",
 }" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NSR.Pack / NSR.Unpack",
-                    Namespace = "NekoSerializer",
+                    Namespace = "TRnK.Serializer",
                     Summary = "Bundle multiple saved keys into a portable string for cloud sync or profile transfer. Unpack restores them.",
                     Description = "Pack serializes the specified keys into a single string. Unpack writes them back to the storage backend. Pass overwriteExisting: false to preserve existing values and only write missing keys.",
                     Code =
-@"using NekoSerializer;
+@"using TRnK.Serializer;
 
 // Bundle keys into a portable snapshot string
 string snapshot = NSR.Pack(""playerName"", ""score"", ""position"");
@@ -2833,7 +2833,7 @@ NSR.Unpack(snapshot);
 // Restore — skip keys that already exist
 NSR.Unpack(snapshot, overwriteExisting: false);",
                     Tags = new[] { "Migration", "Pack", "Unpack", "CloudSync" },
-                    Category = DocCategory.NekoSerializer,
+                    Category = DocCategory.TRnKSerializer,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "NSR.Pack(params string[] keys)",
@@ -2853,14 +2853,14 @@ NSR.Unpack(snapshot);" },
 NSR.Unpack(snapshot, overwriteExisting: false);" },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "NSR.Serialize / NSR.Deserialize",
-                    Namespace = "NekoSerializer",
+                    Namespace = "TRnK.Serializer",
                     Summary = "Direct JSON serialization helpers — useful for networking, clipboard, or manual file handling.",
                     Description = "These methods bypass the storage backend entirely and work with raw JSON strings. PrettyPrintJson in SerializerSettings controls output formatting.",
                     Code =
-@"using NekoSerializer;
+@"using TRnK.Serializer;
 
 string json   = NSR.Serialize(myData);
 MyData data   = NSR.Deserialize<MyData>(json);
@@ -2869,7 +2869,7 @@ MyData data   = NSR.Deserialize<MyData>(json);
 DateTime utc   = NSR.LastSaveTimeUtc;
 DateTime local = NSR.LastSaveTimeLocal;",
                     Tags = new[] { "JSON", "Serialize", "Deserialize" },
-                    Category = DocCategory.NekoSerializer,
+                    Category = DocCategory.TRnKSerializer,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Method, Signature = "NSR.Serialize<T>(T obj)",
@@ -2892,14 +2892,14 @@ SendToServer(json); // networking, clipboard, manual file" },
 " },
                     }
                 },
-                new NekoLibDocEntry
+                new TRnKDocEntry
                 {
                     Title = "SerializerSettings",
-                    Namespace = "NekoSerializer",
+                    Namespace = "TRnK.Serializer",
                     Summary = "ScriptableObject config asset. Create once at Assets/Resources/SerializerSettings. Defaults apply if missing.",
-                    Description = "Properties:\n• StorageOption — PlayerPrefs (default) or JsonFile\n• SaveDirectory — folder under Application.persistentDataPath (default: \"SaveData\")\n• UseEncryption — encrypt strings before writing (default: false)\n• EncryptionKey — key used when encryption is on (default: \"DefaultEncryptionKey\")\n• PrettyPrintJson — indented vs compact JSON (default: true)\n\nCreate via: Assets → Create → Neko Framework → Serialize → Serializer Settings.",
+                    Description = "Properties:\n• StorageOption — PlayerPrefs (default) or JsonFile\n• SaveDirectory — folder under Application.persistentDataPath (default: \"SaveData\")\n• UseEncryption — encrypt strings before writing (default: false)\n• EncryptionKey — key used when encryption is on (default: \"DefaultEncryptionKey\")\n• PrettyPrintJson — indented vs compact JSON (default: true)\n\nCreate via: Assets → Create → TRnK Framework → Serialize → Serializer Settings.",
                     Tags = new[] { "Settings", "Config", "Encryption", "Storage" },
-                    Category = DocCategory.NekoSerializer,
+                    Category = DocCategory.TRnKSerializer,
                     Members = new[]
                     {
                         new DocMember { Kind = DocMemberKind.Property, Signature = "StorageOption",

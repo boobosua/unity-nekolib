@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class AnimatorExtensions
     {

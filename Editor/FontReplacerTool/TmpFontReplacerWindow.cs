@@ -8,11 +8,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal class TmpFontReplacerWindow : EditorWindow
     {
-        [MenuItem("Tools/Neko Framework/TMP Font Replacer")]
+        [MenuItem("Tools/TRnK/TMP Font Replacer")]
         public static void Open() => GetWindow<TmpFontReplacerWindow>("TMP Font Replacer");
 
         // --- Settings ---

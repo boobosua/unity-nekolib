@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {

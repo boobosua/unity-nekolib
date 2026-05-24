@@ -1,11 +1,11 @@
-using NekoLib.Extensions;
-using NekoLib.Logger;
+using TRnK.Extensions;
+using TRnK.Logger;
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Look At Camera")]
+    [AddComponentMenu("TRnK.Toolkit/Look At Camera")]
     public sealed class LookAtCamera : MonoBehaviour
     {
         private enum Mode

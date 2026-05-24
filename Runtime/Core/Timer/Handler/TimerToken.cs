@@ -1,4 +1,4 @@
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     /// <summary>A restricted handle returned by fire-and-forget timer helpers.</summary>
     public readonly struct TimerToken

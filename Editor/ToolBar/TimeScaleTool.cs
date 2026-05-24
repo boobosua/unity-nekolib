@@ -9,16 +9,16 @@ using UnityEditor.UIElements; // ToolbarButton
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     // Original layout preserved. Only logic changed to sync with Project Settings Time Scale (TimeManager.asset m_TimeScale).
     [InitializeOnLoad]
     internal static class TimeScaleTool
     {
-        private const string PrefStoredValue = "NekoLib:TimeScaleValue";      // kept for backward compatibility (not authoritative anymore)
+        private const string PrefStoredValue = "TRnK.Toolkit:TimeScaleValue";      // kept for backward compatibility (not authoritative anymore)
         private const float DefaultTimeScale = 1f;
         private const float MinTimeScale = 0f;
-        private static float MaxTimeScale => Mathf.Max(10f, (float)NekoLibSettings.GetOrCreate().timeScaleMax);
+        private static float MaxTimeScale => Mathf.Max(10f, (float)TRnKSettings.GetOrCreate().timeScaleMax);
 
         private static bool installed;
 #if !UNITY_6000_3_OR_NEWER
@@ -53,13 +53,13 @@ namespace NekoLib
 
             public Unity6000TimeScaleElement()
             {
-                name = "NekoLibTimeScaleMainToolbar";
+                name = "TRnK.ToolkitTimeScaleMainToolbar";
                 style.flexDirection = FlexDirection.Row;
                 style.alignItems = Align.Center;
                 style.paddingLeft = 4;
                 style.paddingRight = 4;
 
-                var titleLabel = new Label("Time Scale") { name = "NekoLibTimeScaleTitle" };
+                var titleLabel = new Label("Time Scale") { name = "TRnK.ToolkitTimeScaleTitle" };
                 titleLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
                 titleLabel.style.fontSize = 12;
                 titleLabel.style.marginLeft = 1;
@@ -68,7 +68,7 @@ namespace NekoLib
 
                 slider = new Slider(GetMin(), GetMax())
                 {
-                    name = "NekoLibTimeScaleSlider",
+                    name = "TRnK.ToolkitTimeScaleSlider",
                     showInputField = false
                 };
                 slider.style.minWidth = 88;
@@ -76,7 +76,7 @@ namespace NekoLib
                 slider.style.marginLeft = 1;
                 slider.style.marginRight = 1;
 
-                valueLabel = new Label("1.00") { name = "NekoLibTimeScaleValue" };
+                valueLabel = new Label("1.00") { name = "TRnK.ToolkitTimeScaleValue" };
                 valueLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
                 valueLabel.style.minWidth = 40;
                 valueLabel.style.maxWidth = 40;
@@ -100,7 +100,7 @@ namespace NekoLib
                     valueLabel.text = v.ToString("0.00");
                 })
                 {
-                    name = "NekoLibTimeScaleReset",
+                    name = "TRnK.ToolkitTimeScaleReset",
                     tooltip = "Reset Time Scale (1.0)"
                 };
                 resetButton.focusable = false;
@@ -138,7 +138,7 @@ namespace NekoLib
             private void ApplyVisibilityAndSync()
             {
                 bool hidden = false;
-                try { hidden = NekoLibSettings.GetOrCreate().hideToolbar; } catch { }
+                try { hidden = TRnKSettings.GetOrCreate().hideToolbar; } catch { }
                 style.display = hidden ? DisplayStyle.None : DisplayStyle.Flex;
                 SetEnabled(!hidden);
 
@@ -150,7 +150,7 @@ namespace NekoLib
             }
         }
 
-        [MainToolbarElement("NekoLib/Time Scale", defaultDockPosition = MainToolbarDockPosition.Left)]
+        [MainToolbarElement("TRnK.Toolkit/Time Scale", defaultDockPosition = MainToolbarDockPosition.Left)]
         public static MainToolbarElement CreateMainToolbarElement()
         {
             return new Unity6000TimeScaleElement();
@@ -195,7 +195,7 @@ namespace NekoLib
             // Unity 6.3+ uses MainToolbarElement integration.
             return;
 #else
-            try { if (NekoLibSettings.GetOrCreate().hideToolbar) return; } catch { }
+            try { if (TRnKSettings.GetOrCreate().hideToolbar) return; } catch { }
             if (installed) return;
             var toolbarRoot = ToolbarUtils.GetToolbarRoot();
             if (toolbarRoot == null)
@@ -205,7 +205,7 @@ namespace NekoLib
             }
 
             // Defensive: domain reload / toolbar rebuild can leave old injected elements behind.
-            ToolbarUtils.RemoveAllByName(toolbarRoot, "NekoLibTimeScaleContainer");
+            ToolbarUtils.RemoveAllByName(toolbarRoot, "TRnK.ToolkitTimeScaleContainer");
 
             LoadTimeManager();
             // Authoritative value from TimeManager first
@@ -232,7 +232,7 @@ namespace NekoLib
 #if UNITY_6000_3_OR_NEWER
             return;
 #else
-            rootContainer = new VisualElement { name = "NekoLibTimeScaleContainer" };
+            rootContainer = new VisualElement { name = "TRnK.ToolkitTimeScaleContainer" };
             rootContainer.style.position = Position.Absolute;
             rootContainer.style.flexDirection = FlexDirection.Row;
             rootContainer.style.alignItems = Align.Center;
@@ -245,7 +245,7 @@ namespace NekoLib
             timeSlider = new Slider(MinTimeScale, MaxTimeScale)
             {
                 value = lastAppliedTimeScale,
-                name = "NekoLibTimeScaleSlider",
+                name = "TRnK.ToolkitTimeScaleSlider",
                 showInputField = false
             };
             timeSlider.style.minWidth = 88;
@@ -274,7 +274,7 @@ namespace NekoLib
             }
 #endif
 
-            valueLabel = new Label(FormatValue(lastAppliedTimeScale)) { name = "NekoLibTimeScaleValue" };
+            valueLabel = new Label(FormatValue(lastAppliedTimeScale)) { name = "TRnK.ToolkitTimeScaleValue" };
             valueLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             valueLabel.style.minWidth = 40; // tighten width slightly
             valueLabel.style.maxWidth = 40;
@@ -293,7 +293,7 @@ namespace NekoLib
             {
                 text = string.Empty,
                 tooltip = "Reset Time Scale (1.0)",
-                name = "NekoLibTimeScaleReset"
+                name = "TRnK.ToolkitTimeScaleReset"
             };
             resetButton.AddToClassList("unity-toolbar-button");
 #else
@@ -301,7 +301,7 @@ namespace NekoLib
             {
                 text = string.Empty,
                 tooltip = "Reset Time Scale (1.0)",
-                name = "NekoLibTimeScaleReset"
+                name = "TRnK.ToolkitTimeScaleReset"
             };
 #endif
             resetButton.style.width = 26;
@@ -343,7 +343,7 @@ namespace NekoLib
             resetButton.style.flexGrow = 0;
             resetButton.style.flexShrink = 0;
 
-            titleLabel = new Label("Time Scale") { name = "NekoLibTimeScaleTitle" };
+            titleLabel = new Label("Time Scale") { name = "TRnK.ToolkitTimeScaleTitle" };
             titleLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
             titleLabel.style.fontSize = 12;
             titleLabel.style.marginLeft = 1;

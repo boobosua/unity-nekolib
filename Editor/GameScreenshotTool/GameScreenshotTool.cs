@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal class GameScreenshotTool : EditorWindow
     {
@@ -32,7 +32,7 @@ namespace NekoLib
         [SerializeField] private int _cameraWidth = DefaultCameraWidth;
         [SerializeField] private int _cameraHeight = DefaultCameraHeight;
 
-        [MenuItem("Tools/Neko Framework/Screenshot/Quick Capture %#k")]
+        [MenuItem("Tools/TRnK/Screenshot/Quick Capture %#k")]
         private static void QuickCapture()
         {
             if (!EditorApplication.isPlaying)
@@ -52,7 +52,7 @@ namespace NekoLib
             ScreenshotCoroutineHelper.Begin(filePath, settings.supersize, settings.revealOnSave);
         }
 
-        [MenuItem("Tools/Neko Framework/Screenshot/Open Settings")]
+        [MenuItem("Tools/TRnK/Screenshot/Open Settings")]
         private static void OpenWindow()
         {
             var win = GetWindow<GameScreenshotTool>("Game Screenshot");

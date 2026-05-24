@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [Serializable]
     internal class SceneGroup
@@ -23,7 +23,7 @@ namespace NekoLib
 #endif
         public List<SceneGroup> groups = new List<SceneGroup>();
 
-        private const string SettingsFolder = "Assets/Plugins/NekoLib/Editor";
+        private const string SettingsFolder = "Assets/Plugins/TRnK/Toolkit/Editor";
         private const string AssetPath = SettingsFolder + "/SceneSwitcherSettings.asset";
 
         public static SceneSwitcherSettings GetOrCreate()
@@ -43,8 +43,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string name)

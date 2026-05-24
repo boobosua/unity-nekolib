@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.Pooling
+namespace TRnK.Pooling
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(ParticleSystem))]

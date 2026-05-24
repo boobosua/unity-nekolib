@@ -1,7 +1,7 @@
 using System;
-using NekoLib.Logger;
+using TRnK.Logger;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {
@@ -83,8 +83,8 @@ namespace NekoLib.Timer
 
             if (!_capacitySet)
             {
-                Log.Warn($"[NekoLib.Timer] Capacity has been increased from {oldCap} to {newCap}. " +
-                         $"Call NekoLib.TimerConfig.SetCapacity({newCap}) at startup to prevent runtime allocations.");
+                Log.Warn($"[TRnK.Timer] Capacity has been increased from {oldCap} to {newCap}. " +
+                         $"Call TRnK.TimerConfig.SetCapacity({newCap}) at startup to prevent runtime allocations.");
             }
 
             Array.Resize(ref _hotSlots, newCap);
@@ -109,8 +109,8 @@ namespace NekoLib.Timer
                 int oldCap = _active.Length;
                 int newCap = oldCap * 2;
                 if (!_capacitySet)
-                    Log.Warn($"[NekoLib.Timer] Active list capacity has been increased from {oldCap} to {newCap}. " +
-                             $"Call NekoLib.TimerConfig.SetCapacity({newCap}) at startup to prevent runtime allocations.");
+                    Log.Warn($"[TRnK.Timer] Active list capacity has been increased from {oldCap} to {newCap}. " +
+                             $"Call TRnK.TimerConfig.SetCapacity({newCap}) at startup to prevent runtime allocations.");
                 Array.Resize(ref _active, newCap);
             }
 

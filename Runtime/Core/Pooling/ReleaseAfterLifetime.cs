@@ -4,7 +4,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 #endif
 
-namespace NekoLib.Pooling
+namespace TRnK.Pooling
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PoolableObject))]

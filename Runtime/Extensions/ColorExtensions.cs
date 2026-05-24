@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class ColorExtensions
     {

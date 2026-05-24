@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using NekoLib.Extensions;
-using NekoLib.Logger;
+using TRnK.Extensions;
+using TRnK.Logger;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

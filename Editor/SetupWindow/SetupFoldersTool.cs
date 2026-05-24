@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     /// <summary>
     /// Utility methods for creating project folders under a chosen Assets-relative root.

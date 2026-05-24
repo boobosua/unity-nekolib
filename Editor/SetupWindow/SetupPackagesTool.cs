@@ -6,7 +6,7 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal static class SetupPackagesTool
     {

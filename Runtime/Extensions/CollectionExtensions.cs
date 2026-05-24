@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Random = UnityEngine.Random;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class CollectionExtensions
     {

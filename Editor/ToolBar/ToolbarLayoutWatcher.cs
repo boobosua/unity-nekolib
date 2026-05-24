@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     // Central watcher to notify registered callbacks when the main editor toolbar layout width changes.
     // Does NOT alter any styling or positioning logic; tools re-run their own existing PositionContainer.

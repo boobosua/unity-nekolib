@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal static class ToolbarUtils
     {
@@ -15,7 +15,7 @@ namespace NekoLib
 
         public static class PrefKeys
         {
-            public const string PreferencesRoot = "NekoLib";
+            public const string PreferencesRoot = "TRnK.Toolkit";
             public const string HideToolbar = PreferencesRoot + ":HideToolbar";
             public const string ActivateLoadedAdditive = PreferencesRoot + ":ActivateLoadedAdditiveOnSelect";
             public const string TimeScaleMax = PreferencesRoot + ":TimeScaleMax";
@@ -114,8 +114,8 @@ namespace NekoLib
         {
             try
             {
-                var watcherType = Type.GetType("NekoLib.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ??
-                                Type.GetType("NekoLib.ToolbarLayoutWatcher");
+                var watcherType = Type.GetType("TRnK.ToolbarLayoutWatcher, Assembly-CSharp-Editor") ??
+                                Type.GetType("TRnK.ToolbarLayoutWatcher");
                 if (watcherType == null) return;
                 var register = watcherType.GetMethod("Register", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
                 if (register == null) return;

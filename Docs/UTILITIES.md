@@ -1,9 +1,9 @@
-# NekoLib Utilities
+# TRnK.Toolkit Utilities
 
 Static utility classes for common operations.
 
 ```csharp
-using NekoLib.Utilities;
+using TRnK.Utilities;
 ```
 
 ## Static Utilities

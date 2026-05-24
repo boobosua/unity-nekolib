@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Scrolling Mesh Renderer")]
+    [AddComponentMenu("TRnK.Toolkit/Scrolling Mesh Renderer")]
     public class ScrollingMeshRenderer : ScrollingBackgroundBase
     {
         private Material _material;

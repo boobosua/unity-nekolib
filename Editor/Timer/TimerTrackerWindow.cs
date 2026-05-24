@@ -1,14 +1,15 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using NekoLib.Logger;
+using TRnK.Logger;
+using TRnK.Toolkit;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal partial class TimerTrackerWindow : EditorWindow
     {
-        [MenuItem("Tools/Neko Framework/Timer Tracker")]
+        [MenuItem("Tools/TRnK/Timer Tracker")]
         public static void ShowWindow() => GetWindow<TimerTrackerWindow>("Timer Tracker");
 
         // ─── UI state ────────────────────────────────────────────────────────────────

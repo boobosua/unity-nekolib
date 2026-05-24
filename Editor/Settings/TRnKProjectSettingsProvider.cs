@@ -2,19 +2,19 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    internal static class NekoLibProjectSettingsProvider
+    internal static class TRnKProjectSettingsProvider
     {
         [SettingsProvider]
         public static SettingsProvider CreateProvider()
         {
-            var provider = new SettingsProvider("Project/NekoLib", SettingsScope.Project)
+            var provider = new SettingsProvider("Project/TRnK.Toolkit", SettingsScope.Project)
             {
-                label = "NekoLib",
+                label = "TRnK.Toolkit",
                 guiHandler = _ =>
                 {
-                    var settings = NekoLibSettings.GetOrCreate();
+                    var settings = TRnKSettings.GetOrCreate();
 
                     const float desiredLabelWidth = 300f;
                     float oldLabelWidth = EditorGUIUtility.labelWidth;
@@ -23,7 +23,7 @@ namespace NekoLib
                     EditorGUILayout.BeginVertical("box");
 
                     EditorGUI.BeginChangeCheck();
-                    bool hideToolbar = EditorGUILayout.Toggle(new GUIContent("Hide NekoLib toolbar", "Hide all NekoLib toolbar controls (Scene Switcher, Time Scale, Clear PlayerPrefs)."), settings.hideToolbar);
+                    bool hideToolbar = EditorGUILayout.Toggle(new GUIContent("Hide TRnK.Toolkit toolbar", "Hide all TRnK.Toolkit toolbar controls (Scene Switcher, Time Scale, Clear PlayerPrefs)."), settings.hideToolbar);
                     if (EditorGUI.EndChangeCheck())
                     {
                         settings.hideToolbar = hideToolbar;
@@ -59,7 +59,7 @@ namespace NekoLib
                     EditorGUILayout.EndVertical();
                     EditorGUIUtility.labelWidth = oldLabelWidth;
                 },
-                keywords = new System.Collections.Generic.HashSet<string>(new[] { "NekoLib", "Scene", "Toolbar", "TimeScale", "PlayerPrefs" })
+                keywords = new System.Collections.Generic.HashSet<string>(new[] { "TRnK.Toolkit", "Scene", "Toolbar", "TimeScale", "PlayerPrefs" })
             };
             return provider;
         }

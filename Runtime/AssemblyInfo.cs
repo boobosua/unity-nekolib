@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("NekoLib.Editor")]
-[assembly: InternalsVisibleTo("NekoLib.Tests")]
+[assembly: InternalsVisibleTo("TRnK.Toolkit.Editor")]
+[assembly: InternalsVisibleTo("TRnK.Toolkit.Tests")]

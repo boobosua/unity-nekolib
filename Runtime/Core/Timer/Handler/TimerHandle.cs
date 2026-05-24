@@ -1,6 +1,6 @@
 using System;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     /// <summary>Lightweight handle that references an internal timer slot.</summary>
     public readonly struct TimerHandle : IEquatable<TimerHandle>

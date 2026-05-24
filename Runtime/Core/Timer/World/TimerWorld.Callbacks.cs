@@ -1,6 +1,6 @@
 using System;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {

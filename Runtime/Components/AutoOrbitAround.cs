@@ -1,12 +1,12 @@
-using NekoLib.ColorPalette;
-using NekoLib.Constant;
-using NekoLib.Extensions;
+using TRnK.ColorPalette;
+using TRnK.Constant;
+using TRnK.Extensions;
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Auto Orbit Around")]
+    [AddComponentMenu("TRnK.Toolkit/Auto Orbit Around")]
     public sealed class AutoOrbitAround : MonoBehaviour
     {
         private enum FacingMode

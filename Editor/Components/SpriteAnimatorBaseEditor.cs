@@ -8,7 +8,7 @@ using UnityEngine;
 using Sirenix.OdinInspector.Editor;
 #endif
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [CustomEditor(typeof(SpriteAnimatorBase), true)]
     internal class SpriteAnimatorEditorBase :
@@ -18,7 +18,7 @@ namespace NekoLib.Components
         Editor
 #endif
     {
-        private const string TabSessionKey = "NekoLib.SpriteAnimatorEditorBase.Tab";
+        private const string TabSessionKey = "TRnK.SpriteAnimatorEditorBase.Tab";
         private SerializedProperty _sprites;
         private SerializedProperty _frameRate;
         private SerializedProperty _loopMode;

@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [CustomEditor(typeof(SetupFoldersSettings))]
     internal class SetupFoldersSettingsEditor : Editor

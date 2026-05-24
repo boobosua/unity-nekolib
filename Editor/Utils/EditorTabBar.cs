@@ -2,10 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     /// <summary>
-    /// Unified tab bar drawing helper for Neko editor windows.
+    /// Unified tab bar drawing helper for TRnK editor windows.
     /// </summary>
     public static class EditorTabBar
     {

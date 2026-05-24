@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.ColorPalette
+namespace TRnK.ColorPalette
 {
     public static class Swatch
     {

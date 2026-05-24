@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal enum CaptureMode { GameView, SpecificCamera }
 
@@ -13,7 +13,7 @@ namespace NekoLib
         public string saveFolder = "";
         public bool revealOnSave = true;
 
-        private const string SettingsFolder = "Assets/Plugins/NekoLib/Editor";
+        private const string SettingsFolder = "Assets/Plugins/TRnK/Toolkit/Editor";
         private const string AssetPath = SettingsFolder + "/GameScreenshotSettings.asset";
 
         public static GameScreenshotSettings GetOrCreate()
@@ -33,8 +33,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string name)

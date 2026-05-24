@@ -2,7 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class TMPTextExtensions
     {

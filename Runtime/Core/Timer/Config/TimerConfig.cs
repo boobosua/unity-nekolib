@@ -1,6 +1,6 @@
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
-    /// <summary>Global configuration for NekoLib.Timer.</summary>
+    /// <summary>Global configuration for TRnK.Timer.</summary>
     public static class TimerConfig
     {
         /// <summary>Set the initial capacity of the timer world. Default is 32.</summary>

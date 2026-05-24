@@ -5,7 +5,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal class SceneSwitcherSettingsWindow : EditorWindow
     {
@@ -26,7 +26,7 @@ namespace NekoLib
         private SceneSwitcherSettings _settings;
         private EditorBuildSettingsScene[] _buildScenes = Array.Empty<EditorBuildSettingsScene>();
 
-        [MenuItem("Tools/Neko Framework/Scene Switcher Groups")]
+        [MenuItem("Tools/TRnK/Scene Switcher Groups")]
         internal static void Open()
         {
             var win = GetWindow<SceneSwitcherSettingsWindow>("Scene Switcher Settings");

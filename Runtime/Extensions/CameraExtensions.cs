@@ -1,7 +1,7 @@
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class CameraExtensions
     {

@@ -7,7 +7,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 #endif
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
 #if ODIN_INSPECTOR
     [HideMonoScript]
@@ -49,7 +49,7 @@ namespace NekoLib
             public List<SerializedObjectEntry> Objects = new();
         }
 
-        private const string SettingsFolder = "Assets/Plugins/NekoLib/Editor";
+        private const string SettingsFolder = "Assets/Plugins/TRnK/Toolkit/Editor";
         private const string AssetPath = SettingsFolder + "/TmpFontReplacerSettings.asset";
 
         public static TmpFontReplacerSettings GetOrCreate()
@@ -75,8 +75,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string folderName)

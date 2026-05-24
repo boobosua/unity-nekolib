@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [CustomEditor(typeof(SetupPackagesSettings))]
     internal class SetupPackagesSettingsEditor : Editor

@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using NekoLib.Extensions;
+using TRnK.Extensions;
 
 using Random = UnityEngine.Random;
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

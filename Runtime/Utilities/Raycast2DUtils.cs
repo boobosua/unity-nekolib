@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

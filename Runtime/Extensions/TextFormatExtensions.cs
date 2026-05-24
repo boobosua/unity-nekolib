@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class TextFormatExtensions
     {

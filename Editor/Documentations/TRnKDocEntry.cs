@@ -2,9 +2,9 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    internal enum DocCategory { Core, Components, Extensions, Services, Utilities, EditorTools, NekoSignal, NekoFlow, NekoSerializer }
+    internal enum DocCategory { Core, Components, Extensions, Services, Utilities, EditorTools, TRnKSignal, TRnKFlow, TRnKSerializer }
     internal enum DocMemberKind { Property, Method, Callback }
 
     [Serializable]
@@ -20,7 +20,7 @@ namespace NekoLib
     }
 
     [Serializable]
-    internal sealed class NekoLibDocEntry
+    internal sealed class TRnKDocEntry
     {
         public string Title;
         public string Namespace;

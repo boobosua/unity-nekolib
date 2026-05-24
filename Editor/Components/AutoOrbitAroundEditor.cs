@@ -6,7 +6,7 @@ using UnityEngine;
 using Sirenix.OdinInspector.Editor;
 #endif
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(AutoOrbitAround))]

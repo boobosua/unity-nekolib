@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NekoLib.Pooling
+namespace TRnK.Pooling
 {
     /// <summary> A generic object pool for MonoBehaviour-derived types. Provides methods to get and release instances, with optional prewarming and max size limits. </summary>
     /// <typeparam name="T"> The type of objects to pool. Must derive from PoolableObject. </typeparam>

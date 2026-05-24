@@ -1,9 +1,9 @@
 using System;
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class NumberExtensions
     {

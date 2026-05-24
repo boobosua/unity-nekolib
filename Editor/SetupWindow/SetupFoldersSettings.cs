@@ -6,12 +6,12 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [Serializable]
     internal class SetupFoldersSettings : ScriptableObject
     {
-        private const string AssetDir = "Assets/Plugins/NekoLib/Editor";
+        private const string AssetDir = "Assets/Plugins/TRnK/Toolkit/Editor";
         private const string AssetName = "SetupFoldersSettings.asset";
 
         [Serializable]
@@ -84,8 +84,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string folderName)

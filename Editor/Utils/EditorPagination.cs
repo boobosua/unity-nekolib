@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     /// <summary>
     /// Lightweight, reusable pagination bar for Unity Editor inspectors and windows.

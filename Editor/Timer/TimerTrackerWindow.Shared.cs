@@ -1,10 +1,10 @@
 #if UNITY_EDITOR
 using System.Globalization;
-using NekoLib.Extensions;
+using TRnK.Extensions;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal partial class TimerTrackerWindow
     {

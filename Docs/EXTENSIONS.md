@@ -1,9 +1,9 @@
-# NekoLib Extensions
+# TRnK.Toolkit Extensions
 
 Extension methods for Unity and C# types.
 
 ```csharp
-using NekoLib.Extensions;
+using TRnK.Extensions;
 ```
 
 ## Unity Extensions
@@ -167,7 +167,7 @@ bool insideBox = point.IsInsideBox(center, size);             // AABB by center+
 bool insideCollider = point.IsInsideColliderBounds(collider); // AABB of a Collider
 
 // Random points
-// Plane2D enum (XY / XZ / YZ) is in NekoLib.Extensions
+// Plane2D enum (XY / XZ / YZ) is in TRnK.Extensions
 Vector3 onEdge = origin.RandomPointOnCircle(5f, Plane2D.XZ);
 Vector3 inDisk = origin.RandomPointInDisk(5f, Plane2D.XZ);
 Vector3 inRing = origin.RandomPointInAnnulus(2f, 8f, Plane2D.XZ);
@@ -200,7 +200,7 @@ MyEnum safe = "BadValue".ToEnumOrDefault(MyEnum.Default);
 ### BigNumberStyleExtensions
 
 ```csharp
-// Mini big-number formatter — no dependency on the NekoBigNumber package.
+// Mini big-number formatter — no dependency on the TRnK.BigNum package.
 // Two styles via the BigNumberStyle enum. Overloads for int, long, and decimal.
 
 // Compact: K/M/B/T then doubled-letter pairs (aa, bb, cc, ...).
@@ -240,7 +240,7 @@ MyEnum safeEnum = 999.ToEnumOrDefault(MyEnum.Default);
 ### CollectionExtensions
 
 ```csharp
-using NekoLib.Logger;
+using TRnK.Logger;
 
 // Array operations
 T randomItem = array.Rand();
@@ -364,7 +364,7 @@ Task<Task> firstCompleted = await this.WhenAny(coroutineA, coroutineB, coroutine
 
 ### TimerExtensions
 
-> Requires `using NekoLib.Timer;`
+> Requires `using TRnK.Timer;`
 
 ```csharp
 
@@ -381,7 +381,7 @@ ticker.Cancel();
 ### TaskExtensions
 
 ```csharp
-using NekoLib.Logger;
+using TRnK.Logger;
 
 // Fire-and-forget tasks
 myAsyncTask.Forget();

@@ -1,11 +1,11 @@
-# NekoLib Core
+# TRnK.Toolkit Core
 
 Core foundational systems: singletons, timers, and color swatches.
 
 ## Singletons
 
 ```csharp
-using NekoLib.Singleton;
+using TRnK.Singleton;
 ```
 
 ### PersistentSingleton
@@ -39,18 +39,18 @@ AudioManager.Instance.PlayMusic(backgroundMusic);
 ### Creating Timers
 
 ```csharp
-using NekoLib.Timer;
+using TRnK.Timer;
 ```
 
-NekoLib timers are PlayerLoop-driven (no coroutines) and come in two flavors:
+TRnK.Toolkit timers are PlayerLoop-driven (no coroutines) and come in two flavors:
 
 - `Countdown`: counts down from a duration to 0.
 - `Stopwatch`: counts up until you stop it (or a stop condition triggers).
 
-Both are lightweight `readonly struct` handles in `NekoLib.Timer`.
+Both are lightweight `readonly struct` handles in `TRnK.Timer`.
 
 ```csharp
-using NekoLib.Timer;
+using TRnK.Timer;
 using UnityEngine;
 
 // Countdown — fires OnComplete 3 times, only ticks when not paused
@@ -117,10 +117,10 @@ countdown.OnUpdateWhen(() => player.IsAlive && !game.IsPaused);
 
 ### Invoke Helpers
 
-Convenience extension methods on `MonoBehaviour` (namespace `NekoLib.Timer`) that schedule actions via the PlayerLoop timer system — no coroutines required.
+Convenience extension methods on `MonoBehaviour` (namespace `TRnK.Timer`) that schedule actions via the PlayerLoop timer system — no coroutines required.
 
 ```csharp
-using NekoLib.Timer;
+using TRnK.Timer;
 
 // Invoke once after a delay; returns a token to cancel before it fires
 TimerToken token = this.Delay(2f, () => Debug.Log("Fired after 2s"));
@@ -137,20 +137,20 @@ ticker.Cancel(); // stops the loop without invoking stop callbacks
 Notes:
 
 - All helpers use the PlayerLoop-driven driver (no MonoBehaviour `Update`).
-- Active timers can be inspected via `Window > Neko Framework > Timer Tracker`.
+- Active timers can be inspected via `Window > TRnK Framework > Timer Tracker`.
 - `Delay(delay <= 0)` fires the action immediately and returns `default` (no active timer to cancel).
 - `Repeat(interval <= 0)` throws `ArgumentException` — interval must be positive.
 
 ### Pooling
 
 ```csharp
-using NekoLib.Pooling;
+using TRnK.Pooling;
 ```
 
 A lightweight, deterministic prefab pool. Inherit from `PoolableObject` to make a MonoBehaviour poolable.
 
 ```csharp
-using NekoLib.Pooling;
+using TRnK.Pooling;
 using UnityEngine;
 
 public sealed class Bullet : PoolableObject
@@ -242,7 +242,7 @@ public sealed class HitEffect : PoolableParticle { }
 ### Color Swatch
 
 ```csharp
-using NekoLib.ColorPalette;
+using TRnK.ColorPalette;
 ```
 
 Pre-defined color constants for consistent theming.
@@ -264,13 +264,13 @@ errorText.color = Swatch.VR;
 ### Log
 
 ```csharp
-using NekoLib.Logger;
+using TRnK.Logger;
 ```
 
-Simple conditional logger. Methods are compiled only in the Editor, Development builds, or when `NEKOLIB_LOG` is defined.
+Simple conditional logger. Methods are compiled only in the Editor, Development builds, or when `TRNK_LOG` is defined.
 
 ```csharp
-using NekoLib.Logger;
+using TRnK.Logger;
 
 // Basic usage
 Log.Info("Started");

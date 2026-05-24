@@ -2,11 +2,11 @@
 
 ### Overhaul Extension Methods
 
-- Add `BigNumberStyleExtensions` for formatting `NekoBigNumber` values with configurable notation styles.
+- Add `BigNumberStyleExtensions` for formatting `TRnK.BigNum` values with configurable notation styles.
 - Refactor `CollectionExtensions`: rename index-based `Swap(int, int)` to `SwapAt(int, int)` on arrays and lists to resolve overload ambiguity with value-based `Swap(T, T)`.
 - Refactor `AnimatorExtensions`, `CameraExtensions`, `GameObjectExtensions`, `TransformExtensions`, `Vector2Extensions`, and `Vector3Extensions` with improved XML documentation and cleaner APIs.
 - Refactor `NumberExtensions`, `StringExtensions`, `TextColorizeExtensions`, `TextFormatExtensions`, `TMPTextExtensions`, `TaskExtensions`, and `TimeExtensions` for consistency and correctness.
-- Update `Docs/EXTENSIONS.md` and `NekoLibDocDatabase` to reflect all API changes.
+- Update `Docs/EXTENSIONS.md` and `TRnKDocDatabase` to reflect all API changes.
 - Bump `package.json` version.
 
 
@@ -32,7 +32,7 @@
 ### Major Update: Timer System Overhaul
 
 - Rearchitect timer internals to a flat ECS-style slot array, replacing the old per-type pool model.
-- Move all timer types and extensions into the `NekoLib.Timer` namespace.
+- Move all timer types and extensions into the `TRnK.Timer` namespace.
 - Replace `InvokeAfterDelay`, `InvokeEvery`, and `InvokeEverySeconds` with `Delay` and `Repeat`.
 - Replace `CancelHandler` with `TimerToken` readonly struct.
 - Add non-capturing generic overloads to all fluent timer callbacks to reduce allocations.
@@ -91,7 +91,7 @@
 ### Add Debug Logger
 
 - Add a simple debug logger to log messages, warnings, and errors with conditions.
-- Replace all Unity default Debug.Log with NekoLib.Logger.
+- Replace all Unity default Debug.Log with TRnK.Logger.
 
 ## [1.9.7] - 2025-10-09
 

@@ -2,7 +2,7 @@
 using System;
 using UnityEngine.Profiling;
 
-namespace NekoLib.Benchmark
+namespace TRnK.Benchmark
 {
     /// <summary> A simple utility to count GC allocations in a code block. </summary>
     public sealed class AllocCounter

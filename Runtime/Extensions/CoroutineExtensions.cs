@@ -2,10 +2,10 @@ using System;
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
-using NekoLib.Utilities;
+using TRnK.Utilities;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class CoroutineExtensions
     {

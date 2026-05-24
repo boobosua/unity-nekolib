@@ -6,9 +6,9 @@ using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-using NekoLib.Logger;
+using TRnK.Logger;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     internal class SetupWindow : EditorWindow
     {
@@ -29,7 +29,7 @@ namespace NekoLib
         private string _namespaceRootDraft;
         private bool _namespaceRootDraftDirty;
 
-        [MenuItem("Tools/Neko Framework/Project Setup", priority = 0)]
+        [MenuItem("Tools/TRnK/Project Setup", priority = 0)]
         public static void ShowWindow()
         {
             var window = GetWindow<SetupWindow>(false, WindowTitle, true);
@@ -131,7 +131,7 @@ namespace NekoLib
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                GUILayout.Label("Neko Indie • Project Setup", EditorStyles.boldLabel);
+                GUILayout.Label("TRnK Dev • Project Setup", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("A quick starter to create your preferred project folder layout.", EditorStyles.miniLabel);
             }
         }

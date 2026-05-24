@@ -1,9 +1,9 @@
-# NekoLib Components
+# TRnK.Toolkit Components
 
 MonoBehaviour components for common game functionality.
 
 ```csharp
-using NekoLib.Components;
+using TRnK.Components;
 ```
 
 ---

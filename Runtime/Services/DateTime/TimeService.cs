@@ -3,11 +3,11 @@ using System.Collections;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace NekoLib.Services
+namespace TRnK.Services
 {
     /// <summary>
     /// Provides server-synced UTC time. Fetches once via HTTP Date headers (Google/Cloudflare/Microsoft)

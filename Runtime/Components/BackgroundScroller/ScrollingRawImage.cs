@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [RequireComponent(typeof(RawImage))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Scrolling Raw Image")]
+    [AddComponentMenu("TRnK.Toolkit/Scrolling Raw Image")]
     public class ScrollingRawImage : ScrollingBackgroundBase
     {
         private RawImage _image;

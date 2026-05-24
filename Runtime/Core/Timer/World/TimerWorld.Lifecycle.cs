@@ -1,8 +1,8 @@
 using System;
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {
@@ -60,7 +60,7 @@ namespace NekoLib.Timer
             // Countdown with non-positive duration completes immediately.
             if (h.Kind == TimerKind.Countdown && _coldSlots[slot].CountdownTotal <= 0f)
             {
-                Log.Warn("[NekoLib.Timer] Countdown duration is 0; it will complete immediately.");
+                Log.Warn("[TRnK.Timer] Countdown duration is 0; it will complete immediately.");
                 h.IsRunning = true;
                 h.OnUpdate.Invoke(0f);
                 if (h.IsPendingKill) return;

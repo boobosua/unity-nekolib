@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     public static class TimerExtensions
     {

@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [RequireComponent(typeof(SpriteRenderer))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Scrolling Sprite Renderer")]
+    [AddComponentMenu("TRnK.Toolkit/Scrolling Sprite Renderer")]
     public class ScrollingSpriteRenderer : ScrollingBackgroundBase
     {
         private Material _material;

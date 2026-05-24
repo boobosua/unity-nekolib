@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     /// <summary>A timer that measures elapsed time until cancelled or its stop predicate becomes true.</summary>
     public readonly struct Stopwatch

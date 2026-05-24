@@ -1,9 +1,9 @@
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using NekoLib.Logger;
+using TRnK.Logger;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class StringExtensions
     {

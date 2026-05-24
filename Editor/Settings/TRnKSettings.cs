@@ -2,10 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    // Project-scoped settings container for NekoLib
-    internal class NekoLibSettings : ScriptableObject
+    // Project-scoped settings container for TRnK.Toolkit
+    internal class TRnKSettings : ScriptableObject
     {
         public string startupScenePath;
         public bool activateLoadedAdditiveOnSelect = false;
@@ -13,17 +13,17 @@ namespace NekoLib
         public bool hideToolbar = false;
         public bool autoReenterPlayAfterClear = true;
 
-        private const string SettingsFolder = "Assets/Plugins/NekoLib/Editor";
-        private const string AssetPath = SettingsFolder + "/NekoLibSettings.asset";
+        private const string SettingsFolder = "Assets/Plugins/TRnK/Toolkit/Editor";
+        private const string AssetPath = SettingsFolder + "/TRnKSettings.asset";
 
-        public static NekoLibSettings GetOrCreate()
+        public static TRnKSettings GetOrCreate()
         {
-            var settings = AssetDatabase.LoadAssetAtPath<NekoLibSettings>(AssetPath);
+            var settings = AssetDatabase.LoadAssetAtPath<TRnKSettings>(AssetPath);
             if (settings != null) return settings;
 
             EnsureFolders();
 
-            settings = CreateInstance<NekoLibSettings>();
+            settings = CreateInstance<TRnKSettings>();
             AssetDatabase.CreateAsset(settings, AssetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -33,8 +33,8 @@ namespace NekoLib
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "NekoLib");
-            EnsureFolder("Assets/Plugins/NekoLib", "Editor");
+            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
+            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
         }
 
         private static void EnsureFolder(string parent, string folderName)

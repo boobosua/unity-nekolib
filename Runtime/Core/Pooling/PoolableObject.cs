@@ -4,7 +4,7 @@ using System;
 using Sirenix.OdinInspector;
 #endif
 
-namespace NekoLib.Pooling
+namespace TRnK.Pooling
 {
 #if ODIN_INSPECTOR
     public abstract class PoolableObject : SerializedMonoBehaviour

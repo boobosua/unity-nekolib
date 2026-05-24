@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using NekoLib.Logger;
-using NekoLib.Utilities;
+using TRnK.Logger;
+using TRnK.Utilities;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class TransformExtensions
     {

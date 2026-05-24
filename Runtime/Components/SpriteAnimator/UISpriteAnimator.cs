@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [RequireComponent(typeof(Image))]
-    [AddComponentMenu("NekoLib/UI Sprite Animator")]
+    [AddComponentMenu("TRnK.Toolkit/UI Sprite Animator")]
     public sealed class UISpriteAnimator : SpriteAnimatorBase
     {
         [Tooltip("Optional Canvas Groups used for visibility checks. If any assigned group has alpha <= 0, animation pauses.")]

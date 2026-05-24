@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [CustomEditor(typeof(SceneSwitcherSettings))]
     internal class SceneSwitcherSettingsEditor : Editor

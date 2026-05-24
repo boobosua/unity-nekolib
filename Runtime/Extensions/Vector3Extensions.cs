@@ -1,7 +1,7 @@
-using NekoLib.Constant;
+using TRnK.Constant;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class Vector3Extensions
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     public abstract class ScrollingBackgroundBase : MonoBehaviour
     {

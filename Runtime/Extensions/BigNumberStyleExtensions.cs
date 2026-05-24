@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     /// <summary>Display style for big-number formatting.</summary>
     public enum BigNumberStyle

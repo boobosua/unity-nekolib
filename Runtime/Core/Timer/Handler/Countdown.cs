@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     /// <summary>A timer that counts down from a duration to zero.</summary>
     public readonly struct Countdown

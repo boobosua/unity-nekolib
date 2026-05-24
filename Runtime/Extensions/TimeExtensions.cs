@@ -1,11 +1,11 @@
 using System;
 using System.Text;
-using NekoLib.Constant;
-using NekoLib.Logger;
-using NekoLib.Services;
+using TRnK.Constant;
+using TRnK.Logger;
+using TRnK.Services;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class TimeExtensions
     {

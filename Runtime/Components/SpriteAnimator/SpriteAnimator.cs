@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [RequireComponent(typeof(SpriteRenderer))]
-    [AddComponentMenu("NekoLib/Sprite Animator")]
+    [AddComponentMenu("TRnK.Toolkit/Sprite Animator")]
     public sealed class SpriteAnimator : SpriteAnimatorBase
     {
         private SpriteRenderer _spriteRenderer;

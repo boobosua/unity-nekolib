@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using NekoLib.Extensions;
-using NekoLib.Logger;
-using NekoLib.Utilities;
+using TRnK.Extensions;
+using TRnK.Logger;
+using TRnK.Utilities;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace NekoLib.Services
+namespace TRnK.Services
 {
     public static class NetworkService
     {

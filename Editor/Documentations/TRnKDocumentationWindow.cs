@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
-    internal sealed class NekoLibDocumentationWindow : EditorWindow
+    internal sealed class TRnKDocumentationWindow : EditorWindow
     {
-        [MenuItem("Tools/Neko Framework/Documentation", priority = 100)]
+        [MenuItem("Tools/TRnK/Documentation", priority = 100)]
         public static void Open()
         {
-            var w = GetWindow<NekoLibDocumentationWindow>("NekoLib Docs");
+            var w = GetWindow<TRnKDocumentationWindow>("TRnK.Toolkit Docs");
             w.minSize = new Vector2(860f, 560f);
             w.Show();
         }
@@ -112,7 +112,7 @@ namespace NekoLib
 
         private void LoadDatabase()
         {
-            var entries = NekoLibDocDatabase.GetEntries();
+            var entries = TRnKDocDatabase.GetEntries();
             _db = new List<Entry>(entries.Count);
             foreach (var e in entries)
             {
@@ -210,7 +210,7 @@ namespace NekoLib
                 using (new EditorGUILayout.VerticalScope())
                 {
                     GUILayout.Space(4f);
-                    GUILayout.Label("NekoLib", new GUIStyle(EditorStyles.boldLabel)
+                    GUILayout.Label("TRnK.Toolkit", new GUIStyle(EditorStyles.boldLabel)
                     {
                         fontSize = 13,
                         normal = { textColor = TextMain }
@@ -1130,9 +1130,9 @@ namespace NekoLib
             DocCategory.Services => "◎",
             DocCategory.Utilities => "⊞",
             DocCategory.EditorTools => "◧",
-            DocCategory.NekoSignal => "◯",
-            DocCategory.NekoFlow => "↻",
-            DocCategory.NekoSerializer => "≡",
+            DocCategory.TRnKSignal => "◯",
+            DocCategory.TRnKFlow => "↻",
+            DocCategory.TRnKSerializer => "≡",
             _ => "•"
         };
 

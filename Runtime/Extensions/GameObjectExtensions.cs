@@ -1,8 +1,8 @@
-using NekoLib.ColorPalette;
-using NekoLib.Logger;
+using TRnK.ColorPalette;
+using TRnK.Logger;
 using UnityEngine;
 
-namespace NekoLib.Extensions
+namespace TRnK.Extensions
 {
     public static class GameObjectExtensions
     {

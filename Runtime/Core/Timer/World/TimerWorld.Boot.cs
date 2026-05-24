@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using NekoLib.Logger;
+using TRnK.Logger;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using UnityEngine.PlayerLoop;
 
-namespace NekoLib.Timer
+namespace TRnK.Timer
 {
     internal static partial class TimerWorld
     {
@@ -30,7 +30,7 @@ namespace NekoLib.Timer
                 var loop = PlayerLoop.GetCurrentPlayerLoop();
                 if (!InjectIntoUpdateRecursive(ref loop))
                 {
-                    Log.Error("[NekoLib.Timer] PlayerLoop injection failed: Update subsystem not found. Timers will not tick.");
+                    Log.Error("[TRnK.Timer] PlayerLoop injection failed: Update subsystem not found. Timers will not tick.");
                     return;
                 }
 
@@ -38,7 +38,7 @@ namespace NekoLib.Timer
 
                 if (!VerifyInjected())
                 {
-                    Log.Error("[NekoLib.Timer] PlayerLoop injection failed verification: TickPlayerLoop entry missing after SetPlayerLoop. Timers will not tick.");
+                    Log.Error("[TRnK.Timer] PlayerLoop injection failed verification: TickPlayerLoop entry missing after SetPlayerLoop. Timers will not tick.");
                     return;
                 }
 
@@ -46,7 +46,7 @@ namespace NekoLib.Timer
             }
             catch (Exception ex)
             {
-                Log.Error($"[NekoLib.Timer] PlayerLoop injection threw an exception. Timers will not tick. {ex}");
+                Log.Error($"[TRnK.Timer] PlayerLoop injection threw an exception. Timers will not tick. {ex}");
             }
         }
 

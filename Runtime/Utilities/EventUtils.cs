@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.Events;
 
-namespace NekoLib.Utilities
+namespace TRnK.Utilities
 {
     public static partial class Utils
     {

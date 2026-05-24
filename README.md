@@ -1,4 +1,4 @@
-# NekoLib
+# TRnK.Toolkit
 
 Essential Unity utility library: clean, modern extensions, components, and utilities for common game dev tasks.
 
@@ -28,7 +28,7 @@ Navigate to each section below for complete API reference and usage examples:
 Add this package via Unity Package Manager:
 
 ```
-https://github.com/boobosua/unity-nekolib.git
+https://github.com/boobosua/unity-trnk-toolkit.git
 ```
 
 ### Manual Installation
@@ -40,12 +40,12 @@ https://github.com/boobosua/unity-nekolib.git
 
 ## Related Packages
 
-NekoLib is part of a suite of Unity packages:
+TRnK.Toolkit is part of a suite of Unity packages:
 
-- **[NekoSerializer](https://github.com/boobosua/unity-neko-serializer)**: Serialization system (Newtonsoft.Json)
-- **[NekoSignal](https://github.com/boobosua/unity-neko-signal)**: Event/signal system
-- **[NekoFlow](https://github.com/boobosua/unity-neko-flow)**: Lightweight state machine & conditional flow helpers
-- **[NekoNav](https://github.com/boobosua/unity-neko-nav)**: Navigation — Physics2D tilemap pathfinding and BoardGrid for dynamic tactical grids
+- **[TRnK.Serializer](https://github.com/boobosua/unity-trnk-serializer)**: Serialization system (Newtonsoft.Json)
+- **[TRnK.Signal](https://github.com/boobosua/unity-trnk-signal)**: Event/signal system
+- **[TRnK.Flow](https://github.com/boobosua/unity-trnk-flow)**: Lightweight state machine & conditional flow helpers
+- **[TRnK.Nav](https://github.com/boobosua/unity-neko-nav)**: Navigation — Physics2D tilemap pathfinding and BoardGrid for dynamic tactical grids
 
 ---
 

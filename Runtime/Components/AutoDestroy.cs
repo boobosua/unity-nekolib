@@ -1,11 +1,11 @@
-using NekoLib.Timer;
+using TRnK.Timer;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace NekoLib.Components
+namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("NekoLib/Auto Destroy")]
+    [AddComponentMenu("TRnK.Toolkit/Auto Destroy")]
     public sealed class AutoDestroy : MonoBehaviour
     {
         [SerializeField, Min(0f), Tooltip("Time in seconds before the object is destroyed")]

@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace NekoLib
+namespace TRnK.Toolkit
 {
     [CustomEditor(typeof(GameScreenshotSettings))]
     internal class GameScreenshotSettingsEditor : Editor
@@ -12,7 +12,7 @@ namespace NekoLib
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "Edit these settings via Tools \u2192 Neko Framework \u2192 Screenshot \u2192 Open Settings.",
+                "Edit these settings via Tools \u2192 TRnK Framework \u2192 Screenshot \u2192 Open Settings.",
                 MessageType.Info);
 
             using (new EditorGUI.DisabledScope(true))
