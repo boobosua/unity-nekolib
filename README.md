@@ -1,4 +1,4 @@
-# TRnK.Toolkit
+# TRnK Toolkit
 
 Essential Unity utility library: clean, modern extensions, components, and utilities for common game dev tasks.
 
