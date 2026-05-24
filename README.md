@@ -42,12 +42,12 @@ https://github.com/trnkdev/unity-trnk-toolkit.git
 
 TRnK.Toolkit is part of a suite of Unity packages:
 
-- **[TRnK.Serializer](https://github.com/trnkdev/unity-trnk-serializer)**: Save/load and data serialization powered by Newtonsoft.Json.
-- **[TRnK.Signal](https://github.com/trnkdev/unity-trnk-signal)**: Type-safe event/signal bus with filters and priorities.
-- **[TRnK.Flow](https://github.com/trnkdev/unity-trnk-flow)**: Lightweight state machine and transition flow helpers.
-- **[TRnK.Nav](https://github.com/trnkdev/unity-trnk-nav)**: Navigation with Physics2D grid pathfinding and BoardGrid systems.
-- **[TRnK.Big Number](https://github.com/trnkdev/unity-trnk-big-number)**: High-range number type for idle/incremental economy systems.
-- **[TRnK.Spreadsheets](https://github.com/trnkdev/unity-trnk-spreadsheets)**: Spreadsheet-driven content pipeline for game data workflows.
+- **[TRnK Serializer](https://github.com/trnkdev/unity-trnk-serializer)**: Save/load and data serialization powered by Newtonsoft.Json.
+- **[TRnK Signal](https://github.com/trnkdev/unity-trnk-signal)**: Type-safe event/signal bus with filters and priorities.
+- **[TRnK Flow](https://github.com/trnkdev/unity-trnk-flow)**: Lightweight state machine and transition flow helpers.
+- **[TRnK Nav](https://github.com/trnkdev/unity-trnk-nav)**: Navigation with Physics2D grid pathfinding and BoardGrid systems.
+- **[TRnK Big Number](https://github.com/trnkdev/unity-trnk-big-number)**: High-range number type for idle/incremental economy systems.
+- **[TRnK Spreadsheets](https://github.com/trnkdev/unity-trnk-spreadsheets)**: Spreadsheet-driven content pipeline for game data workflows.
 
 ---
 
