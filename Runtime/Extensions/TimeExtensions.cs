@@ -1,7 +1,5 @@
 using System;
 using System.Text;
-using TRnK.Logger;
-using TRnK.Services;
 using UnityEngine;
 
 namespace TRnK.Extensions
@@ -11,6 +9,7 @@ namespace TRnK.Extensions
         private static readonly StringBuilder s_stringBuilder = new(32);
 
         #region Time to String Formatting
+
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
         public static string ToClock(this float time, bool useCeiling = true)
         {
@@ -113,98 +112,6 @@ namespace TRnK.Extensions
 
         #endregion
 
-        #region DateTime Time Calculations
-
-        /// <summary>Gets the time span elapsed from this DateTime to now (for past times).</summary>
-        public static TimeSpan TimeSince(this DateTime time)
-        {
-            return TimeService.Now - time;
-        }
-
-        /// <summary>Gets the time span elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static TimeSpan TimeSinceUtc(this DateTime time)
-        {
-            return TimeService.UtcNow - time;
-        }
-
-        /// <summary>Gets seconds elapsed from this DateTime to now (for past times).</summary>
-        public static double SecondsSince(this DateTime time)
-        {
-            var now = TimeService.Now;
-            var diff = (now - time).TotalSeconds;
-
-            if (diff < 0)
-            {
-                Log.Warn($"SecondsSince called with future time. Expected past time, got: {time}. Returning 0.");
-                return 0;
-            }
-
-            return diff;
-        }
-
-        /// <summary>Gets seconds elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double SecondsSinceUtc(this DateTime time)
-        {
-            var now = TimeService.UtcNow;
-            var diff = (now - time).TotalSeconds;
-
-            if (diff < 0)
-            {
-                Log.Warn($"SecondsSinceUtc called with future time. Expected past time, got: {time}. Returning 0.");
-                return 0;
-            }
-
-            return diff;
-        }
-
-        #endregion
-
-        #region DateTime Future Time Calculations
-
-        /// <summary>Gets the time span from this DateTime to now (for future times).</summary>
-        public static TimeSpan TimeFromNow(this DateTime time)
-        {
-            return time - TimeService.Now;
-        }
-
-        /// <summary>Gets the time span from this DateTime to now (UTC, for past times).</summary>
-        public static TimeSpan TimeFromNowUtc(this DateTime time)
-        {
-            return time - TimeService.UtcNow;
-        }
-
-        /// <summary>Gets seconds from now until this DateTime (for future times).</summary>
-        public static double SecondsFromNow(this DateTime time)
-        {
-            var now = TimeService.Now;
-            var diff = (time - now).TotalSeconds;
-
-            if (diff < 0)
-            {
-                Log.Warn($"SecondsFromNow called with past time. Expected future time, got: {time}. Returning 0.");
-                return 0;
-            }
-
-            return diff;
-        }
-
-        /// <summary>Gets seconds from now until this DateTime (UTC, for future times).</summary>
-        public static double SecondsFromNowUtc(this DateTime time)
-        {
-            var now = TimeService.UtcNow;
-            var diff = (time - now).TotalSeconds;
-
-            if (diff < 0)
-            {
-                Log.Warn($"SecondsFromNowUtc called with past time. Expected future time, got: {time}. Returning 0.");
-                return 0;
-            }
-
-            return diff;
-        }
-
-        #endregion
-
         #region DateTime Manipulation
 
         /// <summary>Returns a new DateTime with modified date components (day clamps to the new month's max).</summary>
@@ -252,19 +159,6 @@ namespace TRnK.Extensions
             return time.Day == 1 && time.IsStartOfDay();
         }
 
-        /// <summary>Checks if this DateTime represents today.</summary>
-        public static bool IsToday(this DateTime time)
-        {
-            return time.Date == TimeService.Today;
-        }
-
-        /// <summary>Checks if this DateTime represents today (UTC).</summary>
-        public static bool IsTodayUtc(this DateTime time)
-        {
-            return time.Date == TimeService.TodayUtc;
-        }
-
         #endregion
-
     }
 }

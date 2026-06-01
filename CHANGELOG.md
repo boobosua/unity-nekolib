@@ -1,3 +1,29 @@
+## [2.5.3] - 2026-06-01
+
+### Breaking Changes: Services Migrated to TRnK Game System
+
+`TimeService` and `NetworkService` have been removed from TRnK Toolkit and now live in dedicated packages inside **TRnK Game System**:
+
+| Old | New package | New class |
+|---|---|---|
+| `TRnK.Services.TimeService` | `TRnK Game System / ServerTime` | `TRnK.ServerTime.ServerTimeService` |
+| `TRnK.Services.NetworkService` | `TRnK Game System / Network` | `TRnK.Network.NetworkService` |
+
+**Migration steps:**
+
+1. Import the `ServerTime` and/or `Network` systems from **TRnK Game System**.
+2. Replace `using TRnK.Services;` with `using TRnK.ServerTime;` and/or `using TRnK.Network;`.
+3. Rename all `TimeService.*` call sites to `ServerTimeService.*`.
+4. `NetworkService` API is unchanged — only the namespace changes to `TRnK.Network`.
+
+**Also changed:**
+
+- `TimeExtensions` methods that required `TimeService` (`TimeSince`, `SecondsSince`, `TimeFromNow`, `SecondsFromNow`, `IsToday`, and UTC variants) have moved to `ServerTimeExtensions` in the `TRnK.ServerTime` namespace. Add `using TRnK.ServerTime;` to restore them.
+- `TimeExtensions` in Toolkit retains all pure formatting and manipulation methods (`ToClock`, `ToShortClock`, `ToReadableFormat`, `WithDate`, `WithTime`, `IsStartOfDay`, `IsStartOfWeek`, `IsStartOfMonth`) with no changes.
+- Both services now load configuration from a `ScriptableObject` asset at `Resources/TRnK/` (urls, timeouts, poll interval).
+
+---
+
 ## [2.4.2] - 2026-05-18
 
 ### Overhaul Extension Methods
