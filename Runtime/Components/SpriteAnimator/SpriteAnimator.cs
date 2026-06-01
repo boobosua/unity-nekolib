@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TRnK.Components
 {
     [RequireComponent(typeof(SpriteRenderer))]
-    [AddComponentMenu("TRnK.Toolkit/Sprite Animator")]
+    [AddComponentMenu("TRnK/Sprite Animator")]
     public sealed class SpriteAnimator : SpriteAnimatorBase
     {
         private SpriteRenderer _spriteRenderer;

@@ -317,10 +317,10 @@ namespace TRnK.Extensions
             return time.TimeOfDay == TimeSpan.Zero;
         }
 
-        /// <summary>Checks if the DateTime is at the start of the week (Monday 00:00:00).</summary>
-        public static bool IsStartOfWeek(this DateTime time)
+        /// <summary>Checks if the DateTime is at the start of the week (00:00:00 on the given first day; defaults to Monday).</summary>
+        public static bool IsStartOfWeek(this DateTime time, DayOfWeek firstDay = DayOfWeek.Monday)
         {
-            return time.DayOfWeek == DayOfWeek.Monday && time.IsStartOfDay();
+            return time.DayOfWeek == firstDay && time.IsStartOfDay();
         }
 
         /// <summary>Checks if the DateTime is at the start of the month (1st day 00:00:00).</summary>

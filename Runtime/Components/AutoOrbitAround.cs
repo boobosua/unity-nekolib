@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Auto Orbit Around")]
+    [AddComponentMenu("TRnK/Auto Orbit Around")]
     public sealed class AutoOrbitAround : MonoBehaviour
     {
         private enum FacingMode

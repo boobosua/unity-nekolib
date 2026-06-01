@@ -5,7 +5,7 @@ namespace TRnK.Components
 {
     [RequireComponent(typeof(Image))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Scrolling Image")]
+    [AddComponentMenu("TRnK/Scrolling Image")]
     public class ScrollingImage : ScrollingBackgroundBase
     {
         private Material _material;

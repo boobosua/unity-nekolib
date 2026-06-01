@@ -2,10 +2,17 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 using TRnK.Logger;
-using TRnK.Utilities;
+using UnityEngine;
 
 namespace TRnK.Extensions
 {
+    internal class YieldTask : CustomYieldInstruction
+    {
+        public Task Task { get; }
+        public YieldTask(Task task) { Task = task; }
+        public override bool keepWaiting => !Task.IsCompleted;
+    }
+
     public static class TaskExtensions
     {
         /// <summary>Extension method to safely ignore a Task and handle exceptions.</summary>

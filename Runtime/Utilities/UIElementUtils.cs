@@ -8,7 +8,14 @@ namespace TRnK.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>Returns 'true' if we touched or hovering on Unity UI element.</summary>
+        /// <summary>Returns 'true' if the pointer is over any Unity UI element.</summary>
+        public static bool IsPointerOverUI()
+        {
+            if (EventSystem.current == null) return false;
+            return EventSystem.current.IsPointerOverGameObject();
+        }
+
+        /// <summary>Returns 'true' if the pointer is over a Unity UI element on the given layer.</summary>
         public static bool IsPointerOverUI(LayerMask layer)
         {
             var eventSystemRaycastResults = GetEventSystemRaycastResults();
@@ -26,7 +33,7 @@ namespace TRnK.Utilities
         }
 
         /// <summary>Gets all event system raycast results of current mouse or touch position.</summary>
-        private static List<RaycastResult> GetEventSystemRaycastResults()
+        public static List<RaycastResult> GetEventSystemRaycastResults()
         {
             if (EventSystem.current == null)
             {

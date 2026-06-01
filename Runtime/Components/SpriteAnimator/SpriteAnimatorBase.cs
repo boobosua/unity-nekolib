@@ -244,6 +244,12 @@ namespace TRnK.Components
             _frameRate = Mathf.Max(0f, newFrameRate);
         }
 
+        /// <summary>Set the speed multiplier of the animation.</summary>
+        public void SetSpeedMultiplier(float multiplier)
+        {
+            _speedMultiplier = Mathf.Max(0f, multiplier);
+        }
+
         /// <summary>Go to a specific frame in the animation.</summary>
         public void GoToFrame(int frameIndex)
         {

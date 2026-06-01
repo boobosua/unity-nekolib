@@ -4,7 +4,7 @@ namespace TRnK.Components
 {
     [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Scrolling Mesh Renderer")]
+    [AddComponentMenu("TRnK/Scrolling Mesh Renderer")]
     public class ScrollingMeshRenderer : ScrollingBackgroundBase
     {
         private Material _material;

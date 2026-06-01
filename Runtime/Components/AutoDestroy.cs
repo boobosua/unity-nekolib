@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Auto Destroy")]
+    [AddComponentMenu("TRnK/Auto Destroy")]
     public sealed class AutoDestroy : MonoBehaviour
     {
         [SerializeField, Min(0f), Tooltip("Time in seconds before the object is destroyed")]

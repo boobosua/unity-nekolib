@@ -750,6 +750,7 @@ anim.Play(SpriteAnimatorLoopMode.Loop);            // explicit loop
 anim.Restart();
 anim.Stop();
 anim.SetFrameRate(24f);
+anim.SetSpeedMultiplier(2f);
 anim.GoToFrame(5);
 anim.SetFrameRate(0f);    // freeze on current frame
 
@@ -827,6 +828,16 @@ anim.SetFrameRate(0f);    // freeze on current frame"
                         new DocMember
                         {
                             Kind = DocMemberKind.Method,
+                            Signature = "SetSpeedMultiplier(float multiplier)",
+                            Summary = "Scales the frame rate by a multiplier. 1 = normal speed, 2 = double, 0 = freeze.",
+                            Code =
+@"anim.SetSpeedMultiplier(2f);  // double speed
+anim.SetSpeedMultiplier(0.5f); // half speed
+anim.SetSpeedMultiplier(0f);   // freeze"
+                        },
+                        new DocMember
+                        {
+                            Kind = DocMemberKind.Method,
                             Signature = "GoToFrame(int index)",
                             Summary = "Jumps to a specific frame index without changing play state.",
                             Code =
@@ -876,10 +887,11 @@ anim.Stop();
 anim.Play(SpriteAnimatorLoopMode.Loop);
 anim.Stop();
 anim.Restart();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "SetFrameRate(float fps) / GoToFrame(int index)",
-                            Summary = "Change playback speed or jump to a specific frame.",
+                        new DocMember { Kind = DocMemberKind.Method, Signature = "SetFrameRate(float fps) / SetSpeedMultiplier(float) / GoToFrame(int index)",
+                            Summary = "Change playback speed, scale it by a multiplier, or jump to a specific frame.",
                             Code =
 @"anim.SetFrameRate(12f);
+anim.SetSpeedMultiplier(2f);
 anim.GoToFrame(0);" },
                         new DocMember { Kind = DocMemberKind.Callback, Signature = "OnCycleComplete",
                             Summary = "UnityEvent fired at the end of each animation cycle.",
@@ -969,7 +981,7 @@ ad.OnBeforeDestroy.AddListener(() =>
                     Title = "LookAtCamera",
                     Namespace = "TRnK.Components",
                     Summary = "Makes a GameObject face the camera every frame. Four facing modes selectable in the inspector.",
-                    Description = "Modes: LookAt, LookAtInverted, CameraForward, CameraForwardInverted. Uses Camera.main by default. Override via inspector.",
+                    Description = "Modes: LookAt (face camera position), LookAtInverted (face away), CameraForward (match camera forward, billboard-parallel), CameraForwardInverted (match camera backward). Uses Camera.main by default. Override via inspector.",
                     Code =
 @"// Pure inspector setup — no code required.
 // Use Custom Camera + Camera To Look At to override Camera.main.",
@@ -1902,58 +1914,6 @@ character.MoveTo(ground);" },
 @"Ray ray = Utils.GetMouseRay();
 if (Physics.Raycast(ray, out RaycastHit hit))
     Debug.Log(hit.collider.name);" },
-                    }
-                },
-                new TRnKDocEntry
-                {
-                    Title = "Raycast2D / Raycast3D Utils",
-                    Namespace = "TRnK.Utilities",
-                    Summary = "IsPointerOver* helpers for 2D/3D objects with optional layer mask, out-collider, and component retrieval.",
-                    Description = "Overloads include: out Collider/RaycastHit; generic IsPointerOver2DObject<T>/IsPointerOver3DObject<T> for direct component access. UIElementUtils.IsPointerOverUI checks UI layers.",
-                    Code =
-@"bool over2D = Utils.IsPointerOverAny2DObject();
-bool over   = Utils.IsPointerOverAny2DObject(
-    LayerMask.GetMask(""Interactive""));
-bool hit    = Utils.IsPointerOverAny2DObject(out Collider2D col);
-bool hasBtn = Utils.IsPointerOver2DObject<Button>(out Button btn);
-
-bool over3D = Utils.IsPointerOverAny3DObject();
-bool hit3D  = Utils.IsPointerOverAny3DObject(out RaycastHit rh);
-bool hasI   = Utils.IsPointerOver3DObject<Interactable>(
-    out Interactable i);
-
-bool overUI = Utils.IsPointerOverUI(LayerMask.GetMask(""UI""));",
-                    Tags = new[] { "Raycast", "Input", "2D", "3D" },
-                    Category = DocCategory.Utilities,
-                    Members = new[]
-                    {
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOverAny2DObject()",
-                            Summary = "Returns true if the mouse is over any 2D collider.",
-                            Code = @"if (Utils.IsPointerOverAny2DObject()) HandleClick();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOverAny2DObject(LayerMask layerMask)",
-                            Summary = "Returns true if the mouse is over a 2D collider on the specified layers.",
-                            Code = @"bool hit = Utils.IsPointerOverAny2DObject(LayerMask.GetMask(""Enemy""));" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOverAny2DObject(out Collider2D)",
-                            Summary = "Returns true and outputs the first hit 2D collider.",
-                            Code =
-@"if (Utils.IsPointerOverAny2DObject(out Collider2D col))
-    col.GetComponent<Enemy>()?.TakeDamage();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOver2DObject<T>(out T)",
-                            Summary = "Returns true if the mouse hits a 2D collider with component T, and outputs it.",
-                            Code =
-@"if (Utils.IsPointerOver2DObject<Enemy>(out Enemy e))
-    e.ShowTooltip();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOverAny3DObject()",
-                            Summary = "Returns true if the mouse ray hits any 3D collider.",
-                            Code = @"if (Utils.IsPointerOverAny3DObject()) ShowCursor(CursorType.Hand);" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOver3DObject<T>(out T)",
-                            Summary = "Returns true if the mouse ray hits a 3D collider with component T, and outputs it.",
-                            Code =
-@"if (Utils.IsPointerOver3DObject<Interactable>(out var obj))
-    obj.Highlight();" },
-                        new DocMember { Kind = DocMemberKind.Method, Signature = "IsPointerOverUI(LayerMask layerMask)",
-                            Summary = "Returns true if the pointer is currently over a UI element on the given layer mask.",
-                            Code = @"if (Utils.IsPointerOverUI(LayerMask.GetMask(""UI""))) return;" },
                     }
                 },
                 new TRnKDocEntry

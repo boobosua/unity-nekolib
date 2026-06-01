@@ -4,7 +4,7 @@ namespace TRnK.Components
 {
     [RequireComponent(typeof(SpriteRenderer))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Scrolling Sprite Renderer")]
+    [AddComponentMenu("TRnK/Scrolling Sprite Renderer")]
     public class ScrollingSpriteRenderer : ScrollingBackgroundBase
     {
         private Material _material;

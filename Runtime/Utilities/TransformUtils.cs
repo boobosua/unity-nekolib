@@ -7,12 +7,10 @@ namespace TRnK.Utilities
 {
     public static partial class Utils
     {
-        /// <summary>Returns the angle of a Vector3 in degrees.</summary>
-        public static float GetAngleFromVector(Vector3 vector3)
+        /// <summary>Returns the angle of a Vector2 in degrees.</summary>
+        public static float GetAngleFromVector(Vector2 vector)
         {
-            var radian = Mathf.Atan2(vector3.y, vector3.x);
-            var degrees = radian * Mathf.Rad2Deg;
-            return degrees;
+            return Mathf.Atan2(vector.y, vector.x) * Mathf.Rad2Deg;
         }
 
         private static readonly Vector2 s_defaultAngleRange = new(0f, 360f);

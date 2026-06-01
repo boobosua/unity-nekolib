@@ -5,15 +5,15 @@ using UnityEngine;
 namespace TRnK.Components
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Look At Camera")]
+    [AddComponentMenu("TRnK/Look At Camera")]
     public sealed class LookAtCamera : MonoBehaviour
     {
         private enum Mode
         {
-            LookAt, // Look at camera center point.
-            LookAtInverted, // Look at camera center point in an opposite direction.
-            CameraForward, // Look straight at camera in X position only.
-            CameraForwardInverted // Look straight at camera in X position only but in an opposite direction.
+            LookAt,                // Rotate to face the camera's position.
+            LookAtInverted,        // Rotate to face away from the camera's position.
+            CameraForward,         // Match the camera's forward direction (billboard-parallel).
+            CameraForwardInverted  // Match the camera's backward direction.
         }
 
         [SerializeField] private Mode _mode;

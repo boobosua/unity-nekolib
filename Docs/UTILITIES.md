@@ -29,7 +29,7 @@ yield return Utils.GetWaitForSecondsRealtime(2.0f);
 #### GetAngleFromVector()
 
 ```csharp
-// Get angle in degrees from Vector3
+// Get angle in degrees from Vector2
 float angle = Utils.GetAngleFromVector(direction);
 ```
 
@@ -177,87 +177,6 @@ yield return new YieldTask(myAsyncTask);
 ```
 
 ## Raycast Utilities
-
-### Raycast2DUtils
-
-#### IsPointerOverAny2DObject()
-
-```csharp
-// Check if mouse is over any 2D collider
-bool isOverObject = Utils.IsPointerOverAny2DObject();
-```
-
-#### IsPointerOverAny2DObject() with layer mask
-
-```csharp
-// Check if mouse is over any 2D collider with layer filtering
-bool isOverObjectFiltered = Utils.IsPointerOverAny2DObject(LayerMask.GetMask("Interactive"));
-```
-
-#### IsPointerOverAny2DObject() with camera
-
-```csharp
-// Check if mouse is over any 2D collider with specific camera
-bool isOverObjectCustom = Utils.IsPointerOverAny2DObject(myCamera);
-```
-
-#### IsPointerOverAny2DObject() with output
-
-```csharp
-// Check if mouse is over any 2D collider and get the collider
-bool isOver = Utils.IsPointerOverAny2DObject(out Collider2D hit);
-```
-
-#### IsPointerOver2DObject() with component output
-
-```csharp
-// Check if mouse is over object and get a component of type T
-bool isOver = Utils.IsPointerOver2DObject<Button>(out Button button);
-```
-
-### Raycast3DUtils
-
-#### IsPointerOverAny3DObject()
-
-```csharp
-// Check if mouse is over any 3D collider
-bool isOverObject = Utils.IsPointerOverAny3DObject();
-```
-
-#### IsPointerOverAny3DObject() with layer mask
-
-```csharp
-// Check if mouse is over any 3D collider with layer filtering
-bool isOverObjectFiltered = Utils.IsPointerOverAny3DObject(LayerMask.GetMask("Interactive"));
-```
-
-#### IsPointerOverAny3DObject() with distance
-
-```csharp
-// Check if mouse is over any 3D collider within distance
-bool isOverObjectNear = Utils.IsPointerOverAny3DObject(50f);
-```
-
-#### IsPointerOverAny3DObject() with camera
-
-```csharp
-// Check if mouse is over any 3D collider with specific camera
-bool isOverObjectCustom = Utils.IsPointerOverAny3DObject(myCamera);
-```
-
-#### IsPointerOverAny3DObject() with output
-
-```csharp
-// Check if mouse is over any 3D collider and get raycast info
-bool isOver = Utils.IsPointerOverAny3DObject(out RaycastHit hit);
-```
-
-#### IsPointerOver3DObject() with component output
-
-```csharp
-// Check if mouse is over object and get a component of type T
-bool isOver = Utils.IsPointerOver3DObject<Interactable>(out Interactable interactable);
-```
 
 ### UIElementUtils
 

@@ -5,7 +5,7 @@ namespace TRnK.Components
 {
     [RequireComponent(typeof(RawImage))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("TRnK.Toolkit/Scrolling Raw Image")]
+    [AddComponentMenu("TRnK/Scrolling Raw Image")]
     public class ScrollingRawImage : ScrollingBackgroundBase
     {
         private RawImage _image;

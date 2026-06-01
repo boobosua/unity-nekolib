@@ -21,6 +21,7 @@ animator.PlayOneShot();          // Once mode, then stops
 animator.Restart();
 animator.Stop();
 animator.SetFrameRate(24f);
+animator.SetSpeedMultiplier(2f); // Double speed
 animator.GoToFrame(5);
 animator.SetFrameRate(0f);       // Freezes on current frame
 
@@ -117,10 +118,10 @@ Makes a GameObject face the camera every frame. Four modes selectable in the ins
 
 | Mode                    | Behaviour                               |
 | ----------------------- | --------------------------------------- |
-| `LookAt`                | Faces towards the camera position       |
-| `LookAtInverted`        | Faces away from the camera              |
-| `CameraForward`         | Aligns forward with camera's forward    |
-| `CameraForwardInverted` | Aligns forward against camera's forward |
+| `LookAt`                | Rotates to face the camera's position        |
+| `LookAtInverted`        | Rotates to face away from the camera         |
+| `CameraForward`         | Matches the camera's forward (billboard-parallel) |
+| `CameraForwardInverted` | Matches the camera's backward direction      |
 
 Optionally override the camera via `Use Custom Camera` + `Camera To Look At` in the inspector.
 

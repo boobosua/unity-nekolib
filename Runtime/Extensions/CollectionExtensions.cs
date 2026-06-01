@@ -41,22 +41,19 @@ namespace TRnK.Extensions
             return result;
         }
 
-        /// <summary>Swaps two elements in the array by index.</summary>
-        public static T[] SwapAt<T>(this T[] arr, int aIndex, int bIndex)
+        /// <summary>Swaps two elements in the array by index, in place.</summary>
+        public static void SwapAt<T>(this T[] arr, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= arr.Length || bIndex < 0 || bIndex >= arr.Length)
                 throw new IndexOutOfRangeException($"Index {aIndex} or {bIndex} is out of bounds of array of length {arr.Length}");
 
-            if (aIndex == bIndex)
-                return arr.Clone() as T[];
+            if (aIndex == bIndex) return;
 
-            T[] result = arr.Clone() as T[];
-            (result[bIndex], result[aIndex]) = (result[aIndex], result[bIndex]);
-            return result;
+            (arr[bIndex], arr[aIndex]) = (arr[aIndex], arr[bIndex]);
         }
 
-        /// <summary>Swaps two elements in the array.</summary>
-        public static T[] Swap<T>(this T[] arr, T a, T b)
+        /// <summary>Swaps two elements in the array by value, in place.</summary>
+        public static void Swap<T>(this T[] arr, T a, T b)
         {
             var eq = EqualityComparer<T>.Default;
             if (eq.Equals(a, default) && a is null) throw new ArgumentNullException(nameof(a));
@@ -70,7 +67,7 @@ namespace TRnK.Extensions
             if (bIndex == -1)
                 throw new ArgumentException($"Element '{b}' not found in array", nameof(b));
 
-            return SwapAt(arr, aIndex, bIndex);
+            arr.SwapAt(aIndex, bIndex);
         }
 
         /// <summary>Checks if the array contains any null elements.</summary>
@@ -253,22 +250,19 @@ namespace TRnK.Extensions
             return result;
         }
 
-        /// <summary>Swaps two elements in the list by index.</summary>
-        public static List<T> SwapAt<T>(this List<T> list, int aIndex, int bIndex)
+        /// <summary>Swaps two elements in the list by index, in place.</summary>
+        public static void SwapAt<T>(this List<T> list, int aIndex, int bIndex)
         {
             if (aIndex < 0 || aIndex >= list.Count || bIndex < 0 || bIndex >= list.Count)
                 throw new IndexOutOfRangeException($"Index {aIndex} or {bIndex} is out of bounds of list of length {list.Count}");
 
-            if (aIndex == bIndex)
-                return new List<T>(list);
+            if (aIndex == bIndex) return;
 
-            List<T> result = new(list);
-            (result[bIndex], result[aIndex]) = (result[aIndex], result[bIndex]);
-            return result;
+            (list[bIndex], list[aIndex]) = (list[aIndex], list[bIndex]);
         }
 
-        /// <summary>Swaps two elements in the list.</summary>
-        public static List<T> Swap<T>(this List<T> list, T a, T b)
+        /// <summary>Swaps two elements in the list by value, in place.</summary>
+        public static void Swap<T>(this List<T> list, T a, T b)
         {
             var eq = EqualityComparer<T>.Default;
             if (eq.Equals(a, default) && a is null) throw new ArgumentNullException(nameof(a));
@@ -282,7 +276,7 @@ namespace TRnK.Extensions
             if (bIndex == -1)
                 throw new ArgumentException($"Element '{b}' not found in list", nameof(b));
 
-            return SwapAt(list, aIndex, bIndex);
+            list.SwapAt(aIndex, bIndex);
         }
 
         /// <summary>Checks if the list contains any null elements.</summary>

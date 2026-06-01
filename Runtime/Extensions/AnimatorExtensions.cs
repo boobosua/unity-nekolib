@@ -18,20 +18,6 @@ namespace TRnK.Extensions
             return 0f;
         }
 
-        /// <summary>Returns the clip length in seconds for the given clip-name hash.</summary>
-        public static float GetAnimationLength(this Animator animator, int clipNameHash)
-        {
-            if (animator == null || animator.runtimeAnimatorController == null) return 0f;
-
-            foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
-            {
-                if (Animator.StringToHash(clip.name) == clipNameHash)
-                    return clip.length;
-            }
-
-            return 0f;
-        }
-
         /// <summary>Check if the animator is currently playing a specific animation by name.</summary>
         public static bool IsPlayingAnimation(this Animator animator, string animName, int layerIndex = 0)
         {

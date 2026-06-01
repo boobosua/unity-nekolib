@@ -4,7 +4,7 @@ using UnityEngine.UI;
 namespace TRnK.Components
 {
     [RequireComponent(typeof(Image))]
-    [AddComponentMenu("TRnK.Toolkit/UI Sprite Animator")]
+    [AddComponentMenu("TRnK/UI Sprite Animator")]
     public sealed class UISpriteAnimator : SpriteAnimatorBase
     {
         [Tooltip("Optional Canvas Groups used for visibility checks. If any assigned group has alpha <= 0, animation pauses.")]
