@@ -61,8 +61,7 @@ namespace TRnK.Toolkit
 
             settings = CreateInstance<TmpFontReplacerSettings>();
             AssetDatabase.CreateAsset(settings, AssetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            EditorAssetUtils.SaveAndRefresh();
             return settings;
         }
 
@@ -72,19 +71,7 @@ namespace TRnK.Toolkit
             AssetDatabase.SaveAssetIfDirty(this);
         }
 
-        private static void EnsureFolders()
-        {
-            EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
-            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
-        }
-
-        private static void EnsureFolder(string parent, string folderName)
-        {
-            string full = parent + "/" + folderName;
-            if (!AssetDatabase.IsValidFolder(full))
-                AssetDatabase.CreateFolder(parent, folderName);
-        }
+        private static void EnsureFolders() => EditorAssetUtils.EnsureFolderPath(SettingsFolder);
     }
 }
 #endif

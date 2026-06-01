@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace TRnK.Toolkit
 {
-    [CustomEditor(typeof(SetupPackagesSettings))]
-    internal class SetupPackagesSettingsEditor : Editor
+    [CustomEditor(typeof(PackagesSettings))]
+    internal class PackagesSettingsEditor : Editor
     {
         public override void OnInspectorGUI()
         {

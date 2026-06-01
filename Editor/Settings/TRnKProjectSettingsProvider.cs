@@ -16,9 +16,7 @@ namespace TRnK.Toolkit
                 {
                     var settings = TRnKSettings.GetOrCreate();
 
-                    const float desiredLabelWidth = 300f;
-                    float oldLabelWidth = EditorGUIUtility.labelWidth;
-                    EditorGUIUtility.labelWidth = desiredLabelWidth;
+                    using var labelScope = new LabelWidthScope(300f);
 
                     EditorGUILayout.BeginVertical("box");
 
@@ -27,8 +25,7 @@ namespace TRnK.Toolkit
                     if (EditorGUI.EndChangeCheck())
                     {
                         settings.hideToolbar = hideToolbar;
-                        EditorUtility.SetDirty(settings);
-                        AssetDatabase.SaveAssets();
+                        EditorAssetUtils.MarkDirtyAndSave(settings);
                         bool enabled = !hideToolbar;
                         SceneSwitcherToolbar.ApplyPreferenceChange(enabled);
                         TimeScaleTool.ApplyPreferenceChange(enabled);
@@ -39,7 +36,7 @@ namespace TRnK.Toolkit
                     {
                         EditorGUI.BeginChangeCheck();
                         bool act = EditorGUILayout.Toggle(new GUIContent("Prefer Activating Loaded Additives", "If selected scene is already loaded additively, make it active instead of reopening."), settings.activateLoadedAdditiveOnSelect);
-                        if (EditorGUI.EndChangeCheck()) { settings.activateLoadedAdditiveOnSelect = act; EditorUtility.SetDirty(settings); AssetDatabase.SaveAssets(); }
+                        if (EditorGUI.EndChangeCheck()) { settings.activateLoadedAdditiveOnSelect = act; EditorAssetUtils.MarkDirtyAndSave(settings); }
 
                         EditorGUI.BeginChangeCheck();
                         int maxVal = EditorGUILayout.IntSlider(new GUIContent("Max Time Scale", "Maximum value for the Time Scale slider (10–100)."), Mathf.Clamp(settings.timeScaleMax, 10, 100), 10, 100);
@@ -53,11 +50,10 @@ namespace TRnK.Toolkit
 
                         EditorGUI.BeginChangeCheck();
                         bool ar = EditorGUILayout.Toggle(new GUIContent("Auto re-enter Play Mode after clearing prefs", "After clearing PlayerPrefs, automatically enter Play Mode if previously playing or explicitly requested."), settings.autoReenterPlayAfterClear);
-                        if (EditorGUI.EndChangeCheck()) { settings.autoReenterPlayAfterClear = ar; EditorUtility.SetDirty(settings); AssetDatabase.SaveAssets(); }
+                        if (EditorGUI.EndChangeCheck()) { settings.autoReenterPlayAfterClear = ar; EditorAssetUtils.MarkDirtyAndSave(settings); }
                     }
 
                     EditorGUILayout.EndVertical();
-                    EditorGUIUtility.labelWidth = oldLabelWidth;
                 },
                 keywords = new System.Collections.Generic.HashSet<string>(new[] { "TRnK.Toolkit", "Scene", "Toolbar", "TimeScale", "PlayerPrefs" })
             };

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace TRnK.Toolkit
 {
-    internal static class SetupPackagesTool
+    internal static class PackagesTool
     {
         /// <summary>
         /// Normalize a Git URL to a comparable form (lowercase host/path, strip scheme and .git, unify separators).

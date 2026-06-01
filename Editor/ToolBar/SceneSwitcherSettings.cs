@@ -35,24 +35,11 @@ namespace TRnK.Toolkit
 
             settings = CreateInstance<SceneSwitcherSettings>();
             AssetDatabase.CreateAsset(settings, AssetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            EditorAssetUtils.SaveAndRefresh();
             return settings;
         }
 
-        private static void EnsureFolders()
-        {
-            EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
-            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
-        }
-
-        private static void EnsureFolder(string parent, string name)
-        {
-            string full = parent + "/" + name;
-            if (!AssetDatabase.IsValidFolder(full))
-                AssetDatabase.CreateFolder(parent, name);
-        }
+        private static void EnsureFolders() => EditorAssetUtils.EnsureFolderPath(SettingsFolder);
     }
 }
 #endif

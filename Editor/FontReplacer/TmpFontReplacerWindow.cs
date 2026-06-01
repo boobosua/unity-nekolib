@@ -578,12 +578,12 @@ namespace TRnK.Toolkit
 
             EnsureStyles();
             DrawFontSection();
-            DrawSeparator();
+            EditorGUIUtils.DrawHorizontalSeparator();
             DrawExclusionSection();
-            DrawSeparator();
+            EditorGUIUtils.DrawHorizontalSeparator();
             DrawAssetSection();
             GUILayout.FlexibleSpace();
-            DrawSeparator();
+            EditorGUIUtils.DrawHorizontalSeparator();
             DrawFooter();
         }
 
@@ -599,16 +599,6 @@ namespace TRnK.Toolkit
                 title, EditorStyles.boldLabel);
         }
 
-        private static void DrawSeparator()
-        {
-            EditorGUILayout.Space(2);
-            EditorGUI.DrawRect(
-                GUILayoutUtility.GetRect(0f, 1f, GUILayout.ExpandWidth(true)),
-                EditorGUIUtility.isProSkin
-                    ? new Color(0.13f, 0.13f, 0.13f)
-                    : new Color(0.6f, 0.6f, 0.6f));
-            EditorGUILayout.Space(2);
-        }
 
         // -------------------------------------------------------------------------
         // Section 1 — Font Settings

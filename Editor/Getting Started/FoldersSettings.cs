@@ -9,10 +9,10 @@ using UnityEngine;
 namespace TRnK.Toolkit
 {
     [Serializable]
-    internal class SetupFoldersSettings : ScriptableObject
+    internal class FoldersSettings : ScriptableObject
     {
         private const string AssetDir = "Assets/Plugins/TRnK/Toolkit/Editor";
-        private const string AssetName = "SetupFoldersSettings.asset";
+        private const string AssetName = "FoldersSettings.asset";
 
         [Serializable]
         internal class FolderOption
@@ -63,16 +63,16 @@ namespace TRnK.Toolkit
             };
         }
 
-        public static SetupFoldersSettings LoadOrCreate()
+        public static FoldersSettings LoadOrCreate()
         {
             string assetPath = Path.Combine(AssetDir, AssetName).Replace("\\", "/");
-            var settings = AssetDatabase.LoadAssetAtPath<SetupFoldersSettings>(assetPath);
+            var settings = AssetDatabase.LoadAssetAtPath<FoldersSettings>(assetPath);
             if (settings != null)
                 return settings;
 
             EnsureFolders();
 
-            settings = CreateInstance<SetupFoldersSettings>();
+            settings = CreateInstance<FoldersSettings>();
             settings.SetDefaults();
             // initialize namespace root from project settings or derived default
             settings._namespaceRoot = settings.DeriveInitialNamespaceRoot();
@@ -81,21 +81,7 @@ namespace TRnK.Toolkit
             return settings;
         }
 
-        private static void EnsureFolders()
-        {
-            EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
-            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
-        }
-
-        private static void EnsureFolder(string parent, string folderName)
-        {
-            string full = parent.EndsWith("/") ? parent + folderName : parent + "/" + folderName;
-            if (AssetDatabase.IsValidFolder(full))
-                return;
-
-            AssetDatabase.CreateFolder(parent, folderName);
-        }
+        private static void EnsureFolders() => EditorAssetUtils.EnsureFolderPath(AssetDir);
 
         private string DeriveInitialNamespaceRoot()
         {

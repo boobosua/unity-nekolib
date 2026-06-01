@@ -3,8 +3,8 @@ using UnityEditor;
 
 namespace TRnK.Toolkit
 {
-    [CustomEditor(typeof(SetupFoldersSettings))]
-    internal class SetupFoldersSettingsEditor : Editor
+    [CustomEditor(typeof(FoldersSettings))]
+    internal class FoldersSettingsEditor : Editor
     {
         public override void OnInspectorGUI()
         {

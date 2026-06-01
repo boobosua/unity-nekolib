@@ -301,8 +301,7 @@ namespace TRnK.Toolkit
 
         private void Save()
         {
-            EditorUtility.SetDirty(_settings);
-            AssetDatabase.SaveAssets();
+            EditorAssetUtils.MarkDirtyAndSave(_settings);
             SceneSwitcherToolbar.RefreshSceneList();
         }
     }

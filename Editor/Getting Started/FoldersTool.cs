@@ -11,13 +11,13 @@ namespace TRnK.Toolkit
     /// Utility methods for creating project folders under a chosen Assets-relative root.
     /// Editor-only.
     /// </summary>
-    internal static class SetupFoldersTool
+    internal static class FoldersTool
     {
         private const string DefaultRoot = "Assets/Project";
 
-        public static void CreateFolders(SetupFoldersSettings settings, List<string> folderNames)
+        public static void CreateFolders(FoldersSettings settings, List<string> folderNames)
         {
-            if (settings == null) settings = SetupFoldersSettings.LoadOrCreate();
+            if (settings == null) settings = FoldersSettings.LoadOrCreate();
             string root = SanitizeRoot(settings.RootPath);
 
             // Determine if anything is missing first
@@ -27,7 +27,7 @@ namespace TRnK.Toolkit
 
             if (!anyMissing)
             {
-                EditorUtility.DisplayDialog("Project Setup", "All selected folders already exist.", "OK");
+                EditorUtility.DisplayDialog("Getting Started", "All selected folders already exist.", "OK");
                 return;
             }
 
@@ -47,7 +47,7 @@ namespace TRnK.Toolkit
             {
                 AssetDatabase.Refresh();
             }
-            EditorUtility.DisplayDialog("Project Setup", "Requested folders have been created.", "OK");
+            EditorUtility.DisplayDialog("Getting Started", "Requested folders have been created.", "OK");
         }
 
         public static string CombineUnityPath(string a, string b)

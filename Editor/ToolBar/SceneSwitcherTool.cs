@@ -670,8 +670,7 @@ namespace TRnK.Toolkit
                 {
                     var settings = TRnKSettings.GetOrCreate();
                     settings.startupScenePath = string.Empty;
-                    EditorUtility.SetDirty(settings);
-                    AssetDatabase.SaveAssets();
+                    EditorAssetUtils.MarkDirtyAndSave(settings);
                 }
                 catch { }
                 EditorSceneManager.playModeStartScene = null;
@@ -728,8 +727,7 @@ namespace TRnK.Toolkit
                     // Mirror clear into TRnKSettings asset
                     var settings = TRnKSettings.GetOrCreate();
                     settings.startupScenePath = string.Empty;
-                    EditorUtility.SetDirty(settings);
-                    AssetDatabase.SaveAssets();
+                    EditorAssetUtils.MarkDirtyAndSave(settings);
                 }
             }
 #if UNITY_2020_1_OR_NEWER

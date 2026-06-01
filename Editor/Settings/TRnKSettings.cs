@@ -25,26 +25,11 @@ namespace TRnK.Toolkit
 
             settings = CreateInstance<TRnKSettings>();
             AssetDatabase.CreateAsset(settings, AssetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            EditorAssetUtils.SaveAndRefresh();
             return settings;
         }
 
-        private static void EnsureFolders()
-        {
-            EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
-            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
-        }
-
-        private static void EnsureFolder(string parent, string folderName)
-        {
-            string full = parent.EndsWith("/") ? parent + folderName : parent + "/" + folderName;
-            if (AssetDatabase.IsValidFolder(full))
-                return;
-
-            AssetDatabase.CreateFolder(parent, folderName);
-        }
+        private static void EnsureFolders() => EditorAssetUtils.EnsureFolderPath(SettingsFolder);
     }
 }
 #endif

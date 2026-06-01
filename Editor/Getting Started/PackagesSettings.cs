@@ -8,10 +8,10 @@ using UnityEngine;
 namespace TRnK.Toolkit
 {
     [Serializable]
-    internal class SetupPackagesSettings : ScriptableObject
+    internal class PackagesSettings : ScriptableObject
     {
         private const string AssetDir = "Assets/Plugins/TRnK/Toolkit/Editor";
-        private const string AssetName = "SetupPackagesSettings.asset";
+        private const string AssetName = "PackagesSettings.asset";
 
         private static readonly string[] DefaultGitUrls =
         {
@@ -56,7 +56,7 @@ namespace TRnK.Toolkit
             foreach (var p in _packages)
             {
                 if (p == null) continue;
-                string key = SetupPackagesTool.NormalizeGitUrl(p.url);
+                string key = PackagesTool.NormalizeGitUrl(p.url);
                 if (!string.IsNullOrEmpty(key)) existing.Add(key);
             }
 
@@ -64,7 +64,7 @@ namespace TRnK.Toolkit
             foreach (var url in DefaultGitUrls)
             {
                 if (string.IsNullOrWhiteSpace(url)) continue;
-                string key = SetupPackagesTool.NormalizeGitUrl(url);
+                string key = PackagesTool.NormalizeGitUrl(url);
                 if (string.IsNullOrEmpty(key)) continue;
                 if (existing.Contains(key)) continue;
                 _packages.Add(new GitPackage { url = url });
@@ -74,37 +74,23 @@ namespace TRnK.Toolkit
             return added;
         }
 
-        public static SetupPackagesSettings LoadOrCreate()
+        public static PackagesSettings LoadOrCreate()
         {
             string assetPath = Path.Combine(AssetDir, AssetName).Replace("\\", "/");
-            var settings = AssetDatabase.LoadAssetAtPath<SetupPackagesSettings>(assetPath);
+            var settings = AssetDatabase.LoadAssetAtPath<PackagesSettings>(assetPath);
             if (settings != null)
                 return settings;
 
             EnsureFolders();
 
-            settings = CreateInstance<SetupPackagesSettings>();
+            settings = CreateInstance<PackagesSettings>();
             settings.SetDefaults();
             AssetDatabase.CreateAsset(settings, assetPath);
             AssetDatabase.SaveAssets();
             return settings;
         }
 
-        private static void EnsureFolders()
-        {
-            EnsureFolder("Assets", "Plugins");
-            EnsureFolder("Assets/Plugins", "TRnK.Toolkit");
-            EnsureFolder("Assets/Plugins/TRnK/Toolkit", "Editor");
-        }
-
-        private static void EnsureFolder(string parent, string folderName)
-        {
-            string full = parent.EndsWith("/") ? parent + folderName : parent + "/" + folderName;
-            if (AssetDatabase.IsValidFolder(full))
-                return;
-
-            AssetDatabase.CreateFolder(parent, folderName);
-        }
+        private static void EnsureFolders() => EditorAssetUtils.EnsureFolderPath(AssetDir);
     }
 }
 #endif

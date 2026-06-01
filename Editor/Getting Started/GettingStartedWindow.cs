@@ -10,38 +10,38 @@ using TRnK.Logger;
 
 namespace TRnK.Toolkit
 {
-    internal class SetupWindow : EditorWindow
+    internal class GettingStartedWindow : EditorWindow
     {
-        private const string WindowTitle = "Project Setup";
+        private const string WindowTitle = "Getting Started";
         private static readonly string[] Tabs = new[] { "Folders", "Packages", "Settings" };
         private int _tabIndex;
         // Cache icon content to avoid per-GUI allocations
         private static GUIContent _installedCheckContent;
 
         // settings
-        private static SetupFoldersSettings _settings;
+        private static FoldersSettings _settings;
 
         // Folders tab state (runtime selection, doesn't overwrite defaults unless saved in Settings)
-        private List<SetupFoldersSettings.FolderOption> _sessionSelection;
+        private List<FoldersSettings.FolderOption> _sessionSelection;
         private Vector2 _scroll;
         private Vector2 _settingsScroll;
         // Draft text for Namespace Root. We keep this separate so typing doesn't save or trigger validation until Apply.
         private string _namespaceRootDraft;
         private bool _namespaceRootDraftDirty;
 
-        [MenuItem("Tools/TRnK/Project Setup", priority = 0)]
+        [MenuItem("Tools/TRnK/Getting Started", priority = 0)]
         public static void ShowWindow()
         {
-            var window = GetWindow<SetupWindow>(false, WindowTitle, true);
+            var window = GetWindow<GettingStartedWindow>(false, WindowTitle, true);
             window.minSize = new Vector2(480, 370);
             window.Show();
         }
 
         private void OnEnable()
         {
-            _settings = SetupFoldersSettings.LoadOrCreate();
+            _settings = FoldersSettings.LoadOrCreate();
             EnsureSessionSelectionFromSettings();
-            _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            _pkgSettings = PackagesSettings.LoadOrCreate();
             // Initialize draft from current Project Settings so the window reflects external changes
             var projRoot = EditorSettings.projectGenerationRootNamespace;
             _namespaceRootDraft = string.IsNullOrEmpty(projRoot)
@@ -55,7 +55,7 @@ namespace TRnK.Toolkit
                 _installedCheckContent = (check != null && check.image != null) ? check : new GUIContent("Installed");
             }
             // Seed from manifest immediately for first paint
-            if (SetupPackagesTool.TryBuildInstalledGitMapFromManifest(out var manifestMap))
+            if (PackagesTool.TryBuildInstalledGitMapFromManifest(out var manifestMap))
             {
                 _gitInstalledMap = manifestMap;
                 // ensure we repaint immediately with manifest data
@@ -107,7 +107,7 @@ namespace TRnK.Toolkit
         private void EnsureSessionSelectionFromSettings()
         {
             _sessionSelection = _settings.Folders
-                .Select(f => new SetupFoldersSettings.FolderOption { name = f.name, enabled = f.enabled })
+                .Select(f => new FoldersSettings.FolderOption { name = f.name, enabled = f.enabled })
                 .ToList();
         }
 
@@ -131,14 +131,14 @@ namespace TRnK.Toolkit
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                GUILayout.Label("TRnK Dev • Project Setup", EditorStyles.boldLabel);
+                GUILayout.Label("TRnK Dev • Getting Started", EditorStyles.boldLabel);
                 EditorGUILayout.LabelField("A quick starter to create your preferred project folder layout.", EditorStyles.miniLabel);
             }
         }
 
         private void DrawFoldersTab()
         {
-            if (_settings == null) _settings = SetupFoldersSettings.LoadOrCreate();
+            if (_settings == null) _settings = FoldersSettings.LoadOrCreate();
             if (_sessionSelection == null) EnsureSessionSelectionFromSettings();
             else
             {
@@ -170,7 +170,7 @@ namespace TRnK.Toolkit
                     using (new EditorGUILayout.HorizontalScope())
                     {
                         opt.enabled = EditorGUILayout.Toggle(opt.enabled, GUILayout.Width(18));
-                        string path = SetupFoldersTool.CombineUnityPath(_settings.RootPath, opt.name);
+                        string path = FoldersTool.CombineUnityPath(_settings.RootPath, opt.name);
                         bool exists = AssetDatabase.IsValidFolder(path);
                         // Color name green if folder exists, otherwise default color
                         var oldColor = GUI.contentColor;
@@ -195,7 +195,7 @@ namespace TRnK.Toolkit
                     if (GUILayout.Button("Create Folders", GUILayout.Height(32), GUILayout.ExpandWidth(true)))
                     {
                         var toCreate = _sessionSelection.Where(f => f.enabled).Select(f => f.name).ToList();
-                        SetupFoldersTool.CreateFolders(_settings, toCreate);
+                        FoldersTool.CreateFolders(_settings, toCreate);
                     }
                     GUILayout.Space(2);
                 }
@@ -204,7 +204,7 @@ namespace TRnK.Toolkit
 
         // Removed automatic syncing to avoid unintended changes; user applies explicitly.
 
-        private SetupPackagesSettings _pkgSettings;
+        private PackagesSettings _pkgSettings;
         private Vector2 _pkgScroll;
         private Dictionary<string, string> _gitInstalledMap; // normalized git url -> package name
         private ListRequest _gitListRequest;
@@ -232,9 +232,9 @@ namespace TRnK.Toolkit
                 foreach (var p in _gitListRequest.Result)
                 {
                     if (p == null || p.source != PackageSource.Git) continue;
-                    var url = SetupPackagesTool.ExtractGitUrlFromPackageId(p.packageId);
+                    var url = PackagesTool.ExtractGitUrlFromPackageId(p.packageId);
                     if (string.IsNullOrEmpty(url)) continue;
-                    map[SetupPackagesTool.NormalizeGitUrl(url)] = p.name;
+                    map[PackagesTool.NormalizeGitUrl(url)] = p.name;
                 }
             }
             // If UPM returns nothing (edge cases), keep manifest-based map
@@ -252,9 +252,9 @@ namespace TRnK.Toolkit
 
         private void BeginAddPackage(string url)
         {
-            var req = SetupPackagesTool.AddPackage(url);
+            var req = PackagesTool.AddPackage(url);
             if (req == null) return;
-            string key = SetupPackagesTool.NormalizeGitUrl(url);
+            string key = PackagesTool.NormalizeGitUrl(url);
             _pendingAdds[key] = req;
             if (!_pollingAdds)
             {
@@ -293,7 +293,7 @@ namespace TRnK.Toolkit
 
         private void DrawPackagesTab()
         {
-            if (_pkgSettings == null) _pkgSettings = SetupPackagesSettings.LoadOrCreate();
+            if (_pkgSettings == null) _pkgSettings = PackagesSettings.LoadOrCreate();
             if (_gitInstalledMap == null && !_gitListPending) BeginRefreshUpmGitCache();
 
             using (new EditorGUILayout.VerticalScope())
@@ -307,8 +307,7 @@ namespace TRnK.Toolkit
                         int added = _pkgSettings.RefreshMissingDefaults();
                         if (added > 0)
                         {
-                            EditorUtility.SetDirty(_pkgSettings);
-                            AssetDatabase.SaveAssets();
+                            EditorAssetUtils.MarkDirtyAndSave(_pkgSettings);
                             ShowNotification(new GUIContent($"Added {added} default URL(s)"));
                         }
                         else
@@ -331,7 +330,7 @@ namespace TRnK.Toolkit
                         using (new EditorGUILayout.HorizontalScope())
                         {
                             // Determine installed state from cached list FIRST
-                            string normalized = SetupPackagesTool.NormalizeGitUrl(pkg.url);
+                            string normalized = PackagesTool.NormalizeGitUrl(pkg.url);
                             string installedName = null;
                             if (_gitInstalledMap != null)
                                 _gitInstalledMap.TryGetValue(normalized, out installedName);
@@ -364,7 +363,7 @@ namespace TRnK.Toolkit
                                     string label = isInstalling ? "Installing..." : "Install";
                                     if (GUILayout.Button(label, GUILayout.Width(90)))
                                     {
-                                        if (SetupPackagesTool.ValidatePackageIdentifier(pkg.url, out bool isGit, out string err) && isGit)
+                                        if (PackagesTool.ValidatePackageIdentifier(pkg.url, out bool isGit, out string err) && isGit)
                                         {
                                             BeginAddPackage(pkg.url);
                                             Log.Info($"Install requested: {pkg.url}");
@@ -387,7 +386,7 @@ namespace TRnK.Toolkit
 
         private void DrawSettingsTab()
         {
-            if (_settings == null) _settings = SetupFoldersSettings.LoadOrCreate();
+            if (_settings == null) _settings = FoldersSettings.LoadOrCreate();
             if (_namespaceRootDraft == null)
             {
                 _namespaceRootDraft = EditorSettings.projectGenerationRootNamespace ?? _settings.NamespaceRoot;
@@ -421,8 +420,7 @@ namespace TRnK.Toolkit
                             // Persist to settings with validation running once via the property setter
                             Undo.RecordObject(_settings, "Change Namespace Root");
                             _settings.NamespaceRoot = _namespaceRootDraft; // setter sanitizes
-                            EditorUtility.SetDirty(_settings);
-                            AssetDatabase.SaveAssets();
+                            EditorAssetUtils.MarkDirtyAndSave(_settings);
                             // Apply to Project Settings
                             EditorSettings.projectGenerationRootNamespace = _settings.NamespaceRoot;
                             _namespaceRootDraft = _settings.NamespaceRoot;
@@ -444,13 +442,12 @@ namespace TRnK.Toolkit
                         string abs = EditorUtility.OpenFolderPanel("Select Root Folder (under Assets)", Application.dataPath, "");
                         if (!string.IsNullOrEmpty(abs))
                         {
-                            string rel = SetupFoldersTool.AbsoluteToAssetsRelative(abs);
+                            string rel = FoldersTool.AbsoluteToAssetsRelative(abs);
                             if (!string.IsNullOrEmpty(rel))
                             {
-                                Undo.RecordObject(_settings, "Change Setup Root Path");
+                                Undo.RecordObject(_settings, "Change Root Path");
                                 _settings.RootPath = rel;
-                                EditorUtility.SetDirty(_settings);
-                                AssetDatabase.SaveAssets();
+                                EditorAssetUtils.MarkDirtyAndSave(_settings);
                             }
                             else EditorUtility.DisplayDialog("Invalid Folder", "Please select a folder inside the project's Assets directory.", "OK");
                         }
@@ -498,7 +495,7 @@ namespace TRnK.Toolkit
                 {
                     if (GUILayout.Button("Add Folder"))
                     {
-                        _settings.Folders.Add(new SetupFoldersSettings.FolderOption { name = "NewFolder", enabled = true });
+                        _settings.Folders.Add(new FoldersSettings.FolderOption { name = "NewFolder", enabled = true });
                         listChangedByButtons = true;
                     }
                     GUILayout.FlexibleSpace();
@@ -514,9 +511,8 @@ namespace TRnK.Toolkit
 
                 if (EditorGUI.EndChangeCheck() || listChangedByButtons)
                 {
-                    Undo.RecordObject(_settings, "Edit Setup Folders Settings");
-                    EditorUtility.SetDirty(_settings);
-                    AssetDatabase.SaveAssets();
+                    Undo.RecordObject(_settings, "Edit Folders Settings");
+                    EditorAssetUtils.MarkDirtyAndSave(_settings);
                 }
             }
         }
