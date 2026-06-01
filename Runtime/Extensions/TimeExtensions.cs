@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using TRnK.Constant;
 using TRnK.Logger;
 using TRnK.Services;
 using UnityEngine;
@@ -10,10 +9,6 @@ namespace TRnK.Extensions
     public static class TimeExtensions
     {
         private static readonly StringBuilder s_stringBuilder = new(32);
-
-        private const double SecondsPerMinuteD = 60.0;
-        private const double SecondsPerHourD = 3600.0;
-        private const double SecondsPerDayD = 86400.0;
 
         #region Time to String Formatting
         /// <summary>Converts time in seconds to HH:MM:SS format.</summary>
@@ -162,42 +157,6 @@ namespace TRnK.Extensions
             return diff;
         }
 
-        /// <summary>Gets minutes elapsed from this DateTime to now (for past times).</summary>
-        public static double MinutesSince(this DateTime time)
-        {
-            return SecondsSince(time) / SecondsPerMinuteD;
-        }
-
-        /// <summary>Gets minutes elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double MinutesSinceUtc(this DateTime time)
-        {
-            return SecondsSinceUtc(time) / SecondsPerMinuteD;
-        }
-
-        /// <summary>Gets hours elapsed from this DateTime to now (for past times).</summary>
-        public static double HoursSince(this DateTime time)
-        {
-            return SecondsSince(time) / SecondsPerHourD;
-        }
-
-        /// <summary>Gets hours elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double HoursSinceUtc(this DateTime time)
-        {
-            return SecondsSinceUtc(time) / SecondsPerHourD;
-        }
-
-        /// <summary>Gets days elapsed from this DateTime to now (for past times).</summary>
-        public static double DaysSince(this DateTime time)
-        {
-            return SecondsSince(time) / SecondsPerDayD;
-        }
-
-        /// <summary>Gets days elapsed from this DateTime to now (UTC, for past times).</summary>
-        public static double DaysSinceUtc(this DateTime time)
-        {
-            return SecondsSinceUtc(time) / SecondsPerDayD;
-        }
-
         #endregion
 
         #region DateTime Future Time Calculations
@@ -242,42 +201,6 @@ namespace TRnK.Extensions
             }
 
             return diff;
-        }
-
-        /// <summary>Gets minutes from now until this DateTime (for future times).</summary>
-        public static double MinutesFromNow(this DateTime time)
-        {
-            return SecondsFromNow(time) / SecondsPerMinuteD;
-        }
-
-        /// <summary>Gets minutes from now until this DateTime (UTC, for future times).</summary>
-        public static double MinutesFromNowUtc(this DateTime time)
-        {
-            return SecondsFromNowUtc(time) / SecondsPerMinuteD;
-        }
-
-        /// <summary>Gets hours from now until this DateTime (for future times).</summary>
-        public static double HoursFromNow(this DateTime time)
-        {
-            return SecondsFromNow(time) / SecondsPerHourD;
-        }
-
-        /// <summary>Gets hours from now until this DateTime (UTC, for future times).</summary>
-        public static double HoursFromNowUtc(this DateTime time)
-        {
-            return SecondsFromNowUtc(time) / SecondsPerHourD;
-        }
-
-        /// <summary>Gets days from now until this DateTime (for future times).</summary>
-        public static double DaysFromNow(this DateTime time)
-        {
-            return SecondsFromNow(time) / SecondsPerDayD;
-        }
-
-        /// <summary>Gets days from now until this DateTime (UTC, for future times).</summary>
-        public static double DaysFromNowUtc(this DateTime time)
-        {
-            return SecondsFromNowUtc(time) / SecondsPerDayD;
         }
 
         #endregion

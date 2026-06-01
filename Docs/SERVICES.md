@@ -44,21 +44,11 @@ DateTime utcNow = TimeService.UtcNow;
 DateTime localNow = TimeService.Now;
 
 // Date-only helpers
-DateTime todayLocal = TimeService.Today;         // local date, time stripped
-DateTime todayUtc = TimeService.TodayUtc;        // UTC date, time stripped
-DateTime nextDay = TimeService.NextDay;           // local next midnight
-DateTime nextDayUtc = TimeService.NextDayUtc;    // UTC next midnight
+DateTime todayLocal = TimeService.Today;    // local date, time stripped
+DateTime todayUtc = TimeService.TodayUtc;  // UTC date, time stripped
 
 // Check if TimeService has successfully synced
 bool hasSynced = TimeService.HasSynced;
-
-// Time period checks (local)
-bool isStartOfWeek = TimeService.IsTodayStartOfWeek;     // Monday
-bool isStartOfMonth = TimeService.IsTodayStartOfMonth;   // 1st of month
-
-// Time period checks (UTC)
-bool isStartOfWeekUtc = TimeService.IsTodayStartOfWeekUtc;
-bool isStartOfMonthUtc = TimeService.IsTodayStartOfMonthUtc;
 ```
 
 #### Usage Example

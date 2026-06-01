@@ -77,23 +77,6 @@ namespace TRnK.Services
         /// <summary>Today's date (midnight) in local timezone.</summary>
         public static DateTime Today => Now.Date;
 
-        /// <summary>Whether today (local) is Monday.</summary>
-        public static bool IsTodayStartOfWeek => Today.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>Whether today (UTC) is Monday.</summary>
-        public static bool IsTodayStartOfWeekUtc => TodayUtc.DayOfWeek == DayOfWeek.Monday;
-
-        /// <summary>Whether today (local) is the 1st of the month.</summary>
-        public static bool IsTodayStartOfMonth => Today.Day == 1;
-
-        /// <summary>Whether today (UTC) is the 1st of the month.</summary>
-        public static bool IsTodayStartOfMonthUtc => TodayUtc.Day == 1;
-
-        /// <summary>Tomorrow at midnight, local timezone.</summary>
-        public static DateTime NextDay => Today.AddDays(1);
-
-        /// <summary>Tomorrow at midnight, UTC.</summary>
-        public static DateTime NextDayUtc => TodayUtc.AddDays(1);
 
         // ─── Fetch ───────────────────────────────────────────────────────────────
 

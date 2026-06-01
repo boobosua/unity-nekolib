@@ -1451,7 +1451,7 @@ TimeSpan offline = lastLogin.TimeSince();" },
                         new DocMember { Kind = DocMemberKind.Method, Signature = "SecondsFromNow()  (DateTime ext)",
                             Summary = "Returns the total seconds from now until the given future DateTime.",
                             Code =
-@"DateTime resetTime = TimeService.NextDay;
+@"DateTime resetTime = TimeService.Today.AddDays(1);
 double secs = resetTime.SecondsFromNow();
 countdownLabel.text = ((float)secs).ToClock();" },
                     }
@@ -1678,7 +1678,7 @@ cam.RemoveFromCullingMask(LayerMask.GetMask(""HUD""));" },
                     Title = "TimeService",
                     Namespace = "TRnK.Services",
                     Summary = "Server-synchronized DateTime service. Falls back to DateTime.Now until a successful sync.",
-                    Description = "Call FetchTimeFromServerAsync() at startup to sync. Access via TimeService.Now/UtcNow. Define TRNK_TIME_SERVICE_DEBUG to skip real web requests locally.\n\nPeriod helpers: IsTodayStartOfWeek, IsTodayStartOfMonth. Date helpers: Today, TodayUtc, NextDay, NextDayUtc.",
+                    Description = "Call FetchTimeFromServerAsync() at startup to sync. Access via TimeService.Now/UtcNow. Define TRNK_TIME_SERVICE_DEBUG to skip real web requests locally.",
                     Code =
 @"bool synced = await TimeService.FetchTimeFromServerAsync();
 
@@ -1686,9 +1686,8 @@ cam.RemoveFromCullingMask(LayerMask.GetMask(""HUD""));" },
 StartCoroutine(TimeService.FetchTimeFromServerCoroutine(
     ok => Debug.Log($""Synced: {ok}"")));
 
-DateTime now  = TimeService.Now;
-DateTime utc  = TimeService.UtcNow;
-bool mon      = TimeService.IsTodayStartOfWeek;
+DateTime now = TimeService.Now;
+DateTime utc = TimeService.UtcNow;
 
 // Daily reward check
 var last = DateTime.Parse(PlayerPrefs.GetString(""LastLogin""));
@@ -1732,33 +1731,6 @@ Debug.Log($""Local time: {now:HH:mm:ss}"");"
                             Code =
 @"if (!TimeService.HasSynced)
     await TimeService.FetchTimeFromServerAsync();"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "IsTodayStartOfWeek",
-                            Summary = "True if today is Monday (start of ISO week).",
-                            Code =
-@"if (TimeService.IsTodayStartOfWeek)
-    ResetWeeklyRewards();"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "IsTodayStartOfMonth",
-                            Summary = "True if today is the 1st of the month.",
-                            Code =
-@"if (TimeService.IsTodayStartOfMonth)
-    ResetMonthlyLeaderboard();"
-                        },
-                        new DocMember
-                        {
-                            Kind = DocMemberKind.Property,
-                            Signature = "NextDay",
-                            Summary = "Tomorrow's date at midnight (local).",
-                            Code =
-@"TimeSpan untilReset = TimeService.NextDay - TimeService.Now;
-label.text = untilReset.ToReadableFormat();"
                         },
                         // Methods
                         new DocMember
